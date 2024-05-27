@@ -1,0 +1,110 @@
+import os
+import pandas as pd
+from utils.config import *
+from openbb import obb
+import yfinance as yf
+
+# Read directory from JSON file
+
+def us_equity_symbol_download(provider="sec"):
+  # Get all companies from SEC
+  us_all_companies = obb.equity.search("", provider=provider)
+  csv_us_all_companies = us_all_companies.to_dataframe()
+
+  us_symbol_f = us_symbol_file()
+
+  # Save the DataFrame to a CSV file in the output directory
+  csv_us_all_companies.to_csv(us_symbol_f, index=False)
+  print(us_equity_symbol_download.__name__, "download successfully!", f"and stored to {us_symbol_f}")
+
+def us_equity_symbol_load():
+  us_symbol_f = us_symbol_file()
+  us_all_companies = pd.read_csv(us_symbol_f)
+  return us_all_companies.loc[:, 'symbol']
+
+def us_equity_daily_data_download(symbols = ['AAPL'], provider="yfinance"):
+  for symbol in symbols:
+    try:
+      print(f"Downloading {symbol} trade data...")
+      df_daily = obb.equity.price.historical(symbol = symbol, start_date = "1990-01-01", provider=provider).to_df()
+      equity_folder = us_equity_folder(symbol = symbol)
+      equity_file = os.path.join(equity_folder, 'daily.csv')
+      # data = obb.equity.download(symbol, provider=provider, interval="daily", start_date="2010-01-01").to_df()
+      data = obb.equity.price.historical(symbol = symbol, start_date = "1990-01-01", provider=provider).to_df()
+      data.to_csv(equity_file)
+    except:
+      print(f"failed to download equity {symbol}")
+
+def us_equity_finance_store_csv(equity_folder, data, file_name):
+    file = os.path.join(equity_folder, file_name + '.csv')
+    if os.path.exists(file):
+      data_local = pd.read_csv(file)
+
+      # Drop the 'Unnamed: 0.1' column if it exists
+      if 'Unnamed: 0.1' in data_local.columns:
+          data_local.drop(columns=['Unnamed: 0.1'], inplace=True)
+
+      # Drop the 'Unnamed: 0' column if it exists
+      if 'Unnamed: 0' in data_local.columns:
+          data_local.drop(columns=['Unnamed: 0'], inplace=True)
+
+      merged_data = pd.concat([data_local, data])
+      if 'period_ending' in data_local.columns:
+        merged_data.drop_duplicates(subset='period_ending', inplace=True)
+    merged_data.to_csv(file, index=False)
+
+def us_equity_finance_data_download(symbols = ['AAPL'], provider="yfinance"):
+  for symbol in symbols:
+    try:
+      print(f"Downloading {symbol} finance data...")
+      equity_folder = us_equity_folder(symbol = symbol)
+
+      data = obb.equity.fundamental.income(symbol, provider="yfinance", limit=3, period="quarter").to_df()
+      us_equity_finance_store_csv(equity_folder, data, 'income')
+
+      data = obb.equity.fundamental.cash(symbol, provider="yfinance", limit=3, period="quarter").to_df()
+      us_equity_finance_store_csv(equity_folder, data, 'cash')
+
+      data = obb.equity.fundamental.balance(symbol, provider="yfinance", limit=3, period="quarter").to_df()
+      us_equity_finance_store_csv(equity_folder, data, 'balance')
+
+      data = obb.equity.fundamental.metrics(symbol, provider="yfinance", limit=3, period="quarter").to_df()
+      us_equity_finance_store_csv(equity_folder, data, 'metrics')
+
+    except:
+      print(f"failed to download equity {symbol}")
+
+def us_equity_option_data_download(symbols = ['AAPL'], trade_date="20240524"):
+  for ticker_symbol in symbols:
+    try:
+      # Define the ticker symbol
+      equity_folder_date = us_equity_folder_date(symbol = ticker_symbol)
+
+      # Fetch the ticker object
+      ticker = yf.Ticker(ticker_symbol)
+
+      # Fetch the available expiration dates for options
+      exp_dates = ticker.options
+      print(f"Available expiration dates for {ticker_symbol}: {exp_dates}")
+
+      # Loop through each expiration date and save the options data
+      for exp_date in exp_dates:
+          # Fetch the option chain for the current expiration date
+          option_chain = ticker.option_chain(exp_date)
+          
+          # Extract call and put options data
+          calls = option_chain.calls
+          puts = option_chain.puts
+          
+          # Save the calls and puts to separate CSV files
+          call_file = f'calls_{exp_date}.csv'
+          put_file = f'puts_{exp_date}.csv'
+          calls.to_csv(os.path.join(equity_folder_date, call_file), index=False)
+          puts.to_csv(os.path.join(equity_folder_date, put_file), index=False)
+          
+          print(f"Saved options data for expiration date {call_file}")
+          print(f"Saved options data for expiration date {put_file}")
+    except:
+      print(f"failed to download equity {ticker_symbol}")
+
+  print("All options data have been downloaded and saved to CSV files.")
