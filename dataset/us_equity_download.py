@@ -17,11 +17,6 @@ def us_equity_symbol_download(provider="sec"):
   csv_us_all_companies.to_csv(us_symbol_f, index=False)
   print(us_equity_symbol_download.__name__, "download successfully!", f"and stored to {us_symbol_f}")
 
-def us_equity_symbol_load():
-  us_symbol_f = us_symbol_file()
-  us_all_companies = pd.read_csv(us_symbol_f)
-  return us_all_companies.loc[:, 'symbol']
-
 def us_equity_daily_data_download(symbols = ['AAPL'], provider="yfinance"):
   for symbol in symbols:
     try:

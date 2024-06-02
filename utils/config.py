@@ -59,3 +59,20 @@ def us_equity_folder_date(symbol = "AAPL"):
   os.makedirs(equity_path_date, exist_ok=True)
 
   return equity_path_date
+
+def us_equity_research_folder(sub_folder = "price"):
+  
+  # Read directory from JSON file
+  conf = os.path.join(_this_dir, 'config.json')
+  with open(conf) as f:
+      config = json.load(f)
+  root_dir = config['output_dir']
+
+  # Create the output directory if it doesn't exist
+  os.makedirs(root_dir, exist_ok=True)
+
+  # Create the subfolder
+  equity_path = os.path.join(root_dir, 'research', sub_folder)
+  os.makedirs(equity_path, exist_ok=True)
+
+  return equity_path
