@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from utils.config import *
+from common.us_equity_common import *
 from openbb import obb
 import yfinance as yf
 
@@ -30,7 +31,7 @@ def us_equity_daily_data_download(symbols = ['AAPL'], provider="yfinance"):
     except:
       print(f"failed to download equity {symbol}")
 
-def us_equity_finance_store_csv(equity_folder, data, file_name):
+def us_equity_yfinance_finance_store_csv(equity_folder, data, file_name):
     file = os.path.join(equity_folder, file_name + '.csv')
     if os.path.exists(file):
       data_local = pd.read_csv(file)
@@ -46,34 +47,84 @@ def us_equity_finance_store_csv(equity_folder, data, file_name):
       merged_data = pd.concat([data_local, data])
       if 'period_ending' in data_local.columns:
         merged_data.drop_duplicates(subset='period_ending', inplace=True)
-    merged_data.to_csv(file, index=False)
+      data = merged_data
+    data.to_csv(file, index=False)
 
-def us_equity_finance_data_download(symbols = ['AAPL'], provider="yfinance"):
+def us_equity_yfinance_finance_data_download(symbols = ['AAPL'], provider="yfinance"):
   for symbol in symbols:
     try:
       print(f"Downloading {symbol} finance data...")
       equity_folder = us_equity_folder(symbol = symbol)
 
       data = obb.equity.fundamental.income(symbol, provider="yfinance", limit=3, period="quarter").to_df()
-      us_equity_finance_store_csv(equity_folder, data, 'income')
+      us_equity_yfinance_finance_store_csv(equity_folder, data, 'income')
 
       data = obb.equity.fundamental.cash(symbol, provider="yfinance", limit=3, period="quarter").to_df()
-      us_equity_finance_store_csv(equity_folder, data, 'cash')
+      us_equity_yfinance_finance_store_csv(equity_folder, data, 'cash')
 
       data = obb.equity.fundamental.balance(symbol, provider="yfinance", limit=3, period="quarter").to_df()
-      us_equity_finance_store_csv(equity_folder, data, 'balance')
+      us_equity_yfinance_finance_store_csv(equity_folder, data, 'balance')
 
       data = obb.equity.fundamental.metrics(symbol, provider="yfinance", limit=3, period="quarter").to_df()
-      us_equity_finance_store_csv(equity_folder, data, 'metrics')
+      us_equity_yfinance_finance_store_csv(equity_folder, data, 'metrics')
 
     except:
       print(f"failed to download equity {symbol}")
 
-def us_equity_option_data_download(symbols = ['AAPL'], trade_date="20240524"):
+
+def us_equity_efinance_finance_store_csv(equity_folder, data, file_name):
+    file = os.path.join(equity_folder, file_name + '.csv')
+    if os.path.exists(file):
+      data_local = pd.read_csv(file)
+
+      # Drop the 'Unnamed: 0.1' column if it exists
+      if 'Unnamed: 0.1' in data_local.columns:
+          data_local.drop(columns=['Unnamed: 0.1'], inplace=True)
+
+      # Drop the 'Unnamed: 0' column if it exists
+      if 'Unnamed: 0' in data_local.columns:
+          data_local.drop(columns=['Unnamed: 0'], inplace=True)
+
+      merged_data = pd.concat([data_local, data])
+      if 'REPORT_DATE' in data_local.columns:
+        merged_data.drop_duplicates(subset='REPORT_DATE', inplace=True)
+      data = merged_data
+    data.to_csv(file, index=False)
+
+def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efinance"):
+
+  import efinance as ef
+  datacenter = ef.stock.finance_getter()
+
+  for symbol in symbols:
+    try:
+      efinance_symbol = datacenter.get_secucode("MMM")
+      print(f"Downloading {symbol} finance data...")
+      efinance_symbol = datacenter.get_secucode("MMM")
+      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
+
+      data = datacenter.get_us_finance_income(symbol = efinance_symbol)
+      us_equity_efinance_finance_store_csv(equity_folder, data, 'income')
+
+      data = datacenter.get_us_finance_cash(symbol = efinance_symbol)
+      us_equity_efinance_finance_store_csv(equity_folder, data, 'cash')
+
+      data = datacenter.get_us_finance_balance(symbol = efinance_symbol)
+      us_equity_efinance_finance_store_csv(equity_folder, data, 'balance')
+
+      data = datacenter.get_us_finance_main_factor(symbol = efinance_symbol)
+      us_equity_efinance_finance_store_csv(equity_folder, data, 'metrics')
+    except:
+      print(f"failed to download equity {symbol}")
+
+def us_equity_option_data_download(symbols = ['AAPL']):
+  trade_date = us_equity_get_current_trade_date()
   for ticker_symbol in symbols:
     try:
       # Define the ticker symbol
-      equity_folder_date = us_equity_folder_date(symbol = ticker_symbol)
+      equity_folder_date = us_equity_sub_folder(symbol = ticker_symbol, sub_dir = trade_date)
+
+      print("option folder: ", equity_folder_date)
 
       # Fetch the ticker object
       ticker = yf.Ticker(ticker_symbol)
@@ -90,6 +141,7 @@ def us_equity_option_data_download(symbols = ['AAPL'], trade_date="20240524"):
           # Extract call and put options data
           calls = option_chain.calls
           puts = option_chain.puts
+          underlying = option_chain.underlying
           
           # Save the calls and puts to separate CSV files
           call_file = f'calls_{exp_date}.csv'
@@ -99,6 +151,14 @@ def us_equity_option_data_download(symbols = ['AAPL'], trade_date="20240524"):
           
           print(f"Saved options data for expiration date {call_file}")
           print(f"Saved options data for expiration date {put_file}")
+
+          import pickle
+          piklefile = os.path.join(equity_folder_date, 'underlying.pkl')
+          # Writing the dictionary to a file
+          with open(piklefile, "wb") as file:
+              pickle.dump(underlying, file)
+              print("dump file ", piklefile)
+
     except:
       print(f"failed to download equity {ticker_symbol}")
 

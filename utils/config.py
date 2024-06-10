@@ -41,24 +41,16 @@ def us_equity_folder(symbol = "AAPL"):
 
   return equity_path
 
-def us_equity_folder_date(symbol = "AAPL"):
-
-  # Download historical stock data
-  stock_data = yf.download(symbol)
-
-  # Extract the date part from the Timestamp index
-  trade_dates = stock_data.index.date
-
-  trade_dates_str = [date.strftime('%Y-%m-%d') for date in trade_dates]
+def us_equity_sub_folder(symbol = "AAPL", sub_dir = "2024-06-06"):
 
   # Read directory from JSON file
   root_dir = us_equity_folder(symbol)
 
   # Create the subfolder
-  equity_path_date = os.path.join(root_dir, trade_dates_str[-1])
-  os.makedirs(equity_path_date, exist_ok=True)
+  dir = os.path.join(root_dir, sub_dir)
+  os.makedirs(dir, exist_ok=True)
 
-  return equity_path_date
+  return dir
 
 def us_equity_research_folder(sub_folder = "price"):
   
