@@ -75,21 +75,21 @@ def us_equity_yfinance_finance_data_download(symbols = ['AAPL'], provider="yfina
 def us_equity_efinance_finance_store_csv(equity_folder, data, file_name):
     file = os.path.join(equity_folder, file_name + '.csv')
     if os.path.exists(file):
-      data_local = pd.read_csv(file)
+      # data_local = pd.read_csv(file)
 
-      # Drop the 'Unnamed: 0.1' column if it exists
-      if 'Unnamed: 0.1' in data_local.columns:
-          data_local.drop(columns=['Unnamed: 0.1'], inplace=True)
+      # # Drop the 'Unnamed: 0.1' column if it exists
+      # if 'Unnamed: 0.1' in data_local.columns:
+      #     data_local.drop(columns=['Unnamed: 0.1'], inplace=True)
 
-      # Drop the 'Unnamed: 0' column if it exists
-      if 'Unnamed: 0' in data_local.columns:
-          data_local.drop(columns=['Unnamed: 0'], inplace=True)
+      # # Drop the 'Unnamed: 0' column if it exists
+      # if 'Unnamed: 0' in data_local.columns:
+      #     data_local.drop(columns=['Unnamed: 0'], inplace=True)
 
-      merged_data = pd.concat([data_local, data])
-      if 'REPORT_DATE' in data_local.columns:
-        merged_data.drop_duplicates(subset='REPORT_DATE', inplace=True)
-      data = merged_data
-    data.to_csv(file, index=False)
+      # merged_data = pd.concat([data_local, data])
+      # if 'REPORT_DATE' in data_local.columns:
+      #   merged_data.drop_duplicates(subset='REPORT_DATE', inplace=True)
+      # data = merged_data
+      data.to_csv(file)
 
 def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efinance"):
 
