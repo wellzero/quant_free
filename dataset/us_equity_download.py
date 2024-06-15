@@ -74,7 +74,7 @@ def us_equity_yfinance_finance_data_download(symbols = ['AAPL'], provider="yfina
 
 def us_equity_efinance_finance_store_csv(equity_folder, data, file_name):
     file = os.path.join(equity_folder, file_name + '.csv')
-    if os.path.exists(file):
+    # if os.path.exists(file):
       # data_local = pd.read_csv(file)
 
       # # Drop the 'Unnamed: 0.1' column if it exists
@@ -89,18 +89,20 @@ def us_equity_efinance_finance_store_csv(equity_folder, data, file_name):
       # if 'REPORT_DATE' in data_local.columns:
       #   merged_data.drop_duplicates(subset='REPORT_DATE', inplace=True)
       # data = merged_data
-      data.to_csv(file)
+    data.to_csv(file)
+    print("store file: ", file)
+
 
 def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efinance"):
 
   import efinance as ef
-  datacenter = ef.stock.finance_getter()
+  datacenter = ef.stock.us_finance_getter()
 
   for symbol in symbols:
     try:
-      efinance_symbol = datacenter.get_secucode("MMM")
+      # efinance_symbol = datacenter.get_secucode("MMM")
       print(f"Downloading {symbol} finance data...")
-      efinance_symbol = datacenter.get_secucode("MMM")
+      efinance_symbol = datacenter.get_secucode(symbol)
       equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
 
       data = datacenter.get_us_finance_income(symbol = efinance_symbol)
@@ -163,3 +165,24 @@ def us_equity_option_data_download(symbols = ['AAPL']):
       print(f"failed to download equity {ticker_symbol}")
 
   print("All options data have been downloaded and saved to CSV files.")
+
+
+
+def us_equity_info_data_download(symbols = ['AAPL'], provider="efinance"):
+
+  import efinance as ef
+  datacenter = ef.stock.us_equity_getter()
+
+  for symbol in symbols:
+    try:
+      # efinance_symbol = datacenter.get_secucode("MMM")
+      print(f"Downloading {symbol} finance data...")
+      efinance_symbol = datacenter.get_secucode(symbol)
+      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
+
+      data = datacenter.get_us_equity_info(symbol = efinance_symbol)
+      us_equity_efinance_finance_store_csv(equity_folder, data, 'info')
+    except:
+      print(f"failed to download equity {symbol}")
+
+
