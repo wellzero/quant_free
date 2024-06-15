@@ -28,7 +28,6 @@ def us_equity_get_current_trade_date(symbol = "AAPL"):
   return trade_dates[-1].strftime('%Y-%m-%d')
 
 
-
 if __name__ == "__main__":
   trade_dates = us_equity_get_trade_date_within_range()
   print(len(trade_dates))

@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import yfinance as yf
+import pandas as pd
 
 _this_dir = Path(__file__).parent.parent
 
@@ -68,3 +69,13 @@ def us_equity_research_folder(sub_folder = "price"):
   os.makedirs(equity_path, exist_ok=True)
 
   return equity_path
+
+
+def us_equity_efinance_load_csv(symbol, file_name, provider = "efinance" ):
+
+    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    file = os.path.join(equity_folder, file_name + '.csv')
+
+    data = pd.read_csv(file)
+
+    return data

@@ -34,7 +34,7 @@ def convert_to_financial_datetime(period):
     
     return pd.to_datetime(date)
 
-def generate_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
+def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
     start_year, quarter = start_quarter.split('/')
     end_year, quarter = end_quarter.split('/')
     # Define a list of years from 2001 to 2022
@@ -67,27 +67,19 @@ def generate_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 
 class us_equity_finance:
 
-  def __init__(self, symbols, factors = ['ROE'], start = '2016-01-01', end = '2023-01-01') -> None:
+  def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
 
     self.symbols = symbols
 
-    self.code_list_process = []
+    self.symbol_list_process = []
 
     self.factors = factors
 
+    self.dates = generate_Q_dates(start_quarter, end_quarter)
 
-    # Applying the conversion function
-    df['financial_datetime'] = df['period'].apply(convert_to_financial_datetime)
+    self.date_times = self.dates.apply(convert_to_financial_datetime)
 
-
-    series = pd.Series(
-        data=month_data,
-        index=pd.to_datetime(month_data, utc=False),
-        name='date'
-    )
-    self.dates = series.loc[start:end].tolist()
-
-    pass
+    return
   
   
   def ab_ratio_calc(self, a,b,str):
@@ -115,12 +107,10 @@ class us_equity_finance:
     return pd_data
 
 
-  def finance_stock_financial_data(self, code = 'AAPL'):
+  def finance_stock_financial_data(self, symbol = 'AAPL'):
     try:
-      df_finance = QA.QA_fetch_financial_report_adv(
-          code
-      ).data
-      df_finance = df_finance.sort_index(ascending=False)
+      df_finance = us_equity_efinance_finance_data_load(symbol)
+      # df_finance = df_finance.sort_index(ascending=False)
       return df_finance
     except:
       print(self.fetch_one_data.__name__, "input wrong!")
@@ -147,29 +137,25 @@ class us_equity_finance:
 
     return nearest_date
 
-  def get_market_value(self, code, df_finance):
-    data = us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', option = all)
-    res = QAQueryAdv.QA_fetch_stock_day_adv(code).data.reset_index(level='code')
-    daily_trade_dates = res.index
+  def get_market_value(self, symbol):
+    daily_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.date_times[0], end_date = self.date_times[-1])
+    daily_trade_dates = daily_data.index
 
-    trade_data_quarter = pd.DataFrame()
-    finance_dates = df_finance['report_date'].values
     dates = []
-    for get_date in finance_dates:
+    for get_date in self.date_times:
       # print(get_date)
       date = self.nearest_date(daily_trade_dates, get_date)
       dates.append(date)
 
+    shares = us_equity_common_shares_load(symbol)
+
     # trade_data_quarter = pd.concat([trade_data_quarter, res.loc[date]], axis = 1)
-    trade_data_quarter = res.loc[dates]
+    trade_data_quarter = daily_data.loc[dates]
 
-    close = trade_data_quarter['close']
-    close.index = df_finance['totalCapital'].index
-      
-    return df_finance['totalCapital'] * close
+    return trade_data_quarter * shares
 
-  def finance_factors_one_stock(self, code):
-    df_finance = self.finance_stock_financial_data(code)
+  def finance_factors_one_stock(self, symbol):
+    df_finance = self.finance_stock_financial_data(symbol)
 
     equlity = df_finance['totalOwnersEquity']
     asset = df_finance['totalAssets']
@@ -198,7 +184,7 @@ class us_equity_finance:
 
     divedends = df_finance['cashPaymentsForDistrbutionOfDividendsOrProfits']
     EBITDA = EBIT + depreciation +amortize0 + amortize1
-    market_cap = self.get_market_value(code, df_finance)
+    market_cap = self.get_market_value(symbol,)
     EV = market_cap + debt - excess_cash
 
     ##### earning capacity
@@ -293,13 +279,13 @@ class us_equity_finance:
   def finance_factors_all_stock(self):
 
     finance_factors = pd.DataFrame()
-    for code in self.code_list:
-      # print("calc code ", code)
+    for symbol in self.symbols:
+      # print("calc symbol ", symbol)
       try:
-        pd_data = self.finance_factors_one_stock(code)
+        pd_data = self.finance_factors_one_stock(symbol)
         [row, col] = pd_data.shape
       except:
-        print("no finance data skip stock", code)
+        print("no finance data skip stock", symbol)
         continue
       
       try:
@@ -307,11 +293,11 @@ class us_equity_finance:
         [row, col] = pd_data_stock.shape
         
         if row == len(self.dates):
-          # print("add process code ", code)
+          # print("add process symbol ", symbol)
           finance_factors = pd.concat([finance_factors, pd_data.loc[self.dates, self.factors]])
-          self.code_list_process.append(str(code).zfill(6))
+          self.symbol_list_process.append(str(symbol).zfill(6))
       except:
-        print('no enough finance data skip stock ', code)
+        print('no enough finance data skip stock ', symbol)
 
     finance_factors.replace([np.inf, -np.inf], 0, inplace=True)
 
@@ -327,12 +313,12 @@ class us_equity_finance:
 
     scaler = MinMaxScaler()
 
-    factor_scaled_sum = pd.DataFrame(0, columns=['scale_sum'], index=self.code_list_process)
+    factor_scaled_sum = pd.DataFrame(0, columns=['scale_sum'], index=self.symbol_list_process)
     factor_scaled_sum.index = factor_scaled_sum.index.map(lambda x: "'" + x)
     for date in self.dates:
       factor = finance_factors.loc[(date, slice(None)), :]
-      # factor_scaled = pd.DataFrame(scaler.fit_transform(factor), columns=self.factors, index=self.code_list_process)
-      # factor_scaled_sum = factor_scaled_sum + pd.DataFrame(factor_scaled.loc[:,self.factors].sum(axis=1), index=self.code_list_process, columns=['scale_sum'])
+      # factor_scaled = pd.DataFrame(scaler.fit_transform(factor), columns=self.factors, index=self.symbol_list_process)
+      # factor_scaled_sum = factor_scaled_sum + pd.DataFrame(factor_scaled.loc[:,self.factors].sum(axis=1), index=self.symbol_list_process, columns=['scale_sum'])
       factor_scaled = factor.rank(pct = True).droplevel(0)
       factor_scaled_sum = factor_scaled_sum + factor_scaled.loc[:,self.factors].sum(axis=1).to_frame('scale_sum')
 
@@ -342,27 +328,4 @@ class us_equity_finance:
     # factor_scaled_rank.index = [f'{idx:06d}' for idx in factor_scaled_rank.index]
     return factor_scaled_rank
 
-
-if __name__ == '__main__':
-  code_list = ['600519', '000001', '000338', '600660', '000063']
-  # code_list =  QA.QA_fetch_stock_block_adv().get_block("沪深300").code
-  # code_list =  QA.QA_fetch_stock_block_adv().get_block("上证50").code
-  code_list =  QA.QA_fetch_stock_block_adv().code
-  # code_list = ['000408']
-  print("code list len ", len(code_list))
-  factors = ['roe', 'roa', 'profit_revenue', 'revenue_incr_rate', 'cash_incr_rate']
-  start = '2020-12-31'
-  end = '2023-03-31'
-  qaanalysis_finance = QAAnalysis_finance(code_list, factors,  start, end)
-  finance_factors = qaanalysis_finance.finance_factors_all_stock()
-  csv_file = os.path.join(analysis_path, start + '_' + end + 'temp_finance_factors.csv')
-  finance_factors.to_csv(csv_file)
-  finance_rank = qaanalysis_finance.finance_factors_rank(finance_factors)
-  
-  if finance_rank.empty:
-    print("finance factors are None")
-  else:
-    csv_file = os.path.join(analysis_path, start + '_' + end + '_finance.csv')
-    print('finance_rank write to ', csv_file)
-    finance_rank.to_csv(csv_file, index=True)
 

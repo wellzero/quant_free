@@ -103,7 +103,7 @@ def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efina
       # efinance_symbol = datacenter.get_secucode("MMM")
       print(f"Downloading {symbol} finance data...")
       efinance_symbol = datacenter.get_secucode(symbol)
-      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
+      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
 
       data = datacenter.get_us_finance_income(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'income')

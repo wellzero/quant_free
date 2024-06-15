@@ -33,3 +33,32 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
     except:
       print(f"failed to load equity {symbol}")
   return data
+
+def us_equity_common_shares_load(symbols = 'AAPL'):
+  data = {}
+  for symbol in symbols:
+    try:
+      # print(f"loading {symbol} trade data...")
+      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
+      equity_file = os.path.join(equity_folder, 'info.csv')
+      data = pd.read_csv(equity_file)
+      return data.loc[:, 'issued_common_shares'][0]
+    except:
+      print(f"failed to load equity {symbol}")
+  return data
+
+
+def us_equity_efinance_finance_data_load(symbol = 'AAPL'):
+
+  try:
+    # efinance_symbol = datacenter.get_secucode("MMM")
+    print(f"Downloading {symbol} finance data...")
+    income = us_equity_efinance_load_csv(symbol, 'income')
+    cash = us_equity_efinance_load_csv(symbol, 'cash')
+    balance = us_equity_efinance_load_csv(symbol, 'balance')
+
+    data = pd.concat([income, cash, balance], axis = 1)
+    return data
+    # us_equity_efinance_finance_store_csv(equity_folder, data, 'metrics')
+  except:
+    print(f"failed to download equity {symbol}")
