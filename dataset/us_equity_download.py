@@ -59,7 +59,7 @@ def us_equity_yfinance_finance_data_download(symbols = ['AAPL'], provider="yfina
       data = obb.equity.fundamental.income(symbol, provider="yfinance", limit=3, period="quarter").to_df()
       us_equity_yfinance_finance_store_csv(equity_folder, data, 'income')
 
-      data = obb.equity.fundamental.cash(symbol, provider="yfinance", limit=3, period="quarter").to_df()
+      data = obb.equity.fundamental.net_cash_flow_from_operating_activities(symbol, provider="yfinance", limit=3, period="quarter").to_df()
       us_equity_yfinance_finance_store_csv(equity_folder, data, 'cash')
 
       data = obb.equity.fundamental.balance(symbol, provider="yfinance", limit=3, period="quarter").to_df()
@@ -109,7 +109,7 @@ def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efina
       us_equity_efinance_finance_store_csv(equity_folder, data, 'income')
 
       data = datacenter.get_us_finance_cash(symbol = efinance_symbol)
-      us_equity_efinance_finance_store_csv(equity_folder, data, 'cash')
+      us_equity_efinance_finance_store_csv(equity_folder, data, 'net_cash_flow_from_operating_activities')
 
       data = datacenter.get_us_finance_balance(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'balance')

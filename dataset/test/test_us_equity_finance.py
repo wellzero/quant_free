@@ -16,9 +16,10 @@ if __name__ == '__main__':
   print("symbol list len ", len(symbols))
   factors = ['roe', 'roa', 'profit_revenue', 'revenue_incr_rate', 'cash_incr_rate']
   start_quater = '2020/Q1'
-  end_quater = '2023/FY'
+  end_quater = '2023/Q4'
   us_analysis_finance = us_equity_finance(symbols, factors,  start_quater, end_quater)
   finance_factors = us_analysis_finance.finance_factors_all_stock()
+  
   analysis_path = us_equity_research_folder("finance")
   csv_file = os.path.join(analysis_path, start_quater + '_' + end_quater + '_finance_factors.csv')
   finance_factors.to_csv(csv_file)

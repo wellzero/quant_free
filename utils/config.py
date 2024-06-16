@@ -71,11 +71,30 @@ def us_equity_research_folder(sub_folder = "price"):
   return equity_path
 
 
-def us_equity_efinance_load_csv(symbol, file_name, provider = "efinance" ):
+def us_equity_efinance_load_csv(symbol, dates, file_name, provider = "efinance" ):
 
     equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
 
     data = pd.read_csv(file)
+    
+    
+    data_temp = [data[data['REPORT'] == date] for date in dates]
+    re = pd.concat(data_temp)
+    re.set_index('REPORT', inplace=True)
+
+    return re
+
+def us_equity_efinance_balance_load_csv(symbol, dates, file_name, provider = "efinance" ):
+
+    replacements = {'Q3': 'Q9', 'Q2': 'Q6', 'Q4': 'FY'}
+    updated_date = [d.replace(d[-2:], replacements.get(d[-2:], d[-2:])) for d in dates]
+
+    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    file = os.path.join(equity_folder, file_name + '.csv')
+    data = pd.read_csv(file)
+    data.set_index('REPORT', inplace=True)
+    data = data.loc[updated_date]
+    data.index =  dates
 
     return data

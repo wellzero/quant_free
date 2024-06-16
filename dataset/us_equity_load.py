@@ -34,7 +34,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
       print(f"failed to load equity {symbol}")
   return data
 
-def us_equity_common_shares_load(symbols = 'AAPL'):
+def us_equity_common_shares_load(symbols = ['AAPL']):
   data = {}
   for symbol in symbols:
     try:
@@ -48,16 +48,18 @@ def us_equity_common_shares_load(symbols = 'AAPL'):
   return data
 
 
-def us_equity_efinance_finance_data_load(symbol = 'AAPL'):
+def us_equity_efinance_finance_data_load(symbol = 'AAPL', dates = ["2021/Q1"]):
 
   try:
     # efinance_symbol = datacenter.get_secucode("MMM")
-    print(f"Downloading {symbol} finance data...")
-    income = us_equity_efinance_load_csv(symbol, 'income')
-    cash = us_equity_efinance_load_csv(symbol, 'cash')
-    balance = us_equity_efinance_load_csv(symbol, 'balance')
+    print(f"Loading {symbol} finance data...")
+    income = us_equity_efinance_load_csv(symbol, dates, 'income')
+    cash = us_equity_efinance_load_csv(symbol, dates, 'cash')
+    balance = us_equity_efinance_balance_load_csv(symbol, dates, 'balance')
 
     data = pd.concat([income, cash, balance], axis = 1)
+    
+    data = data.loc[:, ~data.columns.duplicated()]
     return data
     # us_equity_efinance_finance_store_csv(equity_folder, data, 'metrics')
   except:

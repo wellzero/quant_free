@@ -32,7 +32,7 @@ def convert_to_financial_datetime(period):
     
     date = f'{year}-{quarter_end_mapping[quarter]}'
     
-    return pd.to_datetime(date)
+    return date
 
 def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
     start_year, quarter = start_quarter.split('/')
@@ -43,9 +43,9 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
     # Define a dictionary to map quarter numbers to their corresponding string representations
     quarter_map = {
         1: "Q1",
-        2: "Q6",
-        3: "Q9",
-        4: "FY"
+        2: "Q2",
+        3: "Q3",
+        4: "Q4"
     }
 
     dates = []
@@ -58,10 +58,15 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
             # Append the quarter in the format "YYYY/QN" to the dates list
             dates.append(f"{year}/{quarter_map[quarter]}")
 
-    print(dates)
-    dates_between_quarters = [date for date in dates if start_quarter <= date <= end_quarter]
+    dates_compare = pd.DataFrame(dates).replace('FY', 'QA', regex=True)
+    if 'FY' in start_quarter:
+      start_quarter = start_quarter.replace('FY', 'QA')
+    if 'FY' in end_quarter:
+      end_quarter = end_quarter.replace('FY', 'QA')
+    dates_between_quarters = [date for date in dates_compare.values if start_quarter <= date <= end_quarter]
+    result = pd.DataFrame(dates_between_quarters).replace('QA', 'FY', regex=True)
 
-    return dates_between_quarters
+    return result[0]
 
 
 
@@ -77,7 +82,7 @@ class us_equity_finance:
 
     self.dates = generate_Q_dates(start_quarter, end_quarter)
 
-    self.date_times = self.dates.apply(convert_to_financial_datetime)
+    self.date_times = self.dates.apply(lambda x:convert_to_financial_datetime(x)).values
 
     return
   
@@ -91,7 +96,7 @@ class us_equity_finance:
     pd_data = pd.DataFrame(dict_data)
     return pd_data
   def qoq_rate_calc(self, a,str):
-    data = a.pct_change(-3)
+    data = a.pct_change(3)
     data = data * 100
     data[np.isinf(data)]=0
     # data = np.append(data,[0,0,0,0])
@@ -107,9 +112,9 @@ class us_equity_finance:
     return pd_data
 
 
-  def finance_stock_financial_data(self, symbol = 'AAPL'):
+  def finance_stock_financial_data(self, symbol = 'AAPL', dates = ["2021/Q1"]):
     try:
-      df_finance = us_equity_efinance_finance_data_load(symbol)
+      df_finance = us_equity_efinance_finance_data_load(symbol, dates = dates)
       # df_finance = df_finance.sort_index(ascending=False)
       return df_finance
     except:
@@ -123,22 +128,22 @@ class us_equity_finance:
     # Sort the date list in ascending order
     date_list_sorted = sorted(date_list)
     # Do a linear search to find the nearest date
-    nearest_date = None
-    for date in date_list_sorted:
-        dt = date
-        if dt > input_datetime:
-            if (dt - input_datetime) < (input_datetime - date_list_sorted[date_list_sorted.index(date) - 1]):
-                nearest_date = date
-            else:
-                nearest_date = date_list_sorted[date_list_sorted.index(date) - 1]
-            break
-    if nearest_date is None:
-        nearest_date = date_list_sorted[-1]
+    date_objects = [datetime.strptime(date, '%Y-%m-%d') for date in date_list_sorted]
 
-    return nearest_date
+    # Given date
+    given_date = datetime.strptime(input_date, '%Y-%m-%d')
+
+    # Find the latest date before or equal to the given date
+    latest_date = max(date for date in date_objects if date <= given_date)
+
+    # Convert the latest date back to string format
+    latest_date_str = latest_date.strftime('%Y-%m-%d')
+    
+    return latest_date_str
+  
 
   def get_market_value(self, symbol):
-    daily_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.date_times[0], end_date = self.date_times[-1])
+    daily_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.date_times[0], end_date = self.date_times[-1], option = 'close')[symbol]
     daily_trade_dates = daily_data.index
 
     dates = []
@@ -147,131 +152,130 @@ class us_equity_finance:
       date = self.nearest_date(daily_trade_dates, get_date)
       dates.append(date)
 
-    shares = us_equity_common_shares_load(symbol)
+    shares = us_equity_common_shares_load([symbol])
 
     # trade_data_quarter = pd.concat([trade_data_quarter, res.loc[date]], axis = 1)
     trade_data_quarter = daily_data.loc[dates]
+    trade_data_quarter.index = self.dates
 
     return trade_data_quarter * shares
 
   def finance_factors_one_stock(self, symbol):
-    df_finance = self.finance_stock_financial_data(symbol)
+    df_finance = self.finance_stock_financial_data(symbol, self.dates)
 
-    equlity = df_finance['totalOwnersEquity']
-    asset = df_finance['totalAssets']
-    revenue = df_finance['operatingRevenue']
-    cash = df_finance['netCashFlowsFromOperatingActivities']
-    debt = df_finance['totalLiabilities']
-
-    earning = df_finance['netProfit']
-    tax0 = df_finance['incomeTax']
-    cost = df_finance['operatingCosts']
-    EBIT = df_finance['EBIT']
-
-    equity = df_finance['totalOwnersEquity']
-    debt_total = df_finance['totalLiabilitiesAndOwnersEquity']
-    intangible_asset = df_finance['intangibleAssets']
-    dev_cost = df_finance['developmentExpenditure']
+    # balance
+    total_equity = df_finance['total_equity']
+    total_assets = df_finance['total_assets']
     goodwell = df_finance['goodwill']
-    fix_asset = df_finance['fixedAssets']
-    noncurrent_asset = intangible_asset + goodwell + fix_asset
+    total_liabilities = df_finance['total_liabilities'] #total_liabilities
+    total_liabilities_and_equity = df_finance['total_liabilities_and_equity']
+    intangible_assets = df_finance['intangible_assets']
+    total_non_current_assets = df_finance['total_non_current_assets']
+    # income
+    operating_revenue = df_finance['operating_revenue']
+    operating_cost = df_finance['operating_cost']
+    profit_before_tax_from_continuing_operations = df_finance['profit_before_tax_from_continuing_operations'] #EBIT
+    research_and_development_expenses = df_finance['research_and_development_expenses'] # research_and_development_expenses
+    #net_cash_flow_from_operating_activities
+    net_cash_flow_from_operating_activities = df_finance['net_cash_flow_from_operating_activities']
+    net_profit = df_finance['net_profit']
+    income_taxes_paid = df_finance['income_taxes_paid']
+    cash_and_cash_equivalents = df_finance['cash_and_cash_equivalents']
+    depreciation_and_amortization = df_finance['depreciation_and_amortization']
+    # depreciation_and_amortization = df_finance['depreciationForFixedAssets']
+    cash_and_cash_equivalents_at_end_of_period = df_finance['cash_and_cash_equivalents_at_end_of_period']
 
-    depreciation = df_finance['depreciationForFixedAssets']
-    amortize0 = df_finance['amortizationOfIntangibleAssets']
-    amortize1 = df_finance['amortizationOfLong-termDeferredExpenses']
-    excess_cash = df_finance['cashEndingBal']
-    cash_quivalent = df_finance['cashBeginingBal']
+    noncurrent_asset = intangible_assets + goodwell + total_non_current_assets
+    EBITDA = profit_before_tax_from_continuing_operations + depreciation_and_amortization
+    market_cap = self.get_market_value(symbol)
+    EV = market_cap + total_liabilities - cash_and_cash_equivalents_at_end_of_period
 
-    divedends = df_finance['cashPaymentsForDistrbutionOfDividendsOrProfits']
-    EBITDA = EBIT + depreciation +amortize0 + amortize1
-    market_cap = self.get_market_value(symbol,)
-    EV = market_cap + debt - excess_cash
-
-    ##### earning capacity
+    ##### net_profit capacity
     #roe
-    roe = pd.DataFrame(df_finance['ROE'])
-    roe = roe.rename(columns={'ROE': 'roe'})
+    pd_data = pd.DataFrame({'roe': net_profit / total_equity}) * 100
     # roe = roe.rename(columns = ['roe'])
-    pd_data = roe
     #roa
-    roa = self.ab_ratio_calc(earning,asset,'roa')
+    roa = self.ab_ratio_calc(net_profit,total_assets,'roa')
     pd_data = pd.concat([pd_data, roa], axis=1)
     #roi
-    roi = self.ab_ratio_calc(EBIT-tax0,equity+debt_total-cash_quivalent,'roi')
+    roi = self.ab_ratio_calc(profit_before_tax_from_continuing_operations-income_taxes_paid, total_liabilities_and_equity - cash_and_cash_equivalents,'roi')
     pd_data = pd.concat([pd_data, roi], axis=1)
     #profit_revenue
-    profit_revenue = self.ab_ratio_calc(earning,revenue,'profit_revenue')
+    profit_revenue = self.ab_ratio_calc(net_profit,operating_revenue,'profit_revenue')
+    pd_data = pd.concat([pd_data, profit_revenue], axis=1)
+    #gross_profit_revenue
+    profit_revenue = self.ab_ratio_calc(operating_revenue - operating_cost, operating_revenue, 'gross_profit_revenue')
     pd_data = pd.concat([pd_data, profit_revenue], axis=1)
     #profit_cost
-    profit_cost = self.ab_ratio_calc(earning,cost,'profit_cost')
+    profit_cost = self.ab_ratio_calc(net_profit,operating_cost,'profit_cost')
     pd_data = pd.concat([pd_data, profit_cost], axis=1)
-    #stackholder equity increase
-    equlity_incr_rate = self.qoq_rate_calc(equity,'equlity_incr_rate')
-    pd_data = pd.concat([pd_data, equlity_incr_rate], axis=1)
+    #stackholder total_equity increase
+    equity_incr_rate = self.qoq_rate_calc(total_equity,'equity_incr_rate')
+    pd_data = pd.concat([pd_data, equity_incr_rate], axis=1)
 
     ###grow capacity
-    #revenue
-    revenue_incr_rate = self.qoq_rate_calc(revenue,'revenue_incr_rate')
+    #operating_revenue
+    revenue_incr_rate = self.qoq_rate_calc(operating_revenue,'revenue_incr_rate')
     pd_data = pd.concat([pd_data, revenue_incr_rate], axis=1)
     #profit
-    profit_incr_rate = self.qoq_rate_calc(earning,'profit_incr_rate')
+    profit_incr_rate = self.qoq_rate_calc(net_profit,'profit_incr_rate')
     pd_data = pd.concat([pd_data, profit_incr_rate], axis=1)
-    #cash
-    cash_incr_rate = self.qoq_rate_calc(cash,'cash_incr_rate')
+    #net_cash_flow_from_operating_activities
+    cash_incr_rate = self.qoq_rate_calc(net_cash_flow_from_operating_activities,'cash_incr_rate')
     pd_data = pd.concat([pd_data, cash_incr_rate], axis=1)
-    #asset
-    asset_incr_rate = self.qoq_rate_calc(asset,'asset_incr_rate')
+    #total_assets
+    asset_incr_rate = self.qoq_rate_calc(total_assets,'asset_incr_rate')
     pd_data = pd.concat([pd_data, asset_incr_rate], axis=1)
-    #debt
-    debt_incr_rate = self.qoq_rate_calc(debt,'debt_incr_rate')
+    #total_liabilities
+    debt_incr_rate = self.qoq_rate_calc(total_liabilities,'debt_incr_rate')
     pd_data = pd.concat([pd_data, debt_incr_rate], axis=1)
 
-    ###asset struct
+    ###total_assets struct
     #debt_asset_ratio
-    debt_asset_ratio = self.ab_ratio_calc(debt,asset,'debt_asset_ratio')
+    debt_asset_ratio = self.ab_ratio_calc(total_liabilities,total_assets,'debt_asset_ratio')
     debt_asset_ratio = debt_asset_ratio/100
     pd_data = pd.concat([pd_data, debt_asset_ratio], axis=1)
     #debt_equity_ratio
-    debt_equity_ratio = self.ab_ratio_calc(debt,equity,'debt_equity_ratio')
+    debt_equity_ratio = self.ab_ratio_calc(total_liabilities,total_equity,'debt_equity_ratio')
     debt_equity_ratio = debt_equity_ratio/100
     pd_data = pd.concat([pd_data, debt_equity_ratio], axis=1)
     #debt_net_asset_ratio
-    debt_net_asset_ratio = self.abc_ratio_calc(debt,equity,intangible_asset,'debt_net_asset_ratio','sub')
+    debt_net_asset_ratio = self.abc_ratio_calc(total_liabilities,total_equity,intangible_assets,'debt_net_asset_ratio','sub')
     pd_data = pd.concat([pd_data, debt_net_asset_ratio], axis=1)
     #revenue_asset_ratio
-    revenue_asset_ratio = self.ab_ratio_calc(revenue,asset,'revenue_asset_ratio')
+    revenue_asset_ratio = self.ab_ratio_calc(operating_revenue,total_assets,'revenue_asset_ratio')
     revenue_asset_ratio = revenue_asset_ratio
     pd_data = pd.concat([pd_data, revenue_asset_ratio], axis=1)
     #goodwell_equity_ratio
-    goodwell_equity_ratio = self.ab_ratio_calc(goodwell,equity,'goodwell_equity_ratio')
+    goodwell_equity_ratio = self.ab_ratio_calc(goodwell,total_equity,'goodwell_equity_ratio')
     pd_data = pd.concat([pd_data, goodwell_equity_ratio], axis=1)
 
     ###CFO2EV
-    CFO_EV_ratio = self.ab_ratio_calc(cash,EV,'CFO2EV')
+    CFO_EV_ratio = self.ab_ratio_calc(net_cash_flow_from_operating_activities,EV,'CFO2EV')
     pd_data = pd.concat([pd_data, CFO_EV_ratio], axis=1)
     ####EBITDA2ev
     EBITDA_EV_ratio = self.ab_ratio_calc(EBITDA,EV,'EDITDA2EV')
     pd_data = pd.concat([pd_data, EBITDA_EV_ratio], axis=1)
     ###BB2P
-    divedends_market_cap_ratio = self.ab_ratio_calc(divedends,market_cap,'BB2P')
+    divedends_market_cap_ratio = self.ab_ratio_calc(depreciation_and_amortization,market_cap,'BB2P')
     pd_data = pd.concat([pd_data, divedends_market_cap_ratio], axis=1)
     ###BB2EV
-    divedends_EV_ratio = self.ab_ratio_calc(divedends,EV,'BB2EV')
+    divedends_EV_ratio = self.ab_ratio_calc(depreciation_and_amortization,EV,'BB2EV')
     pd_data = pd.concat([pd_data, divedends_EV_ratio], axis=1)
     #B2P
-    B2P_ratio = self.ab_ratio_calc(equlity,market_cap,'B2P')/100
+    B2P_ratio = self.ab_ratio_calc(total_equity,market_cap,'B2P')/100
     pd_data = pd.concat([pd_data, B2P_ratio], axis=1)
     #S2EV
-    S2EV_ratio = self.ab_ratio_calc(revenue,EV,'S2EV')
+    S2EV_ratio = self.ab_ratio_calc(operating_revenue,EV,'S2EV')
     pd_data = pd.concat([pd_data, S2EV_ratio], axis=1)
     #equity_asset_ratio
-    OL = self.ab_ratio_calc(equity,asset,'OL')
+    OL = self.ab_ratio_calc(total_equity,total_assets,'OL')
     pd_data = pd.concat([pd_data, OL], axis=1)
     #NCO2A
-    NCO2A = self.ab_ratio_calc(noncurrent_asset,asset,'NCO2A')
+    NCO2A = self.ab_ratio_calc(noncurrent_asset,total_assets,'NCO2A')
     pd_data = pd.concat([pd_data, NCO2A], axis=1)
     #E2EV
-    E2EV = self.ab_ratio_calc(earning,EV,'E2EV')
+    E2EV = self.ab_ratio_calc(net_profit,EV,'E2EV')
     pd_data = pd.concat([pd_data, E2EV], axis=1)
     
     return pd_data
