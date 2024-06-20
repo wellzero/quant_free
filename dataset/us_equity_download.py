@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from utils.config import *
+from utils.us_equity_symbol import *
+from utils.us_equity_utils import *
 from common.us_equity_common import *
 from openbb import obb
 import yfinance as yf

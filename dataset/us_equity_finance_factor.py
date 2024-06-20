@@ -43,9 +43,9 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
     # Define a dictionary to map quarter numbers to their corresponding string representations
     quarter_map = {
         1: "Q1",
-        2: "Q2",
-        3: "Q3",
-        4: "Q4"
+        2: "Q6",
+        3: "Q9",
+        4: "QA"
     }
 
     dates = []
@@ -72,7 +72,8 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 
 class us_equity_finance:
 
-  def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
+  # def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
+  def __init__(self, symbols, factors = None, start_quarter = None, end_quarter = None) -> None:
 
     self.symbols = symbols
 
@@ -80,9 +81,13 @@ class us_equity_finance:
 
     self.factors = factors
 
-    self.dates = generate_Q_dates(start_quarter, end_quarter)
+    if start_quarter is None or end_quarter is None:
+      self.dates = None
+      self.date_times = None
+    else:
+      self.dates = generate_Q_dates(start_quarter, end_quarter)
+      self.date_times = self.dates.apply(lambda x:convert_to_financial_datetime(x)).values
 
-    self.date_times = self.dates.apply(lambda x:convert_to_financial_datetime(x)).values
 
     return
   
@@ -111,15 +116,6 @@ class us_equity_finance:
     pd_data = pd.DataFrame(dict_data)
     return pd_data
 
-
-  def finance_stock_financial_data(self, symbol = 'AAPL', dates = ["2021/Q1"]):
-    try:
-      df_finance = us_equity_efinance_finance_data_load(symbol, dates = dates)
-      # df_finance = df_finance.sort_index(ascending=False)
-      return df_finance
-    except:
-      print(self.fetch_one_data.__name__, "input wrong!")
-
   # def nearest_date(self, date_list, input_date):
   #   return min(date_list, key=lambda x: abs(x - input_date))
   
@@ -142,12 +138,20 @@ class us_equity_finance:
     return latest_date_str
   
 
-  def get_market_value(self, symbol):
-    daily_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.date_times[0], end_date = self.date_times[-1], option = 'close')[symbol]
+  def get_market_value(self, symbol, df = None):
+    
+    if self.date_times is None:
+      df_dates = df.index
+      df_date_times = [convert_to_financial_datetime(date) for date in df.index]
+    else:
+      df_dates = self.dates
+      df_date_times = self.date_times
+
+    daily_data = us_equity_daily_data_read_csv(symbol)['close']
     daily_trade_dates = daily_data.index
 
     dates = []
-    for get_date in self.date_times:
+    for get_date in df_date_times:
       # print(get_date)
       date = self.nearest_date(daily_trade_dates, get_date)
       dates.append(date)
@@ -156,12 +160,13 @@ class us_equity_finance:
 
     # trade_data_quarter = pd.concat([trade_data_quarter, res.loc[date]], axis = 1)
     trade_data_quarter = daily_data.loc[dates]
-    trade_data_quarter.index = self.dates
+    trade_data_quarter.index = df_dates
 
     return trade_data_quarter * shares
 
   def finance_factors_one_stock(self, symbol):
-    df_finance = self.finance_stock_financial_data(symbol, self.dates)
+
+    df_finance = us_equity_efinance_finance_data_load(symbol, dates = self.dates)
 
     # balance
     total_equity = df_finance['total_equity']
@@ -174,12 +179,12 @@ class us_equity_finance:
     # income
     operating_revenue = df_finance['operating_revenue']
     operating_cost = df_finance['operating_cost']
+    income_tax = df_finance['income_tax']
     profit_before_tax_from_continuing_operations = df_finance['profit_before_tax_from_continuing_operations'] #EBIT
     research_and_development_expenses = df_finance['research_and_development_expenses'] # research_and_development_expenses
-    #net_cash_flow_from_operating_activities
+    # cash
     net_cash_flow_from_operating_activities = df_finance['net_cash_flow_from_operating_activities']
     net_profit = df_finance['net_profit']
-    income_taxes_paid = df_finance['income_taxes_paid']
     cash_and_cash_equivalents = df_finance['cash_and_cash_equivalents']
     depreciation_and_amortization = df_finance['depreciation_and_amortization']
     # depreciation_and_amortization = df_finance['depreciationForFixedAssets']
@@ -187,7 +192,7 @@ class us_equity_finance:
 
     noncurrent_asset = intangible_assets + goodwell + total_non_current_assets
     EBITDA = profit_before_tax_from_continuing_operations + depreciation_and_amortization
-    market_cap = self.get_market_value(symbol)
+    market_cap = self.get_market_value(symbol, df_finance)
     EV = market_cap + total_liabilities - cash_and_cash_equivalents_at_end_of_period
 
     ##### net_profit capacity
@@ -198,7 +203,7 @@ class us_equity_finance:
     roa = self.ab_ratio_calc(net_profit,total_assets,'roa')
     pd_data = pd.concat([pd_data, roa], axis=1)
     #roi
-    roi = self.ab_ratio_calc(profit_before_tax_from_continuing_operations-income_taxes_paid, total_liabilities_and_equity - cash_and_cash_equivalents,'roi')
+    roi = self.ab_ratio_calc(profit_before_tax_from_continuing_operations-income_tax, total_liabilities_and_equity - cash_and_cash_equivalents,'roi')
     pd_data = pd.concat([pd_data, roi], axis=1)
     #profit_revenue
     profit_revenue = self.ab_ratio_calc(net_profit,operating_revenue,'profit_revenue')
@@ -215,20 +220,20 @@ class us_equity_finance:
 
     ###grow capacity
     #operating_revenue
-    revenue_incr_rate = self.qoq_rate_calc(operating_revenue,'revenue_incr_rate')
-    pd_data = pd.concat([pd_data, revenue_incr_rate], axis=1)
+    revenue_increase_q2q_rate = self.qoq_rate_calc(operating_revenue,'revenue_increase_q2q_rate')
+    pd_data = pd.concat([pd_data, revenue_increase_q2q_rate], axis=1)
     #profit
-    profit_incr_rate = self.qoq_rate_calc(net_profit,'profit_incr_rate')
-    pd_data = pd.concat([pd_data, profit_incr_rate], axis=1)
+    profit_increase_q2q_rate = self.qoq_rate_calc(net_profit,'profit_increase_q2q_rate')
+    pd_data = pd.concat([pd_data, profit_increase_q2q_rate], axis=1)
     #net_cash_flow_from_operating_activities
-    cash_incr_rate = self.qoq_rate_calc(net_cash_flow_from_operating_activities,'cash_incr_rate')
-    pd_data = pd.concat([pd_data, cash_incr_rate], axis=1)
+    cash_increase_q2q_rate = self.qoq_rate_calc(net_cash_flow_from_operating_activities,'cash_increase_q2q_rate')
+    pd_data = pd.concat([pd_data, cash_increase_q2q_rate], axis=1)
     #total_assets
-    asset_incr_rate = self.qoq_rate_calc(total_assets,'asset_incr_rate')
-    pd_data = pd.concat([pd_data, asset_incr_rate], axis=1)
+    asset_increase_q2q_rate = self.qoq_rate_calc(total_assets,'asset_increase_q2q_rate')
+    pd_data = pd.concat([pd_data, asset_increase_q2q_rate], axis=1)
     #total_liabilities
-    debt_incr_rate = self.qoq_rate_calc(total_liabilities,'debt_incr_rate')
-    pd_data = pd.concat([pd_data, debt_incr_rate], axis=1)
+    debt_increase_q2q_rate = self.qoq_rate_calc(total_liabilities,'debt_increase_q2q_rate')
+    pd_data = pd.concat([pd_data, debt_increase_q2q_rate], axis=1)
 
     ###total_assets struct
     #debt_asset_ratio
@@ -279,6 +284,19 @@ class us_equity_finance:
     pd_data = pd.concat([pd_data, E2EV], axis=1)
     
     return pd_data
+
+  def finance_factors_calc(self):
+
+    finance_factors = pd.DataFrame()
+    for symbol in self.symbols:
+      # print("calc symbol ", symbol)
+      try:
+        df = self.finance_factors_one_stock(symbol)
+        us_equity_efinance_store_csv(symbol, "finance_factor", df)
+      except:
+        print("no finance data skip stock", symbol)
+        continue
+
 
   def finance_factors_all_stock(self):
 
