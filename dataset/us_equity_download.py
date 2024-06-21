@@ -30,7 +30,7 @@ def us_equity_daily_data_download(symbols = ['AAPL'], provider="yfinance"):
       data = obb.equity.price.historical(symbol = symbol, start_date = "1990-01-01", provider=provider).to_df()
       data.to_csv(equity_file)
     except:
-      print(f"failed to download equity {symbol}")
+      print(f"function {__name__} error!!")
 
 def us_equity_yfinance_finance_store_csv(equity_folder, data, file_name):
     file = os.path.join(equity_folder, file_name + '.csv')
@@ -70,7 +70,7 @@ def us_equity_yfinance_finance_data_download(symbols = ['AAPL'], provider="yfina
       us_equity_yfinance_finance_store_csv(equity_folder, data, 'metrics')
 
     except:
-      print(f"failed to download equity {symbol}")
+      print(f"function {__name__} error!!")
 
 
 def us_equity_efinance_finance_store_csv(equity_folder, data, file_name):
@@ -118,7 +118,7 @@ def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efina
       data = datacenter.get_us_finance_main_factor(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'metrics')
     except:
-      print(f"failed to download equity {symbol}")
+      print(f"function {__name__} error!!")
 
 def us_equity_option_data_download(symbols = ['AAPL']):
   trade_date = us_equity_get_current_trade_date()
@@ -163,7 +163,7 @@ def us_equity_option_data_download(symbols = ['AAPL']):
               print("dump file ", piklefile)
 
     except:
-      print(f"failed to download equity {ticker_symbol}")
+      print(f"function {__name__} error!!")
 
   print("All options data have been downloaded and saved to CSV files.")
 
@@ -184,6 +184,6 @@ def us_equity_info_data_download(symbols = ['AAPL'], provider="efinance"):
       data = datacenter.get_us_equity_info(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'info')
     except:
-      print(f"failed to download equity {symbol}")
+      print(f"function {__name__} error!!")
 
 

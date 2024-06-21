@@ -17,6 +17,7 @@ from dataset.us_equity_load import *
 if __name__ == '__main__':
   symbols = us_equity_symbol_load()
   # symbols = ['AAPL', 'NVDA']
+  # symbols = ['MMM','JPM', 'TSLA']
   us_analysis_finance = us_equity_finance(symbols)
   finance_factors = us_analysis_finance.finance_factors_calc()
 

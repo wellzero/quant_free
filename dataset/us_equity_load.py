@@ -91,8 +91,11 @@ def us_equity_efinance_balance_load_csv(symbol, dates, file_name, provider = "ef
       updated_date = [d.replace(d[-2:], replacements.get(d[-2:], d[-2:])) for d in dates]
       data = data.loc[updated_date]
       data.index =  dates
+    else:
+      dates = us_equity_efinance_search_sort_date(data.index)
 
-    return data
+    df = data.loc[dates,:]
+    return df
 
 def us_equity_efinance_store_csv(symbol, file_name, data, provider = "efinance" ):
 
@@ -147,4 +150,4 @@ def us_equity_efinance_finance_data_load(symbol = 'AAPL', dates = ["2021/Q1"]):
     return data
     # us_equity_efinance_finance_store_csv(equity_folder, data, 'metrics')
   except:
-    print(f"failed to download equity {symbol}")
+    print(f"function {__name__}  error!!")

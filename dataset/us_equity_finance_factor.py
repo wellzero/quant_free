@@ -120,7 +120,7 @@ class us_equity_finance:
   #   return min(date_list, key=lambda x: abs(x - input_date))
   
   def nearest_date(self, date_list, input_date):
-    input_datetime = input_date
+    # input_datetime = input_date
     # Sort the date list in ascending order
     date_list_sorted = sorted(date_list)
     # Do a linear search to find the nearest date
@@ -130,7 +130,10 @@ class us_equity_finance:
     given_date = datetime.strptime(input_date, '%Y-%m-%d')
 
     # Find the latest date before or equal to the given date
-    latest_date = max(date for date in date_objects if date <= given_date)
+    if given_date < date_objects[0]:
+      latest_date = date_objects[0]
+    else:
+      latest_date = max(date for date in date_objects if date <= given_date)
 
     # Convert the latest date back to string format
     latest_date_str = latest_date.strftime('%Y-%m-%d')
