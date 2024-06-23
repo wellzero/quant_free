@@ -7,17 +7,13 @@ sys.path.append(str(_this_dir))
 print(_this_dir)
 from dataset.us_equity_finance_factor import *
 from dataset.us_equity_load import *
-from dataset.us_equity_download import *
-from dataset.us_equity_load import *
-
-
-
 
 
 if __name__ == '__main__':
   symbols = us_equity_symbol_load()
   # symbols = ['AAPL', 'NVDA']
-  # symbols = ['MMM','JPM', 'TSLA']
+  #symbols = ['TEAM', 'IAU', 'DKILY', 'OLCLY']
+  # symbols = ['WFC', 'AXP', 'BX', 'GS']
   us_analysis_finance = us_equity_finance(symbols)
   finance_factors = us_analysis_finance.finance_factors_calc()
 

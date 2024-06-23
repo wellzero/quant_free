@@ -53,7 +53,7 @@ def us_equity_sub_folder(symbol = "AAPL", sub_dir = "2024-06-06"):
 
   return dir
 
-def us_equity_research_folder(sub_folder = "price"):
+def us_equity_research_folder(sub_folder = "price", file_name = "default.csv", data = None):
   
   # Read directory from JSON file
   conf = os.path.join(_this_dir, 'config.json')
@@ -67,5 +67,9 @@ def us_equity_research_folder(sub_folder = "price"):
   # Create the subfolder
   equity_path = os.path.join(root_dir, 'research', sub_folder)
   os.makedirs(equity_path, exist_ok=True)
+  
+
+  csv_file = os.path.join(equity_path, file_name)
+  data.to_csv(csv_file)
 
   return equity_path

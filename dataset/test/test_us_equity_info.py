@@ -11,5 +11,6 @@ if __name__ == "__main__":
     # us_equity_symbol_download()
 
     symbols = us_equity_symbol_load()
+    symbols = ['TEAM']
     # print(symbols.head(10))
     us_equity_info_data_download(symbols)

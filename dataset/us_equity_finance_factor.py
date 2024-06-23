@@ -73,25 +73,16 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 class us_equity_finance:
 
   # def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
-  def __init__(self, symbols, factors = None, start_quarter = None, end_quarter = None) -> None:
+  def __init__(self, symbols, factors = None, start_time = None, end_time = None) -> None:
 
     self.symbols = symbols
-
-    self.symbol_list_process = []
-
     self.factors = factors
 
-    if start_quarter is None or end_quarter is None:
-      self.dates = None
-      self.date_times = None
-    else:
-      self.dates = generate_Q_dates(start_quarter, end_quarter)
-      self.date_times = self.dates.apply(lambda x:convert_to_financial_datetime(x)).values
-
+    self.start_time = start_time
+    self.end_time = end_time
 
     return
-  
-  
+
   def ab_ratio_calc(self, a,b,str):
     data = a/b
     # data[np.isinf(data)]=0
@@ -132,6 +123,8 @@ class us_equity_finance:
     # Find the latest date before or equal to the given date
     if given_date < date_objects[0]:
       latest_date = date_objects[0]
+    elif given_date > date_objects[-1]:
+      latest_date = date_objects[-1]
     else:
       latest_date = max(date for date in date_objects if date <= given_date)
 
@@ -143,12 +136,8 @@ class us_equity_finance:
 
   def get_market_value(self, symbol, df = None):
     
-    if self.date_times is None:
-      df_dates = df.index
-      df_date_times = [convert_to_financial_datetime(date) for date in df.index]
-    else:
-      df_dates = self.dates
-      df_date_times = self.date_times
+    df_dates = df.index
+    df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
     daily_data = us_equity_daily_data_read_csv(symbol)['close']
     daily_trade_dates = daily_data.index
@@ -166,32 +155,63 @@ class us_equity_finance:
     trade_data_quarter.index = df_dates
 
     return trade_data_quarter * shares
+  
+  def fectch_or_reset_value(self, df_finance, str):
+    if (str in df_finance.columns):
+      value = df_finance[str]
+    else:
+      value = df_finance['股东权益合计']
+      value.values[:] = 0
+    return value
 
   def finance_factors_one_stock(self, symbol):
 
-    df_finance = us_equity_efinance_finance_data_load(symbol, dates = self.dates)
+    df_finance = us_equity_efinance_finance_data_load(symbol, dates = None)
 
     # balance
-    total_equity = df_finance['total_equity']
-    total_assets = df_finance['total_assets']
-    goodwell = df_finance['goodwill']
-    total_liabilities = df_finance['total_liabilities'] #total_liabilities
-    total_liabilities_and_equity = df_finance['total_liabilities_and_equity']
-    intangible_assets = df_finance['intangible_assets']
-    total_non_current_assets = df_finance['total_non_current_assets']
+    total_equity = df_finance['股东权益合计']
+    total_assets = df_finance['总资产']
+    goodwell = self.fectch_or_reset_value(df_finance, '商誉')
+    total_liabilities = df_finance['总负债'] #total_liabilities
+    total_liabilities_and_equity = df_finance['负债及股东权益合计']
+    # intangible_assets = df_finance['无形资产']
+    intangible_assets = self.fectch_or_reset_value(df_finance, '无形资产')
+    if ('非流动资产合计' in df_finance.columns):
+      total_non_current_assets = df_finance['非流动资产合计']
+    else:
+      total_non_current_assets = df_finance['总资产']
+
     # income
-    operating_revenue = df_finance['operating_revenue']
-    operating_cost = df_finance['operating_cost']
-    income_tax = df_finance['income_tax']
-    profit_before_tax_from_continuing_operations = df_finance['profit_before_tax_from_continuing_operations'] #EBIT
-    research_and_development_expenses = df_finance['research_and_development_expenses'] # research_and_development_expenses
+    if ('营业收入' in df_finance.columns):
+      operating_revenue = df_finance['营业收入']
+    else:
+      operating_revenue = df_finance['收入总额']
+
+    if ('营业成本' in df_finance.columns):
+      operating_cost = df_finance['营业成本']
+    elif ('利息支出合计' in df_finance.columns and '非利息支出合计' in df_finance.columns):
+      operating_cost = df_finance['非利息支出合计'] + df_finance['利息支出合计']
+    elif ('营业收入' in df_finance.columns and '毛利' in df_finance.columns):
+      operating_cost = df_finance['营业收入'] - df_finance['毛利']
+    elif ('经营溢利' in df_finance.columns):
+      operating_cost = operating_revenue - df_finance['经营溢利']
+      
+    income_tax = df_finance['所得税']
+    profit_before_tax_from_continuing_operations = df_finance['持续经营税前利润'] #EBIT
+
+    # if ('研发费用' in df_finance.columns):
+    #   research_and_development_expenses = df_finance['研发费用']
+
     # cash
-    net_cash_flow_from_operating_activities = df_finance['net_cash_flow_from_operating_activities']
-    net_profit = df_finance['net_profit']
-    cash_and_cash_equivalents = df_finance['cash_and_cash_equivalents']
-    depreciation_and_amortization = df_finance['depreciation_and_amortization']
+    net_cash_flow_from_operating_activities = df_finance['经营活动产生的现金流量净额']
+    net_profit = df_finance['净利润']
+    if ('现金及存放同业款项' in df_finance.columns):
+      cash_and_cash_equivalents = df_finance['现金及存放同业款项']
+    else:
+      cash_and_cash_equivalents = df_finance['现金及现金等价物期初余额']
+    depreciation_and_amortization = self.fectch_or_reset_value(df_finance, '折旧及摊销')
     # depreciation_and_amortization = df_finance['depreciationForFixedAssets']
-    cash_and_cash_equivalents_at_end_of_period = df_finance['cash_and_cash_equivalents_at_end_of_period']
+    cash_and_cash_equivalents_at_end_of_period = df_finance['现金及现金等价物期末余额']
 
     noncurrent_asset = intangible_assets + goodwell + total_non_current_assets
     EBITDA = profit_before_tax_from_continuing_operations + depreciation_and_amortization
@@ -285,6 +305,10 @@ class us_equity_finance:
     #E2EV
     E2EV = self.ab_ratio_calc(net_profit,EV,'E2EV')
     pd_data = pd.concat([pd_data, E2EV], axis=1)
+
+    pd_data['REPORT_DATE'] = df_finance['REPORT_DATE']
+    pd_data['SECUCODE'] = df_finance['SECUCODE']
+    pd_data.set_index(['REPORT_DATE', 'SECUCODE'], append=True, inplace=True)
     
     return pd_data
 
@@ -301,56 +325,41 @@ class us_equity_finance:
         continue
 
 
-  def finance_factors_all_stock(self):
+  def finance_factors_fectch(self):
 
-    finance_factors = pd.DataFrame()
+    df_finance_factors = pd.DataFrame()
     for symbol in self.symbols:
       # print("calc symbol ", symbol)
       try:
-        pd_data = self.finance_factors_one_stock(symbol)
-        [row, col] = pd_data.shape
+        df = us_equity_efinance_factors_load_csv(symbol, "finance_factor", self.start_time, self.end_time, self.factors)
+        
+        
+        df.index = pd.MultiIndex.from_product([df.index, [symbol]], names=['REPORT', 'symbol'])
+        
+        
+        df_finance_factors = pd.concat([df_finance_factors, df], axis=0)
       except:
         print("no finance data skip stock", symbol)
         continue
       
-      try:
-        pd_data_stock = pd_data.loc[self.dates, self.factors]
-        [row, col] = pd_data_stock.shape
-        
-        if row == len(self.dates):
-          # print("add process symbol ", symbol)
-          finance_factors = pd.concat([finance_factors, pd_data.loc[self.dates, self.factors]])
-          self.symbol_list_process.append(str(symbol).zfill(6))
-      except:
-        print('no enough finance data skip stock ', symbol)
+    return df_finance_factors
 
-    finance_factors.replace([np.inf, -np.inf], 0, inplace=True)
+  def finance_factors_rank(self):
 
-    finance_factors.index = finance_factors.index.map(lambda x: (x[0],'{:0>6s}'.format("'" + str(x[1]))))
-    # finance_factors = finance_factors[~finance_factors.isin([np.nan, np.inf, -np.inf]).any(axis=1)]
+    finance_factors = self.finance_factors_fectch()
+    
+    us_equity_research_folder("finance", 'finance_factors.csv', finance_factors)
+    # scaler = MinMaxScaler()
 
-    return finance_factors
-
-  def finance_factors_rank(self, finance_factors):
-
-    if (finance_factors.empty):
-      return pd.DataFrame()
-
-    scaler = MinMaxScaler()
-
-    factor_scaled_sum = pd.DataFrame(0, columns=['scale_sum'], index=self.symbol_list_process)
-    factor_scaled_sum.index = factor_scaled_sum.index.map(lambda x: "'" + x)
+    factor_scaled_sum = pd.DataFrame(0, columns=['scale_sum'], index=self.symbols)
     for date in self.dates:
       factor = finance_factors.loc[(date, slice(None)), :]
-      # factor_scaled = pd.DataFrame(scaler.fit_transform(factor), columns=self.factors, index=self.symbol_list_process)
-      # factor_scaled_sum = factor_scaled_sum + pd.DataFrame(factor_scaled.loc[:,self.factors].sum(axis=1), index=self.symbol_list_process, columns=['scale_sum'])
       factor_scaled = factor.rank(pct = True).droplevel(0)
       factor_scaled_sum = factor_scaled_sum + factor_scaled.loc[:,self.factors].sum(axis=1).to_frame('scale_sum')
 
     factor_scaled_rank = factor_scaled_sum.sort_values(by = ['scale_sum'], ascending=False)
-    # factor_scaled_rank.index = factor_scaled_rank.index.map(lambda x: '{:0>6s}'.format("'" + str(x)))
-    # factor_scaled_rank.index = [f'{idx:06d}' for idx in factor_scaled_rank.index]
-    # factor_scaled_rank.index = [f'{idx:06d}' for idx in factor_scaled_rank.index]
+    us_equity_research_folder("finance", 'rank.csv', factor_scaled_rank)
+    
     return factor_scaled_rank
 
 

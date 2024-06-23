@@ -73,7 +73,7 @@ def us_equity_efinance_load_csv(symbol, file_name, dates = None, provider = "efi
     if dates is None:
       dates = us_equity_efinance_search_sort_date(data['REPORT'])
 
-    data.set_index('REPORT', inplace=True)
+    data.set_index(['REPORT'], inplace=True)
 
     df = data.loc[dates,:]
 
@@ -104,6 +104,27 @@ def us_equity_efinance_store_csv(symbol, file_name, data, provider = "efinance" 
 
     data.to_csv(file)
 
+def us_equity_efinance_factors_load_csv(symbol, file_name, start_time, end_time, factors = ['roe'], provider = "efinance"):
+
+    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    file = os.path.join(equity_folder, file_name + '.csv')
+    df = pd.read_csv(file)
+    df.set_index('REPORT_DATE', inplace=True)
+    df.index = pd.to_datetime(df.index)
+
+    start_date = pd.to_datetime(start_time)
+    end_date = pd.to_datetime(end_time)
+
+    # Find indices within the date range
+    mask = (df.index >= start_date) & (df.index <= end_date)
+    indices_in_range = df[mask].index
+
+
+    # If you want to get the data for these indices:
+    data_in_range = df.loc[indices_in_range]
+
+    return data_in_range.loc[:, factors]
+
 # Function to perform the operations
 def calculate_quarterly_differences(df, str1, str2):
     # Define the variables
@@ -115,15 +136,18 @@ def calculate_quarterly_differences(df, str1, str2):
     result_df = df.copy()
     
     # Get the unique years from the index
-    years = sorted(set(idx.split('/')[0] for idx in df.index))
+    years = sorted(set(idx.split('/')[0] for idx in df.index.get_level_values('REPORT')))
+
+    columns = df.columns[2:]
     
     for year in years:
         if f'{year}/{Q9}' in df.index and f'{year}/{FY}' in df.index:
-            result_df.loc[f'{year}/{FY}'] -= df.loc[f'{year}/{Q9}']
+            result_df.loc[f'{year}/{FY}', columns] -= df.loc[f'{year}/{Q9}', columns]
         if f'{year}/{Q6}' in df.index and f'{year}/{Q9}' in df.index:
-            result_df.loc[f'{year}/{Q9}'] -= df.loc[f'{year}/{Q6}']
+            result_df.loc[f'{year}/{Q9}', columns] -= df.loc[f'{year}/{Q6}', columns]
         if f'{year}/{Q1}' in df.index and f'{year}/{Q6}' in df.index:
-            result_df.loc[f'{year}/{Q6}'] -= df.loc[f'{year}/{Q1}']
+            result_df.loc[f'{year}/{Q6}', columns] -= df.loc[f'{year}/{Q1}', columns]
+
     if str1 in df.columns:
       result_df.loc[:,str1] = df.loc[:, str1]
     if str2 in df.columns:
@@ -137,14 +161,14 @@ def us_equity_efinance_finance_data_load(symbol = 'AAPL', dates = ["2021/Q1"]):
     print(f"Loading {symbol} finance data...")
     income = us_equity_efinance_load_csv(symbol, 'income', dates)
     # Apply the function to the DataFrame
-    income = calculate_quarterly_differences(income, 'basic_weighted_average_shares_common_stock', 'diluted_weighted_average_shares_common_stock')
+    income = calculate_quarterly_differences(income, '基本加权平均股数-普通股', '摊薄加权平均股数-普通股')
 
     cash = us_equity_efinance_load_csv(symbol, 'cash', dates)
-    cash = calculate_quarterly_differences(cash, 'cash_and_cash_equivalents_at_beginning_of_period', 'cash_and_cash_equivalents_at_end_of_period')
+    cash = calculate_quarterly_differences(cash, '现金及现金等价物期初余额', '现金及现金等价物期末余额')
     
     balance = us_equity_efinance_balance_load_csv(symbol, dates, 'balance')
 
-    data = pd.concat([income, cash, balance], axis = 1)
+    data = pd.concat([income, cash, balance], axis = 1, join='inner')
     
     data = data.loc[:, ~data.columns.duplicated()]
     return data
