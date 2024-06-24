@@ -353,11 +353,17 @@ class us_equity_finance:
     # scaler = MinMaxScaler()
     df_mean = df_factors.groupby(level='symbol').mean()
  
-    df_scaled = df_mean.rank(pct = True)
+    # df_scaled = df_mean.rank(pct = True)
+
+
+    scaler = MinMaxScaler()
+    scaled_data = scaler.fit_transform(df_mean)
+
+    df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
     
-    df_scale_sum = df_scaled.loc[:,self.factors].sum(axis=1)
+    df_scale_mean = df_scale.loc[:,self.factors].mean(axis=1)
     
-    df_mean['scale_sum'] = df_scale_sum
+    df_mean['scale_sum'] = df_scale_mean * 100
     
     df_rank = df_mean.sort_values(by = ['scale_sum'], ascending=False)
     us_equity_research_folder("finance", 'rank.csv', df_rank)
