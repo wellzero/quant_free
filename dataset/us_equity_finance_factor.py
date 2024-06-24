@@ -346,20 +346,22 @@ class us_equity_finance:
 
   def finance_factors_rank(self):
 
-    finance_factors = self.finance_factors_fectch()
+    df_factors = self.finance_factors_fectch()
     
-    us_equity_research_folder("finance", 'finance_factors.csv', finance_factors)
+    us_equity_research_folder("finance", 'finance_factors.csv', df_factors)
+    
     # scaler = MinMaxScaler()
-
-    factor_scaled_sum = pd.DataFrame(0, columns=['scale_sum'], index=self.symbols)
-    for date in self.dates:
-      factor = finance_factors.loc[(date, slice(None)), :]
-      factor_scaled = factor.rank(pct = True).droplevel(0)
-      factor_scaled_sum = factor_scaled_sum + factor_scaled.loc[:,self.factors].sum(axis=1).to_frame('scale_sum')
-
-    factor_scaled_rank = factor_scaled_sum.sort_values(by = ['scale_sum'], ascending=False)
-    us_equity_research_folder("finance", 'rank.csv', factor_scaled_rank)
+    df_mean = df_factors.groupby(level='symbol').mean()
+ 
+    df_scaled = df_mean.rank(pct = True)
     
-    return factor_scaled_rank
+    df_scale_sum = df_scaled.loc[:,self.factors].sum(axis=1)
+    
+    df_mean['scale_sum'] = df_scale_sum
+    
+    df_rank = df_mean.sort_values(by = ['scale_sum'], ascending=False)
+    us_equity_research_folder("finance", 'rank.csv', df_rank)
+    
+    return df_rank
 
 
