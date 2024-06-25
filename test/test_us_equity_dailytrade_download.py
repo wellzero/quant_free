@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-_this_dir = Path(__file__).parent.parent.parent
+_this_dir = Path(__file__).parent.parent
 sys.path.append(str(_this_dir))
 print(_this_dir)
 from dataset.us_equity_download import *
