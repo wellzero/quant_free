@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 from dataset.us_equity_load import *
+from dataset.us_equity_efinance_load import *
 
 import pandas as pd
 
@@ -148,7 +149,7 @@ class us_equity_finance:
       date = self.nearest_date(daily_trade_dates, get_date)
       dates.append(date)
 
-    shares = us_equity_common_shares_load([symbol])
+    shares = us_equity_efinance_common_shares_load([symbol])
 
     # trade_data_quarter = pd.concat([trade_data_quarter, res.loc[date]], axis = 1)
     trade_data_quarter = daily_data.loc[dates]
