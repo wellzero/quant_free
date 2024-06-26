@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 _this_dir = Path(__file__).parent
 
-def xq_js_to_dict():
+def xq_js_to_dict(market = "us"):
     """
     Convert a JavaScript dictionary from a file to a Python dictionary, removing '$' and the following letter from keys.
 
@@ -40,8 +40,37 @@ def xq_js_to_dict():
             return re.sub(r'\$.', '', key)
         
         cleaned_dict = {clean_key(k): v for k, v in data_dict.items()}
+        
+        data = cleaned_dict[market]
+        
+        result = {}
 
-        return cleaned_dict
+        indicator = {}
+        for key, value in data.items():
+            if key.startswith('indicator'):
+                indicator.update(value)
+        
+        income = {}
+        for key, value in data.items():
+            if key.startswith('income'):
+                income.update(value)
+
+        balance = {}
+        for key, value in data.items():
+            if key.startswith('balance'):
+                balance.update(value)
+
+        cash = {}
+        for key, value in data.items():
+            if key.startswith('cash'):
+                cash.update(value)
+
+        result["indicators"] = indicator
+        result["incomes"] = income
+        result["balances"] = balance
+        result["cashes"] = cash
+        
+        return result
     
     except Exception as e:
         print(f'Error: {e}')
@@ -49,4 +78,4 @@ def xq_js_to_dict():
 
 if __name__ == "__main__":
     data = xq_js_to_dict()
-    print(data)
+    print(data['us'])
