@@ -72,7 +72,12 @@ def us_equity_xq_load_csv(symbol, file_name, title, provider = "xq" ):
     # Apply the function to get the first value in each cell
     df_first_values = df_.applymap(get_first_value)
     
-    df_first_values = df_first_values.sort_values(by='report_date', ascending=True)      
+    df_first_values = df_first_values.sort_values(by='report_date', ascending=True)
+
+    df_first_values = df_first_values.replace('--', 0)
+    df_first_values = df_first_values.replace('_', 0)
+    df_first_values = df_first_values.replace('None', 0)
+    df_first_values = df_first_values.fillna(0)
     
     return df_first_values
 

@@ -190,8 +190,8 @@ class us_equity_xq_factor:
 
     if ('营业成本' in df_finance.columns):
       operating_cost = df_finance['营业成本']
-    elif ('利息支出合计' in df_finance.columns and '非利息支出合计' in df_finance.columns):
-      operating_cost = df_finance['非利息支出合计'] + df_finance['利息支出合计']
+    elif ('利息支出总计' in df_finance.columns and '非利息支出总计' in df_finance.columns):
+      operating_cost = df_finance['利息支出总计'] + df_finance['非利息支出总计']
     elif ('营业收入' in df_finance.columns and '毛利' in df_finance.columns):
       operating_cost = df_finance['营业收入'] - df_finance['毛利']
     elif ('经营溢利' in df_finance.columns):
