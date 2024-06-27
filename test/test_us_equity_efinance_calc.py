@@ -5,7 +5,7 @@ from pathlib import Path
 _this_dir = Path(__file__).parent.parent
 sys.path.append(str(_this_dir))
 print(_this_dir)
-from dataset.us_equity_finance_factor import *
+from dataset.us_equity_efinance_factor import *
 from dataset.us_equity_load import *
 
 
@@ -14,7 +14,7 @@ if __name__ == '__main__':
   # symbols = ['AAPL', 'NVDA']
   #symbols = ['TEAM', 'IAU', 'DKILY', 'OLCLY']
   # symbols = ['WFC', 'AXP', 'BX', 'GS']
-  us_analysis_finance = us_equity_finance(symbols)
+  us_analysis_finance = us_equity_efinance_factor(symbols)
   finance_factors = us_analysis_finance.finance_factors_calc()
 
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
   # factors = ['roe', 'roa', 'profit_revenue', 'revenue_incr_rate', 'cash_incr_rate']
   # start_quater = '2020/Q1'
   # end_quater = '2024/Q2'
-  # us_analysis_finance = us_equity_finance(symbols, factors,  start_quater, end_quater)
+  # us_analysis_finance = us_equity_efinance_factor(symbols, factors,  start_quater, end_quater)
   # finance_factors = us_analysis_finance.finance_factors_all_stock()
   
   # analysis_path = us_equity_research_folder("finance")

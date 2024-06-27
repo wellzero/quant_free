@@ -14,7 +14,7 @@ def us_equity_xq_common_shares_load(symbols = ['AAPL']):
   for symbol in symbols:
     try:
       # print(f"loading {symbol} trade data...")
-      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'xq')
+      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
       equity_file = os.path.join(equity_folder, 'info.csv')
       data = pd.read_csv(equity_file)
       return data.loc[:, 'issued_common_shares'][0]
@@ -72,7 +72,7 @@ def us_equity_xq_load_csv(symbol, file_name, title, provider = "xq" ):
     # Apply the function to get the first value in each cell
     df_first_values = df_.applymap(get_first_value)
     
-    df_first_values.sort_values(by='report_date', ascending=True)      
+    df_first_values = df_first_values.sort_values(by='report_date', ascending=True)      
     
     return df_first_values
 

@@ -5,7 +5,7 @@ from pathlib import Path
 _this_dir = Path(__file__).parent.parent
 sys.path.append(str(_this_dir))
 print(_this_dir)
-from dataset.us_equity_finance_factor import *
+from dataset.us_equity_efinance_factor import *
 from dataset.us_equity_load import *
 
 
@@ -15,7 +15,7 @@ if __name__ == '__main__':
   # symbols = ['AAPL', 'NVDA']
   #symbols = ['TEAM', 'IAU', 'DKILY', 'OLCLY']
   # symbols = ['WFC', 'AXP', 'BX', 'GS']
-  # us_analysis_finance = us_equity_finance(symbols)
+  # us_analysis_finance = us_equity_efinance_factor(symbols)
   # finance_factors = us_analysis_finance.finance_factors_calc()
 
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
   factors = ['roe', 'roa', 'profit_revenue', 'revenue_increase_q2q_rate', 'cash_increase_q2q_rate']
   start_time = '2022-01-01'
   end_time = '2024-06-01'
-  us_analysis_finance = us_equity_finance(symbols, factors,  start_time, end_time)
+  us_analysis_finance = us_equity_efinance_factor(symbols, factors,  start_time, end_time)
   result = us_analysis_finance.finance_factors_rank()
   print(result)
  
