@@ -3,6 +3,7 @@ import pandas as pd
 from utils.us_equity_symbol import *
 from utils.us_equity_utils import *
 from common.us_equity_common import *
+import efinance as ef
 
 # Read directory from JSON file
 
@@ -29,7 +30,6 @@ def us_equity_xq_finance_store_csv(equity_folder, data, file_name):
 
 def us_equity_xq_finance_data_download(symbols = ['AAPL'], provider="xq"):
 
-  import efinance as ef
   datacenter = ef.stock.us_finance_xq_getter()
 
   for symbol in symbols:
@@ -51,4 +51,19 @@ def us_equity_xq_finance_data_download(symbols = ['AAPL'], provider="xq"):
       us_equity_xq_finance_store_csv(equity_folder, data, 'metrics')
     except:
       print(f"function {__name__} error!!")
+
+def us_equity_xq_daily_data_download(symbols = ['AAPL'], provider="xq"):
+  datacenter_xq = ef.stock.us_finance_xq_getter()
+  for symbol in symbols:
+    try:
+      
+      print(f"Downloading {symbol} trade data...")
+      data = datacenter_xq.get_us_finance_daily_trade(symbol = symbol)
+
+      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+      equity_file = os.path.join(equity_folder, 'daily.csv')
+
+      data.to_csv(equity_file, index=False)
+    except:
+      print(f"function {__name__} {us_equity_xq_daily_data_download} error!!")
 

@@ -9,19 +9,22 @@ from utils.xq_parse_js import *
 
 GLOBAL_XQ_IGNORE_COLUMNS = 7
 
-def us_equity_xq_common_shares_load(symbols = ['AAPL']):
-  data = {}
-  for symbol in symbols:
-    try:
-      # print(f"loading {symbol} trade data...")
-      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
-      equity_file = os.path.join(equity_folder, 'info.csv')
-      data = pd.read_csv(equity_file)
-      return data.loc[:, 'issued_common_shares'][0]
-    except:
-      print(f"failed to load equity {symbol}")
-  return data
+def us_equity_xq_daily_data_load(symbol = 'AAPL', options = ['close'], sub_dir = 'xq'):
 
+  try:
+    # print(f"loading {symbol} trade data...")
+    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = sub_dir)
+    equity_file = os.path.join(equity_folder, 'daily.csv')
+    data = pd.read_csv(equity_file)
+    data.set_index('timestamp', inplace=True)
+    data = data.replace('--', 0)
+    data = data.replace('_', 0)
+    data = data.replace('None', 0)
+    data = data.fillna(0)
+    return data.loc[:, options]
+  except:
+    print(f"failed to load equity {symbol}")
+  return data
 
 def us_equity_xq_search_sort_date(report_dates):
    
