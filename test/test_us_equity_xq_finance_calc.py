@@ -24,7 +24,7 @@ if __name__ == '__main__':
   # symbols = ['AAPL', 'NVDA']
   # symbols = ['XOM', 'WMT', 'COST']
   # symbols = ['MS', 'NOW', 'BX', 'GS', 'SCHW']
-  # symbols = ['DJCB', 'FBGX', 'ESUS', 'CEFD', 'BDCZ']
+  # symbols = ['MS', 'GS', 'SCHW', 'PGR', 'BDCZ']
   us_analysis_finance = us_equity_xq_factor(symbols)
   finance_factors = us_analysis_finance.finance_factors_calc()
 

@@ -161,7 +161,7 @@ class us_equity_xq_factor:
     if (str in df_finance.columns):
       value = df_finance[str]
     else:
-      value = self.fectch_value(df_finance, '股东权益合计')
+      value = self.fectch_value(df_finance, '股东权益合计').copy()
       value.values[:] = 0
     return value
 
@@ -373,19 +373,46 @@ class us_equity_xq_factor:
  
     # df_scaled = df_mean.rank(pct = True)
 
+    # Define a function to rank each column (method argument for flexibility)
+    def rank_by_column(df, method='average'):
+      """Ranks values within each column of the DataFrame.
 
-    scaler = MinMaxScaler()
-    scaled_data = scaler.fit_transform(df_mean)
+      Args:
+          df (pandas.DataFrame): The DataFrame to rank.
+          method (str, optional): The ranking method to use. Defaults to 'average'.
+              - 'average': Assigns the average rank to ties.
+              - 'min': Assigns the minimum rank to ties.
+              - 'max': Assigns the maximum rank to ties.
+              - 'first': Assigns ranks in the order they appear.
+              - 'dense': Similar to 'min', but rank increases by 1 between groups.
 
-    df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
+      Returns:
+          pandas.DataFrame: The DataFrame with new columns for ranks.
+      """
+      ranked_df = pd.DataFrame()
+      for col in df.columns:
+        ranked_df[col] = df[col].rank(ascending=True, method=method)  # Rank by column
+      return ranked_df
+    
+    df_scale = rank_by_column(df_mean, 'max')
+
+
+    # scaler = MinMaxScaler()
+    # scaled_data = scaler.fit_transform(df_mean[df_mean.columns])
+
+    # df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
     
     df_scale_mean = df_scale.loc[:,self.factors].mean(axis=1)
     
-    df_mean['scale_sum'] = df_scale_mean * 100
+    df_mean['mean_scale'] = df_scale_mean
     
-    df_rank = df_mean.sort_values(by = ['scale_sum'], ascending=False)
-    us_equity_research_folder("finance", 'rank.csv', df_rank)
+    df_mean = df_mean.sort_values(by = ['mean_scale'], ascending=False)
+    # us_equity_research_folder("finance", 'rank.csv', df_mean)
+
+
+    df_scale['mean_scale'] = df_scale_mean
+    df_scale = df_scale.sort_values(by = ['mean_scale'], ascending=False)
     
-    return df_rank
+    return [df_mean, df_scale]
 
 
