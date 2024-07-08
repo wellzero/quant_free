@@ -6,70 +6,58 @@ import pandas as pd
 
 _this_dir = Path(__file__).parent.parent
 
-def us_symbol_file():
-  
-  # Read directory from JSON file
-  conf = os.path.join(_this_dir, 'config.json')
-  with open(conf) as f:
-      config = json.load(f)
-  root_dir = config['output_dir']
+def create_directory(root_dir, *subdirs):
+    """Create a directory or nested directories if they don't exist."""
+    path = os.path.join(root_dir, *subdirs)
+    os.makedirs(path, exist_ok=True)
+    return path
 
-  # Create the output directory if it doesn't exist
-  os.makedirs(root_dir, exist_ok=True)
+def get_root_directory():
+    """Read the root directory path from the config.json file."""
+    config_path = os.path.join(_this_dir, 'config.json')
+    with open(config_path) as file:
+        config = json.load(file)
+    return config['output_dir']
 
-  # Create the subfolder
-  subfolder_path = os.path.join(root_dir, 'symbol')
-  os.makedirs(subfolder_path, exist_ok=True)
+def create_common_directory(*subdirs):
+    """Create a common directory or nested directories under the root directory."""
+    root_dir = get_root_directory()
+    return create_directory(root_dir, *subdirs)
 
-  csv_file_path = os.path.join(subfolder_path, 'us_equity_symbol.csv')
-  
-  return csv_file_path
+def us_symbol_file(filename='us_equity_symbol.csv'):
+    """Get the file path for the symbol file."""
+    symbol_dir = create_common_directory('symbol')
+    return os.path.join(symbol_dir, filename)
 
-def us_equity_folder(symbol = "AAPL"):
-  
-  # Read directory from JSON file
-  conf = os.path.join(_this_dir, 'config.json')
-  with open(conf) as f:
-      config = json.load(f)
-  root_dir = config['output_dir']
+def us_equity_folder(symbol='AAPL'):
+    """Get the folder path for a specific equity."""
+    return create_common_directory('equity', symbol)
 
-  # Create the output directory if it doesn't exist
-  os.makedirs(root_dir, exist_ok=True)
+def us_equity_sub_folder(symbol='AAPL', sub_dir='2024-06-06'):
+    """Get the subfolder path for a specific equity and date."""
+    return create_common_directory('equity', symbol, sub_dir)
 
-  # Create the subfolder
-  equity_path = os.path.join(root_dir, 'equity', symbol)
-  os.makedirs(equity_path, exist_ok=True)
+def us_equity_research_folder(sub_folder='price', file_name='default.csv', data=None):
+    """Save equity research data to a CSV file if data is provided."""
+    research_dir = create_common_directory('research', sub_folder)
+    file_path = os.path.join(research_dir, file_name)
+    
+    if data is not None:
+        data.to_csv(file_path)
+    return file_path
 
-  return equity_path
-
-def us_equity_sub_folder(symbol = "AAPL", sub_dir = "2024-06-06"):
-
-  # Read directory from JSON file
-  root_dir = us_equity_folder(symbol)
-
-  # Create the subfolder
-  dir = os.path.join(root_dir, sub_dir)
-  os.makedirs(dir, exist_ok=True)
-
-  return dir
-
-def us_equity_research_folder(sub_folder = "price", file_name = "default.csv", data = None):
-  
-  # Read directory from JSON file
-  conf = os.path.join(_this_dir, 'config.json')
-  with open(conf) as f:
-      config = json.load(f)
-  root_dir = config['output_dir']
-
-  # Create the output directory if it doesn't exist
-  os.makedirs(root_dir, exist_ok=True)
-
-  # Create the subfolder
-  equity_path = os.path.join(root_dir, 'research', sub_folder)
-  os.makedirs(equity_path, exist_ok=True)
-  
-
-  csv_file = os.path.join(equity_path, file_name)
-  data.to_csv(csv_file)
-
-  return equity_path
+def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
+    """Get the file path for the symbol file."""
+    symbol_dir = create_common_directory(dir0)
+    file_path = os.path.join(symbol_dir, filename)
+    if data is not None:
+        data.to_csv(file_path)
+def us_dir0_load_csv(dir0 = 'symbol', filename='industry.csv'):
+    """Get the file path for the symbol file."""
+    symbol_dir = create_common_directory(dir0)
+    file_path = os.path.join(symbol_dir, filename)
+    if os.path.exists(file_path):
+        return pd.read_csv(file_path)
+    else:
+        print(f"File {filename} does not exist in the {symbol_dir} directory.")
+        return None
