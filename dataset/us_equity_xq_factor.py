@@ -366,8 +366,6 @@ class us_equity_xq_factor:
 
     df_factors = self.finance_factors_fectch()
     
-    us_equity_research_folder("finance", 'finance_factors.csv', df_factors)
-    
     # scaler = MinMaxScaler()
     df_mean = df_factors.groupby(level='symbol').mean()
  
@@ -413,6 +411,6 @@ class us_equity_xq_factor:
     df_scale['mean_scale'] = df_scale_mean
     df_scale = df_scale.sort_values(by = ['mean_scale'], ascending=False)
     
-    return [df_mean, df_scale]
+    return [df_mean, df_scale, df_factors]
 
 
