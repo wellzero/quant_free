@@ -362,12 +362,15 @@ class us_equity_xq_factor:
       
     return df_finance_factors
 
-  def finance_factors_rank(self):
+  def finance_factors_rank(self, ignore_columns = None):
 
     df_factors = self.finance_factors_fectch()
     
     # scaler = MinMaxScaler()
-    df_mean = df_factors.groupby(level='symbol').mean()
+    if ignore_columns != None:
+      df_mean = df_factors.drop(columns=ignore_columns).groupby(level='symbol').mean()
+    else:
+      df_mean = df_factors.groupby(level='symbol').mean()
  
     # df_scaled = df_mean.rank(pct = True)
 
@@ -399,8 +402,12 @@ class us_equity_xq_factor:
     # scaled_data = scaler.fit_transform(df_mean[df_mean.columns])
 
     # df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
+    if ignore_columns != None:
+      factors = [item for item in self.factors if item not in ignore_columns]
+    else:
+      factors = self.factors
     
-    df_scale_mean = df_scale.loc[:,self.factors].mean(axis=1)
+    df_scale_mean = df_scale.loc[:,factors].mean(axis=1)
     
     df_mean['mean_scale'] = df_scale_mean
     
@@ -411,6 +418,6 @@ class us_equity_xq_factor:
     df_scale['mean_scale'] = df_scale_mean
     df_scale = df_scale.sort_values(by = ['mean_scale'], ascending=False)
     
-    return [df_mean, df_scale, df_factors]
+    return [df_mean.round(2), df_scale.round(2), df_factors.round(2)]
 
 

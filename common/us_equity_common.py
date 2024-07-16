@@ -15,6 +15,10 @@ def us_equity_daily_data_read_csv(symbol = 'AAPL'):
   data.set_index('date', inplace=True)
   return data
 
+def us_equity_get_trade_dates():
+  df = us_equity_daily_data_read_csv()
+  return df.index
+
 def us_equity_get_trade_date_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29'):
 
     # Download historical stock data
