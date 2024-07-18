@@ -323,6 +323,7 @@ class us_equity_xq_factor:
     pd_data = pd.concat([pd_data, df_daily['pe']], axis=1)
     pd_data = pd.concat([pd_data, df_daily['ps']], axis=1)
     pd_data = pd.concat([pd_data, df_daily['pcf']], axis=1)
+    pd_data = pd.concat([pd_data, df_daily['market_capital']], axis=1)
 
     pd_data['REPORT_DATE'] = df_finance['report_date']
     pd_data['SECUCODE'] = symbol
@@ -362,15 +363,13 @@ class us_equity_xq_factor:
       
     return df_finance_factors
 
-  def finance_factors_rank(self, ignore_columns = None):
+  def finance_factors_rank(self, factors = None):
 
-    df_factors = self.finance_factors_fectch()
-    
+    df_factors = self.finance_factors_fectch().loc[:, factors]
+
+
     # scaler = MinMaxScaler()
-    if ignore_columns != None:
-      df_mean = df_factors.drop(columns=ignore_columns).groupby(level='symbol').mean()
-    else:
-      df_mean = df_factors.groupby(level='symbol').mean()
+    df_mean = df_factors.groupby(level='symbol').mean()
  
     # df_scaled = df_mean.rank(pct = True)
 
@@ -402,10 +401,6 @@ class us_equity_xq_factor:
     # scaled_data = scaler.fit_transform(df_mean[df_mean.columns])
 
     # df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
-    if ignore_columns != None:
-      factors = [item for item in self.factors if item not in ignore_columns]
-    else:
-      factors = self.factors
     
     df_scale_mean = df_scale.loc[:,factors].mean(axis=1)
     
