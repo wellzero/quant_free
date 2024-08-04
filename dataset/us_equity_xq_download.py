@@ -67,3 +67,30 @@ def us_equity_xq_daily_data_download(symbols = ['AAPL'], provider="xq"):
     except:
       print(f"function {__name__} {us_equity_xq_daily_data_download} error!!")
 
+def us_equity_xq_euquity_data_download():
+  datacenter_xq = ef.stock.us_finance_xq_sector_getter()
+  data = datacenter_xq.get_all_us_equity()
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='us_equity_symbol.csv', data = data)
+
+  print(f"downloading us_china")
+  data = datacenter_xq.get_all_us_us_china_equity()
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='us_china.csv', data = data)
+
+  print(f"downloading listed")
+  data = datacenter_xq.get_all_us_listed_equity()
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='listed.csv', data = data)
+
+  print(f"downloading us_star")
+  data = datacenter_xq.get_all_us_star_equity()
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='us_star.csv', data = data)
+
+def us_equity_xq_sector_data_download():
+  
+  datacenter_xq = ef.stock.us_finance_xq_sector_getter()
+  data = datacenter_xq.get_all_us_sector_name()
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='us_equity_sector.csv', data = data)
+
+  for index, row in data.iterrows():
+    print(f"downloading {row['name']}")
+    data = datacenter_xq.get_all_us_equity(row['encode'])
+    us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename=row['name'] + '.csv', data = data)

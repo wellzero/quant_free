@@ -46,6 +46,13 @@ def us_equity_research_folder(sub_folder='price', file_name='default.csv', data=
         data.to_csv(file_path)
     return file_path
 
+def us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', data = None):
+    """Get the file path for the symbol file."""
+    symbol_dir = create_common_directory(dir0, dir1)
+    file_path = os.path.join(symbol_dir, filename)
+    if data is not None:
+        data.to_csv(file_path)
+
 def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(dir0)

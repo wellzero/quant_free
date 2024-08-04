@@ -32,7 +32,7 @@ def finance_calculate_ratio_changes(df_factor, days_before, days_after):
     for symbol, symbol_data in df_factor.groupby(level='symbol'):
         # print("symbol: ", symbol)
         try:
-            df = us_equity_daily_data_read_csv(symbol)
+            df = us_equity_daily_data_read_csv(symbol = symbol)
             df.index = pd.to_datetime(df.index)
             date_index = df.index
             # Iterate over each row in the symbol data

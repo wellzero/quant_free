@@ -13,6 +13,12 @@ if __name__ == "__main__":
     # symbols = ['TEAM']
     # print(symbols.head(10))
 
+    # finance report
     # us_equity_xq_finance_data_download(symbols)
 
+    # equity and sector download
+    us_equity_xq_euquity_data_download()
+    us_equity_xq_sector_data_download()
+
+    # daily trade 
     us_equity_xq_daily_data_download(symbols)
