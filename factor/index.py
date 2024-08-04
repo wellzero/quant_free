@@ -23,4 +23,4 @@ class index:
 
   def ratio(self, days = 1):
      df = self.calc()
-     return df.pct_change(days) * 100 
+     return df.pct_change(days).round(2) * 100 

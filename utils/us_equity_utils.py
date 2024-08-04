@@ -59,6 +59,17 @@ def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path)
+
+def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
+    """Get the file path for the symbol file."""
+    symbol_dir = create_common_directory(dir0, dir1)
+    file_path = os.path.join(symbol_dir, filename)
+    if os.path.exists(file_path):
+        return pd.read_csv(file_path)
+    else:
+        print(f"File {filename} does not exist in the {symbol_dir} directory.")
+        return None
+
 def us_dir0_load_csv(dir0 = 'symbol', filename='industry.csv'):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(dir0)
