@@ -12,9 +12,9 @@ if __name__ == "__main__":
 
     symbols = us_equity_symbol_load()
     # symbols = ['TEAM']
-    # print(symbols.head(10))
+    print(symbols.head(10))
 
-    us_equity_daily_data_download(symbols)
+    # us_equity_daily_data_download(symbols)
 
     # us_equity_efinance_finance_data_download(symbols)
     #us_equity_efinance_finance_data_download(symbols)

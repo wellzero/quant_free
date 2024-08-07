@@ -6,9 +6,8 @@ from common.us_equity_common import *
 
 
 def us_equity_symbol_load():
-  us_symbol_f = us_symbol_file()
-  us_all_companies = pd.read_csv(us_symbol_f)
-  return us_all_companies.loc[:, 'symbol']
+  df = us_dir0_load_csv(dir0 = 'symbol', filename='us_equity_symbol.csv')
+  return df.loc[:, 'symbol'].values
 
 def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', trade_option = all, dir_option = ''):
   data = {}

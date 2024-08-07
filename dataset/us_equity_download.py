@@ -13,11 +13,13 @@ def us_equity_symbol_download(provider="sec"):
   us_all_companies = obb.equity.search("", provider=provider)
   csv_us_all_companies = us_all_companies.to_dataframe()
 
-  us_symbol_f = us_symbol_file()
+  # us_symbol_f = us_symbol_file()
 
-  # Save the DataFrame to a CSV file in the output directory
-  csv_us_all_companies.to_csv(us_symbol_f, index=False)
-  print(us_equity_symbol_download.__name__, "download successfully!", f"and stored to {us_symbol_f}")
+  # # Save the DataFrame to a CSV file in the output directory
+  # csv_us_all_companies.to_csv(us_symbol_f, index=False)
+
+  us_dir0_store_csv(dir0 = 'symbol', filename='us_equity_symbol.csv', data = csv_us_all_companies)
+  print(us_equity_symbol_download.__name__, "download successfully!", f"and stored to us_equity_symbol.csv")
 
 def us_equity_daily_data_download(symbols = ['AAPL'], provider="yfinance"):
   for symbol in symbols:
