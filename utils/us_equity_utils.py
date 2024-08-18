@@ -65,7 +65,9 @@ def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
     symbol_dir = create_common_directory(dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
-        return pd.read_csv(file_path)
+        df = pd.read_csv(file_path)
+        df = df.fillna(0)
+        return df
     else:
         print(f"File {filename} does not exist in the {symbol_dir} directory.")
         return None
