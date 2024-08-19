@@ -46,12 +46,12 @@ def us_equity_research_folder(sub_folder='price', file_name='default.csv', data=
         data.to_csv(file_path)
     return file_path
 
-def us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', data = None):
+def us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', encoding='utf-8', data = None):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
-        data.to_csv(file_path)
+        data.to_csv(file_path, encoding = encoding)
 
 def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
     """Get the file path for the symbol file."""
@@ -66,6 +66,13 @@ def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
         df = pd.read_csv(file_path)
+        # Drop the 'Unnamed: 0.1' column if it exists
+        if 'Unnamed: 0.1' in df.columns:
+            df.drop(columns=['Unnamed: 0.1'], inplace=True)
+
+        # Drop the 'Unnamed: 0' column if it exists
+        if 'Unnamed: 0' in df.columns:
+            df.drop(columns=['Unnamed: 0'], inplace=True)
         df = df.fillna(0)
         return df
     else:
