@@ -5,4 +5,4 @@ selenium
 webdriver_manager
 undetected_chromedriver
 
-#git+https://github.com:luozero/efinance.git
+git+https://github.com/luozero/efinance.git
