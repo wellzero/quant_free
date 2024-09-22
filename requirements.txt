@@ -1,0 +1,8 @@
+
+
+chromedriver-autoinstaller
+selenium
+webdriver_manager
+undetected_chromedriver
+
+#git+https://github.com:luozero/efinance.git
