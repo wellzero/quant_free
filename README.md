@@ -1,12 +1,12 @@
 # quant_free
 
-## install chrome
-
- ### install chrome for efinance downlaod
- wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
- sudo apt install ./google-chrome-stable_current_amd64.deb   
- ### spider test
-
+## install
+### requirement installation
+pip install -r requirements.txt
+### install chrome for efinance downlaod
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install ./google-chrome-stable_current_amd64.deb   
+### spider test
 
 ```python
 >>> from selenium import webdriver
