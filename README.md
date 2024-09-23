@@ -1,5 +1,7 @@
 # quant_free
 
+This project used to spider US stock daily trade data and financial data freely, and do some statistcal research for history trade and finicial data. this project only used to research US equity.
+
 ## install
 ### requirement installation
 pip install -r requirements.txt
@@ -26,5 +28,21 @@ sudo apt install ./google-chrome-stable_current_amd64.deb
 >>> options.add_argument('--no-sandbox')
 >>> options.add_argument('--disable-dev-shm-usage')
 >>> driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+## configuration
+configure folder stored download data
+vim conf.json
+{"output_dir": "/your_dir/quant_free/data"}
+
+## download data
+download data to output_dir.
+cd test
+python test_us_equity_xq_finance_download.py
+
+## some jupyter research
+there is some statistical analysis in research folder for US equity.
+
+
+
 
 
