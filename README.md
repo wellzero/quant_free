@@ -32,13 +32,17 @@ sudo apt install ./google-chrome-stable_current_amd64.deb
 
 ## configuration
 configure folder stored download data
+```bash
 vim conf.json
 {"output_dir": "/your_dir/quant_free/data"}
+```
 
 ## download data
 download data to output_dir.
+```bash
 cd test
 python test_us_equity_xq_finance_download.py
+```
 
 ## some jupyter research
 there is some statistical analysis in research folder for US equity.
