@@ -28,6 +28,7 @@ sudo apt install ./google-chrome-stable_current_amd64.deb
 >>> options.add_argument('--no-sandbox')
 >>> options.add_argument('--disable-dev-shm-usage')
 >>> driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+```
 
 ## configuration
 configure folder stored download data
