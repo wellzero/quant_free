@@ -47,6 +47,17 @@ python test_us_equity_xq_finance_download.py
 ## some jupyter research
 there is some statistical analysis in research folder for US equity.
 
+## QuantRL
+Cloning the Repository with Submodules
+```bash
+ git submodule update --init --recursive
+```
+Updating Submodules
+```bash
+ git submodule update --remote
+```
+
+
 
 
 
