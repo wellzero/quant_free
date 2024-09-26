@@ -1,6 +1,8 @@
 # General
+QuantRL
 *__pycache__*
 *.pyc
 *.csv
 *.pkl
 data
+config.json
