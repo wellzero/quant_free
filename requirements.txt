@@ -1,8 +1,16 @@
 
 
+## open equity module
+financedatabase 
+
+## spider module
 chromedriver-autoinstaller
 selenium
 webdriver_manager
 undetected_chromedriver
 
+## AI module
 git+https://github.com/luozero/efinance.git
+
+## misc module
+cufflinks
