@@ -16,9 +16,7 @@ def convert_to_string_if_number(value):
 
 def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', trade_option = all, dir_option = ''):
   data = {}
-  trade_date = us_equity_get_trade_date_within_range(start_date = start_date, end_date = end_date, dir_option = dir_option)
-  trade_date_time = pd.to_datetime(trade_date).date
-  trade_date_len = len(trade_date)
+  trade_date_time = us_equity_get_trade_date_within_range(start_date = start_date, end_date = end_date, dir_option = dir_option)
 
   # symbols = symbols.remove(0)
 

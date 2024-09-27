@@ -33,7 +33,9 @@ def us_equity_get_trade_date_within_range(symbol = "AAPL", start_date = '2023-05
   
   trade_dates = filtered_data.index
 
-  return trade_dates
+  trade_dates_time = pd.to_datetime(trade_dates).date
+
+  return trade_dates_time
 
 def us_equity_get_current_trade_date(symbol = "AAPL"):
     # Download historical stock data

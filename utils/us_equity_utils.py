@@ -65,7 +65,9 @@ def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
     symbol_dir = create_common_directory(dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, index_col=0)
+
+        df.index = pd.to_datetime(df.index).date
         # Drop the 'Unnamed: 0.1' column if it exists
         if 'Unnamed: 0.1' in df.columns:
             df.drop(columns=['Unnamed: 0.1'], inplace=True)
