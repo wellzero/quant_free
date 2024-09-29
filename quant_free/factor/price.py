@@ -1,5 +1,5 @@
 
-from common.us_equity_common import *
+from quant_free.common.us_equity_common import *
 
 import pandas as pd
 from datetime import datetime, timedelta

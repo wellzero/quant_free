@@ -8,9 +8,8 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from dataset.us_equity_load import *
-from dataset.us_equity_efinance_load import *
-from common.us_equity_common import *
+from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.us_equity_xq_load import *
 
 import pandas as pd
 
@@ -72,7 +71,7 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 
 
 
-class us_equity_efinance_factor:
+class xq_finance:
 
   # def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
   def __init__(self, symbols, factors = None, start_time = None, end_time = None) -> None:
@@ -138,10 +137,10 @@ class us_equity_efinance_factor:
 
   def get_market_value(self, symbol, df = None):
     
-    df_dates = df.index
     df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
-    daily_data = us_equity_daily_data_read_csv(symbol)['close']
+    daily_data = us_equity_xq_daily_data_load(symbol, ['pe', 'market_capital', 'ps', 'pcf'])
+    daily_data.index = [it[:10] for it in daily_data.index]
     daily_trade_dates = daily_data.index
 
     dates = []
@@ -149,75 +148,87 @@ class us_equity_efinance_factor:
       # print(get_date)
       date = self.nearest_date(daily_trade_dates, get_date)
       dates.append(date)
-
-    shares = us_equity_efinance_common_shares_load([symbol])
-
-    # trade_data_quarter = pd.concat([trade_data_quarter, res.loc[date]], axis = 1)
-    trade_data_quarter = daily_data.loc[dates]
-    trade_data_quarter.index = df_dates
-
-    return trade_data_quarter * shares
+      
+    
+      
+    df_out = daily_data.loc[dates]
+    df_dates = df.index
+    df_out.index = df_dates
+    
+    return df_out
   
   def fectch_or_reset_value(self, df_finance, str):
     if (str in df_finance.columns):
       value = df_finance[str]
     else:
-      value = df_finance['股东权益合计']
+      value = self.fectch_value(df_finance, '股东权益合计').copy()
       value.values[:] = 0
     return value
 
+  def fectch_value(self, df_finance, str):
+    if (str in df_finance.columns):
+      value = df_finance[str]
+      return value
+    else:
+      print(f'this is not in the finance {str}')
+
   def finance_factors_one_stock(self, symbol):
 
-    df_finance = us_equity_efinance_finance_data_load(symbol, dates = None)
+    df_finance = us_equity_xq_finance_data_load(symbol)
 
     # balance
-    total_equity = df_finance['股东权益合计']
-    total_assets = df_finance['总资产']
+    total_equity = self.fectch_value(df_finance, '股东权益合计')
+    total_assets = self.fectch_value(df_finance, '资产合计')
     goodwell = self.fectch_or_reset_value(df_finance, '商誉')
-    total_liabilities = df_finance['总负债'] #total_liabilities
-    total_liabilities_and_equity = df_finance['负债及股东权益合计']
+    total_liabilities = self.fectch_value(df_finance, '负债合计') #total_liabilities
+    total_liabilities_and_equity = total_equity + total_liabilities #df_finance['负债及股东权益合计']
     # intangible_assets = df_finance['无形资产']
-    intangible_assets = self.fectch_or_reset_value(df_finance, '无形资产')
+    intangible_assets = self.fectch_or_reset_value(df_finance, '无形资产净额')
     if ('非流动资产合计' in df_finance.columns):
-      total_non_current_assets = df_finance['非流动资产合计']
+      total_non_current_assets = self.fectch_value(df_finance, '非流动资产合计')
     else:
-      total_non_current_assets = df_finance['总资产']
+      total_non_current_assets = self.fectch_value(df_finance, '资产合计')
 
     # income
     if ('营业收入' in df_finance.columns):
-      operating_revenue = df_finance['营业收入']
+      operating_revenue = self.fectch_value(df_finance, '营业收入')
     else:
-      operating_revenue = df_finance['收入总额']
+      operating_revenue = self.fectch_value(df_finance, '营业总收入')
 
     if ('营业成本' in df_finance.columns):
-      operating_cost = df_finance['营业成本']
-    elif ('利息支出合计' in df_finance.columns and '非利息支出合计' in df_finance.columns):
-      operating_cost = df_finance['非利息支出合计'] + df_finance['利息支出合计']
+      operating_cost = self.fectch_value(df_finance, '营业成本')
+    elif ('利息支出总计' in df_finance.columns and '非利息支出总计' in df_finance.columns):
+      operating_cost = self.fectch_value(df_finance, '利息支出总计') +self.fectch_value(df_finance, '非利息支出总计')
     elif ('营业收入' in df_finance.columns and '毛利' in df_finance.columns):
-      operating_cost = df_finance['营业收入'] - df_finance['毛利']
+      operating_cost = self.fectch_value(df_finance, '营业收入') - self.fectch_value(df_finance, '毛利')
     elif ('经营溢利' in df_finance.columns):
-      operating_cost = operating_revenue - df_finance['经营溢利']
+      operating_cost = operating_revenue - self.fectch_value(df_finance, '经营溢利')
+    elif ('营业总收入' in df_finance.columns and '税前利润' in df_finance.columns):
+      operating_cost = self.fectch_value(df_finance, '营业总收入') - self.fectch_value(df_finance, '税前利润')
       
-    income_tax = df_finance['所得税']
-    profit_before_tax_from_continuing_operations = df_finance['持续经营税前利润'] #EBIT
+    income_tax = self.fectch_value(df_finance, '所得税')
+    profit_before_tax_from_continuing_operations = self.fectch_value(df_finance, '税前利润') #EBIT
+    net_profit = self.fectch_value(df_finance, '净利润')
 
     # if ('研发费用' in df_finance.columns):
     #   research_and_development_expenses = df_finance['研发费用']
 
     # cash
-    net_cash_flow_from_operating_activities = df_finance['经营活动产生的现金流量净额']
-    net_profit = df_finance['净利润']
+    net_cash_flow_from_operating_activities = self.fectch_value(df_finance, '经营活动产生的现金流量净额')
     if ('现金及存放同业款项' in df_finance.columns):
-      cash_and_cash_equivalents = df_finance['现金及存放同业款项']
+      cash_and_cash_equivalents = self.fectch_value(df_finance, '现金及存放同业款项')
     else:
-      cash_and_cash_equivalents = df_finance['现金及现金等价物期初余额']
-    depreciation_and_amortization = self.fectch_or_reset_value(df_finance, '折旧及摊销')
+      cash_and_cash_equivalents = self.fectch_value(df_finance, '期初现金及现金等价物余额')
+    depreciation_and_amortization = self.fectch_or_reset_value(df_finance, '折旧与摊销')
     # depreciation_and_amortization = df_finance['depreciationForFixedAssets']
-    cash_and_cash_equivalents_at_end_of_period = df_finance['现金及现金等价物期末余额']
+    cash_and_cash_equivalents_at_end_of_period = self.fectch_value(df_finance, '期末现金及现金等价物余额')
 
     noncurrent_asset = intangible_assets + goodwell + total_non_current_assets
     EBITDA = profit_before_tax_from_continuing_operations + depreciation_and_amortization
-    market_cap = self.get_market_value(symbol, df_finance)
+    
+    # ['pe', 'market_capital', 'ps', 'pcf']
+    df_daily = self.get_market_value(symbol, df_finance)
+    market_cap = df_daily['market_capital']
     EV = market_cap + total_liabilities - cash_and_cash_equivalents_at_end_of_period
 
     ##### net_profit capacity
@@ -307,9 +318,15 @@ class us_equity_efinance_factor:
     #E2EV
     E2EV = self.ab_ratio_calc(net_profit,EV,'E2EV')
     pd_data = pd.concat([pd_data, E2EV], axis=1)
+    
+    # ['pe', 'market_capital', 'ps', 'pcf']
+    pd_data = pd.concat([pd_data, df_daily['pe']], axis=1)
+    pd_data = pd.concat([pd_data, df_daily['ps']], axis=1)
+    pd_data = pd.concat([pd_data, df_daily['pcf']], axis=1)
+    pd_data = pd.concat([pd_data, df_daily['market_capital']], axis=1)
 
-    pd_data['REPORT_DATE'] = df_finance['REPORT_DATE']
-    pd_data['SECUCODE'] = df_finance['SECUCODE']
+    pd_data['REPORT_DATE'] = df_finance['report_date']
+    pd_data['SECUCODE'] = symbol
     pd_data.set_index(['REPORT_DATE', 'SECUCODE'], append=True, inplace=True)
     
     return pd_data
@@ -321,7 +338,7 @@ class us_equity_efinance_factor:
       # print("calc symbol ", symbol)
       try:
         df = self.finance_factors_one_stock(symbol)
-        us_equity_efinance_store_csv(symbol, "finance_factor", df)
+        us_equity_xq_store_csv(symbol, "finance_factor", df)
       except:
         print("no finance data skip stock", symbol)
         continue
@@ -333,7 +350,7 @@ class us_equity_efinance_factor:
     for symbol in self.symbols:
       # print("calc symbol ", symbol)
       try:
-        df = us_equity_efinance_factors_load_csv(symbol, "finance_factor", self.start_time, self.end_time, self.factors)
+        df = us_equity_xq_factors_load_csv(symbol, "finance_factor", self.start_time, self.end_time, self.factors)
         
         
         df.index = pd.MultiIndex.from_product([df.index, [symbol]], names=['REPORT', 'symbol'])
@@ -346,30 +363,56 @@ class us_equity_efinance_factor:
       
     return df_finance_factors
 
-  def finance_factors_rank(self):
+  def finance_factors_rank(self, factors = None):
 
-    df_factors = self.finance_factors_fectch()
-    
-    us_equity_research_folder("finance", 'finance_factors.csv', df_factors)
-    
+    df_factors = self.finance_factors_fectch().loc[:, factors]
+
+
     # scaler = MinMaxScaler()
     df_mean = df_factors.groupby(level='symbol').mean()
  
     # df_scaled = df_mean.rank(pct = True)
 
+    # Define a function to rank each column (method argument for flexibility)
+    def rank_by_column(df, method='average'):
+      """Ranks values within each column of the DataFrame.
 
-    scaler = MinMaxScaler()
-    scaled_data = scaler.fit_transform(df_mean)
+      Args:
+          df (pandas.DataFrame): The DataFrame to rank.
+          method (str, optional): The ranking method to use. Defaults to 'average'.
+              - 'average': Assigns the average rank to ties.
+              - 'min': Assigns the minimum rank to ties.
+              - 'max': Assigns the maximum rank to ties.
+              - 'first': Assigns ranks in the order they appear.
+              - 'dense': Similar to 'min', but rank increases by 1 between groups.
 
-    df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
+      Returns:
+          pandas.DataFrame: The DataFrame with new columns for ranks.
+      """
+      ranked_df = pd.DataFrame()
+      for col in df.columns:
+        ranked_df[col] = df[col].rank(ascending=True, method=method)  # Rank by column
+      return ranked_df
     
-    df_scale_mean = df_scale.loc[:,self.factors].mean(axis=1)
+    df_scale = rank_by_column(df_mean, 'max')
+
+
+    # scaler = MinMaxScaler()
+    # scaled_data = scaler.fit_transform(df_mean[df_mean.columns])
+
+    # df_scale = pd.DataFrame(scaled_data, columns=df_mean.columns, index=df_mean.index)
     
-    df_mean['scale_sum'] = df_scale_mean * 100
+    df_scale_mean = df_scale.loc[:,factors].mean(axis=1)
     
-    df_rank = df_mean.sort_values(by = ['scale_sum'], ascending=False)
-    us_equity_research_folder("finance", 'rank.csv', df_rank)
+    df_mean['mean_scale'] = df_scale_mean
     
-    return df_rank
+    df_mean = df_mean.sort_values(by = ['mean_scale'], ascending=False)
+    # us_equity_research_folder("finance", 'rank.csv', df_mean)
+
+
+    df_scale['mean_scale'] = df_scale_mean
+    df_scale = df_scale.sort_values(by = ['mean_scale'], ascending=False)
+    
+    return [df_mean.round(2), df_scale.round(2), df_factors.round(2)]
 
 

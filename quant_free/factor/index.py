@@ -1,5 +1,5 @@
 
-from dataset.us_equity_load import *
+from quant_free.dataset.us_equity_load import *
 
 class index:
   def __init__(self, sectors, start_date, end_date):

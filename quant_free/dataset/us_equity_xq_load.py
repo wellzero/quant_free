@@ -1,10 +1,10 @@
 import os
 import pandas as pd
 import ast
-from utils.us_equity_symbol import *
-from utils.us_equity_utils import *
-from common.us_equity_common import *
-from utils.xq_parse_js import *
+from quant_free.utils.us_equity_symbol import *
+from quant_free.utils.us_equity_utils import *
+from quant_free.common.us_equity_common import *
+from quant_free.utils.xq_parse_js import *
 
 
 GLOBAL_XQ_IGNORE_COLUMNS = 7

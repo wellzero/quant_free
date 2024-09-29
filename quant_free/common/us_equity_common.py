@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import pandas as pd
 import yfinance as yf
-from utils.us_equity_utils import *
+from quant_free.utils.us_equity_utils import *
 
 _this_dir = Path(__file__).parent.parent
 

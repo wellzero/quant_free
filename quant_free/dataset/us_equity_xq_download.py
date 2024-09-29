@@ -1,8 +1,8 @@
 import os
 import pandas as pd
-from utils.us_equity_symbol import *
-from utils.us_equity_utils import *
-from common.us_equity_common import *
+from quant_free.utils.us_equity_symbol import *
+from quant_free.utils.us_equity_utils import *
+from quant_free.common.us_equity_common import *
 import efinance as ef
 
 # Read directory from JSON file

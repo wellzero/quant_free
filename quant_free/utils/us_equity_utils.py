@@ -14,7 +14,7 @@ def create_directory(root_dir, *subdirs):
 
 def get_root_directory():
     """Read the root directory path from the config.json file."""
-    config_path = os.path.join(_this_dir, 'config.json')
+    config_path = os.path.join(_this_dir, '../config.json')
     with open(config_path) as file:
         config = json.load(file)
     return config['output_dir']
