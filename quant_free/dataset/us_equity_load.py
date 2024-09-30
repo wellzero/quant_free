@@ -29,7 +29,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
       equity_file = os.path.join(equity_folder, dir_option, 'daily.csv')
     
     if os.path.exists(equity_file):
-      try:
+      # try:
         # print(f"loading {symbol} trade data...")
 
         data_tmp = us_equity_daily_data_read_csv(symbol, dir_option)
@@ -43,6 +43,10 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
           data_tmp = data_tmp.resample('B').asfreq()
           # Optionally fill missing values (for example, forward fill)
           df_filled = data_tmp.ffill()
+
+          # fill begining
+          df_filled = df_filled.reindex(trade_date_time, method = 'bfill')
+
           df_filled_select = df_filled.loc[trade_date_time,:]
           # df_filled_select.index = df_filled_select.index.strftime('%Y-%m-%d')
 
@@ -52,8 +56,8 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
             data[symbol] = df_filled_select.loc[:, trade_option]
         else:
           print(f"lack of some trade date skip {symbol}, date_start {df_filled.head(1).index}")
-      except:
-        print(f"lack of some trade date skip {symbol}, data row {data_tmp.shape[0]}, date_start {df_filled.index[0]}, end_start {df_filled.index[-1]}")
+      # except:
+      #   print(f"lack of some trade date skip {symbol}, data row {data_tmp.shape[0]}, date_start {df_filled.index[0]}, end_start {df_filled.index[-1]}")
     else:
       print(f"file {equity_file} not exsist!!")
   return data
