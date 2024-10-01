@@ -350,36 +350,37 @@ class FactorBase(ABC):
 
   def processing(self, symbol, sector_price_ratio):
 
-    df = us_equity_daily_data_load(symbols = [symbol], start_date = self.start_date,
+    dict_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, trade_option = "all", 
                                       dir_option = "xq")
     
-    df = pd.concat([df, sector_price_ratio])
+    if(len(dict_data) == 1):
+      df = pd.concat([dict_data[symbol], sector_price_ratio])
 
-    # Insert symbol as the first level of a MultiIndex
-    df.index = pd.MultiIndex.from_product([[symbol], df.index])
+      # Insert symbol as the first level of a MultiIndex
+      df.index = pd.MultiIndex.from_product([[symbol], df.index])
 
-    df_preprocess = self.preprocess(df)
+      df_preprocess = self.preprocess(df)
 
-    df_stored =  copy.deepcopy(df_preprocess)
+      df_stored =  copy.deepcopy(df_preprocess)
 
-    # Iterate over all attributes of the instance (methods and variables)
-    for method_name in dir(self):
-        # Check if the method name starts with 'alpha'
-        if method_name.startswith("alpha"):
-            # Get the method by its name
-            method = getattr(self, method_name)
+      # Iterate over all attributes of the instance (methods and variables)
+      for method_name in dir(self):
+          # Check if the method name starts with 'alpha'
+          if method_name.startswith("alpha"):
+              # Get the method by its name
+              method = getattr(self, method_name)
 
-            # Ensure that the attribute is a callable (method)
-            if callable(method):
-                # Call the method
-                print(f"Calling {method_name}...")
-                result = method(df_preprocess)
-                result.name = method_name
-                df_stored = pd.concat([df_stored, result], axis = 1)
-    
-    subclass_name = self.__class__.__name__
-    us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
+              # Ensure that the attribute is a callable (method)
+              if callable(method):
+                  # Call the method
+                  print(f"Calling {method_name}...")
+                  result = method(df_preprocess)
+                  result.name = method_name
+                  df_stored = pd.concat([df_stored, result], axis = 1)
+      
+      subclass_name = self.__class__.__name__
+      us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
 
   def parallel_procssing(self, symbols, sector_price_ratio):
 
