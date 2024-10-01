@@ -20,6 +20,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
 
   # symbols = symbols.remove(0)
 
+  lack_list = []
   for symbol in symbols:
     # print(symbol)
     equity_folder = us_equity_folder(symbol = convert_to_string_if_number(symbol))
@@ -27,6 +28,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
       equity_file = os.path.join(equity_folder, 'daily.csv')
     else:
       equity_file = os.path.join(equity_folder, dir_option, 'daily.csv')
+
     
     if os.path.exists(equity_file):
       # try:
@@ -46,6 +48,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
 
           # fill begining
           df_filled = df_filled.reindex(trade_date_time, method = 'bfill')
+          # df_filled = df_filled.reindex(trade_date_time, fill_value=0)
 
           df_filled_select = df_filled.loc[trade_date_time,:]
           # df_filled_select.index = df_filled_select.index.strftime('%Y-%m-%d')
@@ -59,7 +62,10 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
       # except:
       #   print(f"lack of some trade date skip {symbol}, data row {data_tmp.shape[0]}, date_start {df_filled.index[0]}, end_start {df_filled.index[-1]}")
     else:
-      print(f"file {equity_file} not exsist!!")
+      lack_list.append(symbol)
+
+  if len(lack_list) > 0:
+    print(f"miss these daily trade files {lack_list}")
   return data
 
 def us_equity_sector_daily_data_load(sector_name = '半导体产品与设备', start_date = '2023-05-29', end_date = '2024-05-29', trade_option = all, dir_option = 'xq'):

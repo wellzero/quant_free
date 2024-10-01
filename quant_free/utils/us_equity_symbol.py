@@ -12,7 +12,7 @@ def us_symbol_file():
   conf = os.path.join(_this_dir, 'config.json')
   with open(conf) as f:
       config = json.load(f)
-  root_dir = config['output_dir']
+  root_dir = config['data_dir']
 
   # Create the output directory if it doesn't exist
   os.makedirs(root_dir, exist_ok=True)

@@ -12,16 +12,22 @@ def create_directory(root_dir, *subdirs):
     os.makedirs(path, exist_ok=True)
     return path
 
+def get_json_config_value(key = None):
+    config_path = os.path.join(_this_dir, '../config.json')
+    with open(config_path) as file:
+        config = json.load(file)
+    return config[key]
+
 def get_root_directory():
     """Read the root directory path from the config.json file."""
     config_path = os.path.join(_this_dir, '../config.json')
     with open(config_path) as file:
         config = json.load(file)
-    return config['output_dir']
+    return config['data_dir']
 
 def create_common_directory(*subdirs):
     """Create a common directory or nested directories under the root directory."""
-    root_dir = get_root_directory()
+    root_dir = get_json_config_value("data_dir")
     return create_directory(root_dir, *subdirs)
 
 def us_symbol_file(filename='us_equity_symbol.csv'):
