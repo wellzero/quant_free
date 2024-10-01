@@ -58,6 +58,7 @@ def us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', enc
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path, encoding = encoding)
+        print(f"stored to folder {file_path}")
 
 def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
     """Get the file path for the symbol file."""
@@ -65,6 +66,7 @@ def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path)
+        print(f"stored to folder {file_path}")
 
 def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
     """Get the file path for the symbol file."""

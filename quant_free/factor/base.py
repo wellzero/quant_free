@@ -26,9 +26,13 @@ from quant_free.utils.us_equity_utils import *
 
 class FactorBase(ABC):
 
-  def __init__(self, symbols):
-      self.symbols = symbols
-      
+  def __init__(self, start_date, end_date, dir = 'fh'):
+    self.start_date = start_date
+    self.end_date = end_date
+    self.dir = dir
+    sector_file = 'us_equity_sector.csv'
+    self.sectors = list(us_dir1_load_csv(dir0 = 'symbol', dir1 = dir, filename = sector_file)['name'].values)
+
   @abstractmethod
   def preprocess(self, data):
     pass
@@ -344,9 +348,13 @@ class FactorBase(ABC):
       # return pd.DataFrame(na_lwma, index=df.index, columns=df.columns)
       return pd.Series(na_lwma, index=df.index, name=df.name)
 
-  def processing(self, symbol):
+  def processing(self, symbol, sector_price_ratio):
 
-    df = us_equity_daily_data_read_csv(symbol, dir_option = 'xq')
+    df = us_equity_daily_data_load(symbols = [symbol], start_date = self.start_date,
+                                      end_date = self.end_date, trade_option = "all", 
+                                      dir_option = "xq")
+    
+    df = pd.concat([df, sector_price_ratio])
 
     # Insert symbol as the first level of a MultiIndex
     df.index = pd.MultiIndex.from_product([[symbol], df.index])
@@ -373,17 +381,30 @@ class FactorBase(ABC):
     subclass_name = self.__class__.__name__
     us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
 
-  def parallel_procssing(self):
+  def parallel_procssing(self, symbols, sector_price_ratio):
 
       @multitasking.task
       def start(symbol: str):
-          s = self.processing(symbol)
+          s = self.processing(symbol, sector_price_ratio)
           series.append(s)
           pbar.update()
           pbar.set_description(f'Processing => {symbol}')
 
       series: List[pd.Series] = []
-      pbar = tqdm(total=len(self.symbols))
-      for symbol in self.symbols:
+      pbar = tqdm(total=len(symbols))
+      for symbol in symbols:
           start(symbol)
       multitasking.wait_for_tasks()
+
+  def calc(self):
+    for sector in self.sectors:
+
+      print(f"processing {sector} ...")
+
+      sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv").loc[:, sector]
+      sector_price_ratio.columns = ["sector_price_ratio"]
+
+      data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
+      if (data_symbols.empty == False):
+        symbols = data_symbols['symbol'].values
+        self.parallel_procssing(symbols, sector_price_ratio)

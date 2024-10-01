@@ -20,11 +20,11 @@ if __name__ == "__main__":
 
   df_index = SectorsRatio(sectors, start_date, end_date, trade_option = 'market_capital', dir = 'xq')
   df = df_index.ratio()
-  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='xq_index_price_ratio' + '.csv', data = df)
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='index_price_ratio' + '.csv', data = df)
 
   df_index = SectorsRatio(sectors, start_date, end_date, trade_option = 'amount', dir = 'xq')
   df = df_index.ratio()
-  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='xq_index_amount_ratio' + '.csv', data = df)
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='index_amount_ratio' + '.csv', data = df)
 
 
   sector_file = 'us_equity_sector.csv'
@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
   df_index = SectorsRatio(sectors, start_date, end_date, trade_option = 'market_capital', dir = 'fh')
   df = df_index.ratio()
-  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'fh', filename='fh_index_price_ratio' + '.csv', data = df)
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'fh', filename='index_price_ratio' + '.csv', data = df)
 
   df_index = SectorsRatio(sectors, start_date, end_date, trade_option = 'amount', dir = 'fh')
   df = df_index.ratio()
-  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'fh', filename='fh_index_amount_ratio' + '.csv', data = df)
+  us_dir1_store_csv(dir0 = 'symbol', dir1 = 'fh', filename='index_amount_ratio' + '.csv', data = df)

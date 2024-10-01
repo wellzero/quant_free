@@ -7,16 +7,10 @@ from quant_free.dataset.us_equity_load import *
 from quant_free.factor.alpha_101 import *
 
 if __name__ == "__main__":
-    # us_equity_symbol_download()
 
-    # symbols = us_equity_symbol_load()
-    symbols = ['AAPL']
-    
-    alpha101 = Alpha101(symbols)
-    alpha101.processing('AAPL')
-    # print(symbols.head(10))
+  start_date = get_json_config_value("start_date")
+  end_date = get_json_config_value("end_date")
 
-    # finance report
-    # us_equity_xq_finance_data_download(symbols)
 
-    # equity and sector download
+  alpha_101_ = Alpha101(start_date, end_date, dir = 'xq')
+  df = alpha_101_.calc()

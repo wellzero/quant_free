@@ -17,10 +17,9 @@ from quant_free.factor.base import FactorBase
 
 class Alpha101(FactorBase):
 
-  def __init__(self, symbols):
+  def __init__(self, start_date, end_date, dir = 'fh'):
 
-    self.symbols = symbols
-    super().__init__(symbols)
+    super().__init__(start_date, end_date, dir)
 
   def preprocess(self, data):
       returns = self.get_current_return(data,'close')
@@ -30,7 +29,7 @@ class Alpha101(FactorBase):
       # {'Open', 'cap', 'close', 'high', 'ind', 'low', 'returns', 'volume', 'vwap'}
       data = pd.concat([data, returns, ret_forward], axis=1)
       data = data.assign(vwap=data.amount/(data.volume*100))
-      data.rename(columns = {"open":"Open",'market_capital':'cap','industry':'ind'}, inplace=True)
+      data.rename(columns = {"open":"Open",'market_capital':'cap','sector_price_ratio':'ind'}, inplace=True)
       data['cap']=data['cap']/data['close'] # 数据取出来的是市值
 
 

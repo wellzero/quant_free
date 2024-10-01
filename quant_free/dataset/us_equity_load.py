@@ -14,7 +14,7 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', trade_option = all, dir_option = ''):
+def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', trade_option = "all", dir_option = ''):
   data = {}
   trade_date_time = us_equity_get_trade_date_within_range(start_date = start_date, end_date = end_date, dir_option = dir_option)
 
@@ -53,7 +53,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
           df_filled_select = df_filled.loc[trade_date_time,:]
           # df_filled_select.index = df_filled_select.index.strftime('%Y-%m-%d')
 
-          if(trade_option == all):
+          if(trade_option == "all"):
             data[symbol] = df_filled_select
           else:
             data[symbol] = df_filled_select.loc[:, trade_option]
