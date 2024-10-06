@@ -18,6 +18,7 @@ def us_equity_daily_data_read_csv(symbol = 'AAPL', dir_option = ''):
   if 'timestamp' in data.columns:
     data.rename(columns={'timestamp': 'date'}, inplace=True)
   data.set_index('date', inplace=True)
+  data = data.sort_index()
   return data
 
 def us_equity_get_trade_dates():
@@ -33,7 +34,7 @@ def us_equity_get_trade_date_within_range(symbol = "AAPL", start_date = '2023-05
   
   trade_dates = filtered_data.index
 
-  trade_dates_time = pd.to_datetime(trade_dates).date
+  trade_dates_time = pd.to_datetime(pd.to_datetime(trade_dates).date)
 
   return trade_dates_time
 

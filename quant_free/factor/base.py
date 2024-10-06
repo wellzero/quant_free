@@ -47,7 +47,8 @@ class FactorBase(ABC):
       :param column: {string}
       :return: {pd.Series}
       '''
-      ret = stocks_df[column].groupby(level=1, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+      # ret = stocks_df[column].groupby(level=1, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+      ret = stocks_df[column].pct_change(1).shift(-1)
       ret.name = 'ret_forward'
       return ret
 
@@ -58,7 +59,8 @@ class FactorBase(ABC):
       :param stride: {int} --计算收益的跨度
       注意：当期回报有可能也包含未来信息。
       '''
-      ret = stocks_df[column].groupby(level=1, group_keys=False).apply(lambda x:(x/x.shift(stride)-1))
+      # ret = stocks_df[column].groupby(level=1, group_keys=False).apply(lambda x:(x/x.shift(stride)-1))
+      ret = stocks_df[column].pct_change(stride)
       ret.name = 'ret'
       return ret
 
@@ -348,7 +350,7 @@ class FactorBase(ABC):
       # return pd.DataFrame(na_lwma, index=df.index, columns=df.columns)
       return pd.Series(na_lwma, index=df.index, name=df.name)
 
-  def processing(self, symbol, sector_price_ratio):
+  def calc_1_symbol(self, symbol, sector_price_ratio):
 
     dict_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, trade_option = "all", 
@@ -382,11 +384,11 @@ class FactorBase(ABC):
       subclass_name = self.__class__.__name__
       us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
 
-  def parallel_procssing(self, symbols, sector_price_ratio):
+  def parallel_calc(self, symbols, sector_price_ratio):
 
       @multitasking.task
       def start(symbol: str):
-          s = self.processing(symbol, sector_price_ratio)
+          s = self.calc_1_symbol(symbol, sector_price_ratio)
           series.append(s)
           pbar.update()
           pbar.set_description(f'Processing => {symbol}')
@@ -403,9 +405,13 @@ class FactorBase(ABC):
       print(f"processing {sector} ...")
 
       sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv").loc[:, sector]
-      sector_price_ratio.columns = ["sector_price_ratio"]
+
+      # sector_price_ratio.rename(columns = {sector:"sector_price_ratio"}, inplace=True)
+      # sector_price_ratio.rename(columns={sector:"sector_price_ratio"}, inplace=True)
+      sector_price_ratio.name = "sector_price_ratio"
 
       data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
       if (data_symbols.empty == False):
-        symbols = data_symbols['symbol'].values
-        self.parallel_procssing(symbols, sector_price_ratio)
+        # symbols = data_symbols['symbol'].values
+        symbols = ['AAPL']
+        self.parallel_calc(symbols, sector_price_ratio)
