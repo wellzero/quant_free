@@ -418,6 +418,6 @@ class FactorBase(ABC):
 
       data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
       if (data_symbols.empty == False):
-        # symbols = data_symbols['symbol'].values
-        symbols = ['AAPL']
+        symbols = data_symbols['symbol'].values
+        # symbols = ['AAPL']
         self.parallel_calc(symbols, sector_price_ratio)
