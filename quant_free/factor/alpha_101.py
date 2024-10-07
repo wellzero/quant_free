@@ -128,21 +128,24 @@ class Alpha101(FactorBase):
 
 
   def alpha9(self, close):
-      self.delta_close = self.delta(close, 1)
-      x1 = self.ts_min(self.delta_close, 5) > 0
-      x2 = self.ts_max(self.delta_close, 5) < 0
-      alpha = -1 * self.delta_close
-      alpha[x1 | x2] = self.delta_close
+      delta_close = self.delta(close, 1)
+      x1 = self.ts_min(delta_close, 5) > 0
+      x2 = self.ts_max(delta_close, 5) < 0
+      alpha = -1 * delta_close
+      alpha[x1 | x2] = delta_close
       return alpha
 
 
   def alpha10(self, close):
-      self.delta_close = self.delta(close, 1)
-      x1 = self.ts_min(self.delta_close, 4) > 0
-      x2 = self.ts_max(self.delta_close, 4) < 0
-      x = -1 * self.delta_close
-      # x[x1 | x2] = self.delta_close
-      x.loc[x1 | x2] = self.delta_close
+      delta_close = self.delta(close, 1)
+      x1 = self.ts_min(delta_close, 4) > 0
+      x2 = self.ts_max(delta_close, 4) < 0
+      # Ensure that x1 and x2 have the same index as delta_close (and hence 'x')
+      x1 = x1.reindex(delta_close.index)
+      x2 = x2.reindex(delta_close.index)
+      x = -1 * delta_close
+      # x[x1 | x2] = delta_close
+      x.loc[x1 | x2] = delta_close
       alpha = self.rank(x)
       return alpha
 
@@ -286,9 +289,9 @@ class Alpha101(FactorBase):
 
 
   def alpha30(self, close, volume):
-      self.delta_close = self.delta(close, 1)
-      x = np.sign(self.delta_close) + np.sign(self.delay(self.delta_close, 1)) + \
-          np.sign(self.delay(self.delta_close, 2))
+      delta_close = self.delta(close, 1)
+      x = np.sign(delta_close) + np.sign(self.delay(delta_close, 1)) + \
+          np.sign(self.delay(delta_close, 2))
       alpha = ((1.0 - self.rank(x)) * self.ts_sum(volume, 5)) / self.ts_sum(volume, 20)
       return alpha
 
