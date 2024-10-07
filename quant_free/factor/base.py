@@ -74,6 +74,11 @@ class FactorBase(ABC):
           注：一般来说，顺序是 去极值->中性化->标准化
           注：单截面操作
       '''
+      data.ffill(inplace=True)
+      data.bfill(inplace=True)
+      factor.ffill(inplace=True)
+      factor.bfill(inplace=True)
+      
       if factor.index.is_monotonic_increasing == False or data.index.is_monotonic_increasing == False:
           import warnings
           warnings.warn('factor or data should be sorted, 否则有可能会造成会自变量和因变量匹配错误',UserWarning)
@@ -365,7 +370,12 @@ class FactorBase(ABC):
       # Insert symbol as the first level of a MultiIndex
       df.index = pd.MultiIndex.from_product([[symbol], df.index])
 
+      print(f'preprocessing {symbol}')
+
       df_preprocess = self.preprocess(df)
+
+      df_preprocess.ffill(inplace=True)
+      df_preprocess.bfill(inplace=True)
 
       df_stored =  copy.deepcopy(df_preprocess)
 
@@ -419,5 +429,5 @@ class FactorBase(ABC):
       data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
       if (data_symbols.empty == False):
         symbols = data_symbols['symbol'].values
-        # symbols = ['AAPL']
+        # symbols = ['OIS', 'FET', 'WTTR']
         self.parallel_calc(symbols, sector_price_ratio)
