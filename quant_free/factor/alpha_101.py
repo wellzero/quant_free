@@ -44,17 +44,17 @@ class Alpha101(FactorBase):
       volume_ind = self.neutralize(data.volume, data['ind'],categorical=['ind'])
       volume_ind.name = 'volume_ind'
 
-      adv20 = self.excute_for_multidates(data.volume, lambda x:x.rolling(20).agg('mean'), level=1)
+      adv20 = self.excute_for_multidates(data.volume, lambda x:x.rolling(20).agg('mean'), level=0)
       adv20 = pd.concat([adv20,data['ind']],axis=1).dropna()
       adv20_ind = self.neutralize(adv20.volume, adv20['ind'],categorical=['ind'])
       adv20_ind.name = 'adv20_ind'
 
-      adv40 = self.excute_for_multidates(data.volume, lambda x:x.rolling(40).agg('mean'), level=1)
+      adv40 = self.excute_for_multidates(data.volume, lambda x:x.rolling(40).agg('mean'), level=0)
       adv40 = pd.concat([adv40, data['ind']],axis=1).dropna()
       adv40_ind = self.neutralize(adv40.volume, adv40['ind'],categorical=['ind'])
       adv40_ind.name = 'adv40_ind'
 
-      adv81 = self.excute_for_multidates(data.volume, lambda x:x.rolling(81).agg('mean'), level=1)
+      adv81 = self.excute_for_multidates(data.volume, lambda x:x.rolling(81).agg('mean'), level=0)
       adv81 = pd.concat([adv81, data['ind']],axis=1).dropna()
       adv81_ind = self.neutralize(adv81.volume, adv81['ind'],categorical=['ind'])
       adv81_ind.name = 'adv81_ind'
@@ -78,8 +78,8 @@ class Alpha101(FactorBase):
   # 因子函数
   def alpha1(self, close, returns):
       x =  copy.deepcopy(close)
-      x[returns < 0] = self.self.stddev(returns, 20)
-      alpha = self.rank(self.self.ts_argmax(x ** 2, 5))-0.5
+      x[returns < 0] = self.stddev(returns, 20)
+      alpha = self.rank(self.ts_argmax(x ** 2, 5))-0.5
       return alpha
 
   def alpha2(self, Open, close, volume):
@@ -236,7 +236,8 @@ class Alpha101(FactorBase):
       x = self.sma(high, 20) < high
       alpha = pd.DataFrame(np.zeros_like(close), index=close.index, columns=['alpha23'])
       a = -1 * self.delta(high, 2).fillna(value=0)
-      alpha['alpha23'][x] = a
+      # alpha['alpha23'][x] = a
+      alpha.loc[x, 'alpha23'] = a
       return alpha
 
 

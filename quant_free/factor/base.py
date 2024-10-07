@@ -16,6 +16,7 @@ import copy
 
 from abc import ABC, abstractmethod
 from typing import List
+import inspect
 
 import threading
 import multitasking
@@ -47,8 +48,8 @@ class FactorBase(ABC):
       :param column: {string}
       :return: {pd.Series}
       '''
-      # ret = stocks_df[column].groupby(level=1, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
-      ret = stocks_df[column].pct_change(1).shift(-1)
+      ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+      # ret = stocks_df[column].pct_change(1).shift(-1)
       ret.name = 'ret_forward'
       return ret
 
@@ -59,8 +60,8 @@ class FactorBase(ABC):
       :param stride: {int} --计算收益的跨度
       注意：当期回报有可能也包含未来信息。
       '''
-      # ret = stocks_df[column].groupby(level=1, group_keys=False).apply(lambda x:(x/x.shift(stride)-1))
-      ret = stocks_df[column].pct_change(stride)
+      ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(stride)-1))
+      # ret = stocks_df[column].pct_change(stride)
       ret.name = 'ret'
       return ret
 
@@ -328,8 +329,10 @@ class FactorBase(ABC):
   # 线性衰减的移动平均加权
   def decay_linear(self, df, period):
       if df.isnull().values.any():
-          df.fillna(method='ffill', inplace=True)
-          df.fillna(method='bfill', inplace=True)
+          # df.fillna(method='ffill', inplace=True)
+          # df.fillna(method='bfill', inplace=True)
+          df.ffill(inplace=True)
+          df.bfill(inplace=True)
           df.fillna(value=0, inplace=True)
       na_lwma = np.zeros_like(df)  # 生成与df大小相同的零数组
   
@@ -357,7 +360,7 @@ class FactorBase(ABC):
                                       dir_option = "xq")
     
     if(len(dict_data) == 1):
-      df = pd.concat([dict_data[symbol], sector_price_ratio])
+      df = pd.concat([dict_data[symbol], sector_price_ratio], axis=1)
 
       # Insert symbol as the first level of a MultiIndex
       df.index = pd.MultiIndex.from_product([[symbol], df.index])
@@ -377,7 +380,10 @@ class FactorBase(ABC):
               if callable(method):
                   # Call the method
                   print(f"Calling {method_name}...")
-                  result = method(df_preprocess)
+                  params = inspect.signature(getattr(self, method_name)).parameters.keys()
+                  input_args = [df_preprocess[param].copy() for param in params]
+                  result = method(*input_args)
+                  
                   result.name = method_name
                   df_stored = pd.concat([df_stored, result], axis = 1)
       
