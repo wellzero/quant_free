@@ -141,7 +141,8 @@ class Alpha101(FactorBase):
       x1 = self.ts_min(self.delta_close, 4) > 0
       x2 = self.ts_max(self.delta_close, 4) < 0
       x = -1 * self.delta_close
-      x[x1 | x2] = self.delta_close
+      # x[x1 | x2] = self.delta_close
+      x.loc[x1 | x2] = self.delta_close
       alpha = self.rank(x)
       return alpha
 
