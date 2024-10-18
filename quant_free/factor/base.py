@@ -361,7 +361,7 @@ class FactorBase(ABC):
   def calc_1_symbol(self, symbol, sector_price_ratio):
 
     dict_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.start_date,
-                                      end_date = self.end_date, trade_option = "all", 
+                                      end_date = self.end_date, column_option = "all", 
                                       dir_option = "xq")
     
     if(len(dict_data) == 1):

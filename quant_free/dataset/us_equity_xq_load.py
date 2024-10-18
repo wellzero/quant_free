@@ -34,28 +34,25 @@ def us_equity_xq_search_sort_date(report_dates):
    dates = [x.replace("QA", "FY") for x in dates]
    return dates
 
-def us_equity_xq_load_csv(symbol, file_name, title, provider = "xq" ):
+import os
+import pandas as pd
+import ast
+import warnings
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+warnings.filterwarnings('ignore')
+
+def us_equity_xq_load_csv(symbol, file_name, title, provider="xq"):
+    equity_folder = us_equity_sub_folder(symbol=symbol, sub_dir=provider)
     file = os.path.join(equity_folder, file_name + '.csv')
 
     df_ = pd.read_csv(file)
-    # Perform the operations
+
     title_cn = [title[key] if key in title else key for key in df_.columns[GLOBAL_XQ_IGNORE_COLUMNS:]]
     df_.columns = list(df_.columns[:GLOBAL_XQ_IGNORE_COLUMNS]) + title_cn  # Rename columns
-    
-    df_['report_name'] = df_['report_name'].str.replace('年', '/')  # Replace '年' with '/'
-    df_.set_index('report_name', inplace=True)  # Set 'report_date' as index
-    
-    # # Function to extract the first value from lists with more than one element
-    # def get_first_value(cell):
-    #     if isinstance(cell, list) and len(cell) > 1:
-    #         return cell[0]
-    #     return cell
 
-    # # Apply the function to each cell in the DataFrame
-    # df_first_values = df_.applymap(get_first_value)
-    
+    df_['report_name'] = df_['report_name'].str.replace('年', '/')  # Replace '年' with '/'
+    df_.set_index('report_name', inplace=True)  # Set 'report_name' as index
+
     # Function to convert string representation of lists to actual lists
     def str_to_list(cell):
         try:
@@ -74,15 +71,70 @@ def us_equity_xq_load_csv(symbol, file_name, title, provider = "xq" ):
 
     # Apply the function to get the first value in each cell
     df_first_values = df_.applymap(get_first_value)
-    
+
+    # Sort values by 'report_date'
     df_first_values = df_first_values.sort_values(by='report_date', ascending=True)
 
-    df_first_values = df_first_values.replace('--', 0)
-    df_first_values = df_first_values.replace('_', 0)
-    df_first_values = df_first_values.replace('None', 0)
-    df_first_values = df_first_values.fillna(0)
-    
+    # Replace specified values and fill NaNs
+    replacements = {'--': 0, '_': 0, 'None': 0}
+    df_first_values.replace(replacements, inplace=True)
+
+    # Fill NaNs and then infer objects to avoid downcasting warnings
+    df_first_values.fillna(0, inplace=True)
+    df_first_values = df_first_values.infer_objects()
+
     return df_first_values
+
+
+# def us_equity_xq_load_csv(symbol, file_name, title, provider = "xq" ):
+
+#     equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+#     file = os.path.join(equity_folder, file_name + '.csv')
+
+#     df_ = pd.read_csv(file)
+#     # Perform the operations
+#     title_cn = [title[key] if key in title else key for key in df_.columns[GLOBAL_XQ_IGNORE_COLUMNS:]]
+#     df_.columns = list(df_.columns[:GLOBAL_XQ_IGNORE_COLUMNS]) + title_cn  # Rename columns
+    
+#     df_['report_name'] = df_['report_name'].str.replace('年', '/')  # Replace '年' with '/'
+#     df_.set_index('report_name', inplace=True)  # Set 'report_date' as index
+    
+#     # # Function to extract the first value from lists with more than one element
+#     # def get_first_value(cell):
+#     #     if isinstance(cell, list) and len(cell) > 1:
+#     #         return cell[0]
+#     #     return cell
+
+#     # # Apply the function to each cell in the DataFrame
+#     # df_first_values = df_.applymap(get_first_value)
+    
+#     # Function to convert string representation of lists to actual lists
+#     def str_to_list(cell):
+#         try:
+#             return ast.literal_eval(cell)
+#         except (ValueError, SyntaxError):
+#             return cell
+
+#     # Apply the conversion function to each cell in the DataFrame
+#     df_ = df_.applymap(str_to_list)
+
+#     # Function to extract the first value from lists with more than one element
+#     def get_first_value(cell):
+#         if isinstance(cell, list) and len(cell) > 1:
+#             return cell[0]
+#         return cell
+
+#     # Apply the function to get the first value in each cell
+#     df_first_values = df_.applymap(get_first_value)
+    
+#     df_first_values = df_first_values.sort_values(by='report_date', ascending=True)
+
+#     df_first_values = df_first_values.replace('--', 0)
+#     df_first_values = df_first_values.replace('_', 0)
+#     df_first_values = df_first_values.replace('None', 0)
+#     df_first_values = df_first_values.fillna(0)
+    
+#     return df_first_values
 
 def us_equity_xq_balance_load_csv(symbol, dates, file_name, provider = "xq" ):
 

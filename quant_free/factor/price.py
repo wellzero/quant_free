@@ -1,5 +1,6 @@
 
 from quant_free.common.us_equity_common import *
+from quant_free.dataset.us_equity_load import *
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -65,3 +66,35 @@ def finance_calculate_ratio_changes(df_factor, days_before, days_after):
             print(f"price processing error {symbol}")
 
     return df_factor.round(2)
+
+class PriceRatio:
+  def __init__(self, start_date, end_date, symbol = 'AAPL', column_option = 'close', dir_option = 'xq'):
+
+    self.start_date = start_date
+    self.end_date = end_date
+    self.symbol = symbol
+    self.column_option = column_option
+    self.dir_option = dir_option
+
+    df_daily_trade = us_equity_data_load(symbol = symbol, dir_option = dir_option)[column_option]
+    df_daily_trade.index = pd.to_datetime(pd.to_datetime(df_daily_trade.index).date)
+    self.df_daily_trade = df_daily_trade
+    return
+
+  # If you use periods=-1 in the DataFrame.pct_change() method, 
+  # it calculates the percentage change between the current element and the next element. 
+  # Essentially, it looks ahead instead of behind.
+  def price_ratio(self, periods = 1):
+    
+    df_ratio = self.df_daily_trade.pct_change(periods = periods)
+    
+    trade_date_time = us_equity_load_trade_date_within_range(start_date = self.start_date, end_date = self.end_date, dir_option = self.dir_option)
+
+
+    
+    df_filled = df_ratio.reindex(trade_date_time, method = 'bfill')
+    # df_filled = df_filled.reindex(trade_date_time, fill_value=0)
+
+    df_filled_select = df_filled.loc[trade_date_time]
+    
+    return df_filled_select
