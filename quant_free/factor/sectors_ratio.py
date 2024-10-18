@@ -1,12 +1,12 @@
 from quant_free.dataset.us_equity_load import *
 
 class SectorsRatio:
-  def __init__(self, sectors, start_date, end_date, trade_option = 'market_capital', dir = 'fh'):
+  def __init__(self, sectors, start_date, end_date, column_option = 'market_capital', dir = 'fh'):
      self.sectors = sectors
      self.start_date = start_date
      self.end_date = end_date
      self.dir = dir
-     self.trade_option = trade_option
+     self.column_option = column_option
 
   def calc(self):
       dict_index = {}
@@ -17,7 +17,7 @@ class SectorsRatio:
           symbols = data_symbols['symbol'].values
 
           data = us_equity_daily_data_load(symbols = symbols, start_date = self.start_date,
-                                            end_date = self.end_date, trade_option = self.trade_option, 
+                                            end_date = self.end_date, column_option = self.column_option, 
                                             dir_option = 'xq')
           if (len(data) > 0):
             df = pd.DataFrame(data)

@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # print(symbols.head(10))
 
     # finance report
-    # us_equity_xq_finance_data_download(symbols)
+    us_equity_xq_finance_data_download(symbols)
 
     # equity and sector download
     us_equity_xq_euquity_data_download()
