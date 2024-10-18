@@ -2,9 +2,14 @@
 
 ### Motivation
 
-금융 연구에 있어서 가장 보편적으로 알려진 실수는 특정 데이터를 선택한 후, 머신러닝 알고리즘을 실행하고, 예측에 백테스트를 수행하며, 근사한 백테스트 결과가 나올 때까지 이 과정을 반복하는 것이다.
-학술지에는 이런 가짜 발견들로 가득 차 있고, 대형 헤지 펀드조자 이런 함정에 계속해서 빠져든다. 백테스트가 walk forward 샘플 외 테스트라고 하더라도 문제는 계속 발생할 수 있다.
-동일한 데이터에 대해 지속적으로 테스트를 반복하면 잘못된 발견으로 귀결될 가능성이 높은 것이다.
+Here's the translation:
 
-이런 방법론적 오류는 통계학자들 사이에 악명이 높아 과학적 사기라 간주되기도 하며, 미국 통계 협회 윤리 강령에도 이에 대한 주의가 포함되어 있다. 표준 유의 수준 5%에 부합하는 투자 전략을 발견하는 데에는 대개 20번 정도의 반복이면 가능하다.
-이번 장에서는 이런 접근법이 왜 시간과 돈 낭비인지 알아보고, Feature importance가 어떻게 대안을 제시하는지 살펴보자.
+---
+
+One of the most commonly known mistakes in financial research is to select a specific dataset, run a machine learning algorithm, conduct backtesting on the predictions, and repeat this process until satisfactory backtesting results are achieved. Academic journals are filled with such false discoveries, and even large hedge funds continue to fall into this trap. The problem persists even when backtesting is done using walk-forward out-of-sample testing.
+
+Continuously repeating tests on the same data is likely to lead to false discoveries.
+
+This methodological error is notorious among statisticians and is sometimes considered scientific fraud, with warnings about it included in the ethical guidelines of the American Statistical Association. Generally, discovering an investment strategy that meets a standard significance level of 5% is possible after about 20 repetitions.
+
+In this chapter, we will explore why this approach is a waste of time and money and examine how feature importance can offer an alternative.

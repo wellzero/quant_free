@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 # def calculate_ratio_changes(symbol, target_date, days_before, days_after):
 #     # Convert the input data to a pandas DataFrame
 
-#     df = us_equity_daily_data_read_csv(symbol)
+#     df = us_equity_data_load(symbol)
 #     df.index = pd.to_datetime(df.index)
 
 #     # Find the nearest date in the data frame
@@ -32,7 +32,7 @@ def finance_calculate_ratio_changes(df_factor, days_before, days_after):
     for symbol, symbol_data in df_factor.groupby(level='symbol'):
         # print("symbol: ", symbol)
         try:
-            df = us_equity_daily_data_read_csv(symbol = symbol)
+            df = us_equity_data_load(symbol = symbol)
             df.index = pd.to_datetime(df.index)
             date_index = df.index
             # Iterate over each row in the symbol data

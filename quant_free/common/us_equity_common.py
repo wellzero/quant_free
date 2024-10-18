@@ -8,12 +8,12 @@ from quant_free.utils.us_equity_utils import *
 
 _this_dir = Path(__file__).parent.parent
 
-def us_equity_daily_data_read_csv(symbol = 'AAPL', dir_option = ''):
+def us_equity_data_load(symbol = 'AAPL', dir_option = '', flie_name = 'daily.csv'):
   equity_folder = us_equity_folder(symbol = symbol)
   if dir_option == '':
-    equity_file = os.path.join(equity_folder, 'daily.csv')
+    equity_file = os.path.join(equity_folder, flie_name)
   else:
-    equity_file = os.path.join(equity_folder, dir_option, 'daily.csv')
+    equity_file = os.path.join(equity_folder, dir_option, flie_name)
   data = pd.read_csv(equity_file)
   if 'timestamp' in data.columns:
     data.rename(columns={'timestamp': 'date'}, inplace=True)
@@ -22,13 +22,13 @@ def us_equity_daily_data_read_csv(symbol = 'AAPL', dir_option = ''):
   return data
 
 def us_equity_get_trade_dates():
-  df = us_equity_daily_data_read_csv()
+  df = us_equity_data_load()
   return df.index
 
 def us_equity_get_trade_date_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
 
     # Download historical stock data
-  stock_data = us_equity_daily_data_read_csv(symbol = symbol, dir_option = dir_option)
+  stock_data = us_equity_data_load(symbol = symbol, dir_option = dir_option)
 
   filtered_data = stock_data.loc[start_date:end_date]
   

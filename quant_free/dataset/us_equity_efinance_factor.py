@@ -141,7 +141,7 @@ class us_equity_efinance_factor:
     df_dates = df.index
     df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
-    daily_data = us_equity_daily_data_read_csv(symbol)['close']
+    daily_data = us_equity_data_load(symbol)['close']
     daily_trade_dates = daily_data.index
 
     dates = []

@@ -34,7 +34,7 @@ def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end
       # try:
         # print(f"loading {symbol} trade data...")
 
-        data_tmp = us_equity_daily_data_read_csv(symbol, dir_option)
+        data_tmp = us_equity_data_load(symbol, dir_option)
         # data_tmp = data_tmp.loc[start_date:end_date]
         # data_tmp = data_tmp[(data_tmp['date'] >= start_date) & (data_tmp['date'] <= end_date)]
         rows, columns = data_tmp.shape
