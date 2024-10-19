@@ -16,7 +16,7 @@ class SectorsRatio:
         if (data_symbols.empty == False):
           symbols = data_symbols['symbol'].values
 
-          data = us_equity_daily_data_load(symbols = symbols, start_date = self.start_date,
+          data = us_equity_data_load_within_range(symbols = symbols, start_date = self.start_date,
                                             end_date = self.end_date, column_option = self.column_option, 
                                             dir_option = 'xq')
           if (len(data) > 0):

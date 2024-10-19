@@ -360,7 +360,7 @@ class FactorBase(ABC):
 
   def calc_1_symbol(self, symbol, sector_price_ratio):
 
-    dict_data = us_equity_daily_data_load(symbols = [symbol], start_date = self.start_date,
+    dict_data = us_equity_data_load_within_range(symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 
                                       dir_option = "xq")
     

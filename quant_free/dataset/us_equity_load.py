@@ -24,7 +24,7 @@ def us_equity_data_load(symbol = 'AAPL', dir_option = '', flie_name = 'daily.csv
   data = data.sort_index()
   return data
 
-def us_equity_load_trade_date_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
+def us_equity_tradedate_load_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
 
     # Download historical stock data
   stock_data = us_equity_data_load(symbol = symbol, dir_option = dir_option)
@@ -46,9 +46,9 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def us_equity_daily_data_load(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', column_option = "all", dir_option = '', file_name = 'daily.csv'):
+def us_equity_data_load_within_range(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', column_option = "all", dir_option = '', file_name = 'daily.csv'):
   data = {}
-  trade_date_time = us_equity_load_trade_date_within_range(start_date = start_date, end_date = end_date, dir_option = 'xq')
+  trade_date_time = us_equity_tradedate_load_within_range(start_date = start_date, end_date = end_date, dir_option = 'xq')
 
   # symbols = symbols.remove(0)
 
@@ -105,4 +105,4 @@ def us_equity_sector_daily_data_load(sector_name = '半导体产品与设备', s
 
   symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename= sector_name +'.csv')['symbol'].values
 
-  return us_equity_daily_data_load(symbols = symbols, start_date = start_date, end_date = end_date, column_option = column_option, dir_option = dir_option)
+  return us_equity_data_load_within_range(symbols = symbols, start_date = start_date, end_date = end_date, column_option = column_option, dir_option = dir_option)

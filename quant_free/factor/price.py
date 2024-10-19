@@ -88,7 +88,7 @@ class PriceRatio:
     
     df_ratio = self.df_daily_trade.pct_change(periods = periods)
     
-    trade_date_time = us_equity_load_trade_date_within_range(start_date = self.start_date, end_date = self.end_date, dir_option = self.dir_option)
+    trade_date_time = us_equity_tradedate_load_within_range(start_date = self.start_date, end_date = self.end_date, dir_option = self.dir_option)
 
 
     

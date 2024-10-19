@@ -17,7 +17,7 @@ def us_equity_get_trade_dates():
 def us_equity_get_trade_date_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
 
   # Download historical stock data
-  trade_dates_time = us_equity_load_trade_date_within_range(symbol, start_date, end_date, dir_option)
+  trade_dates_time = us_equity_tradedate_load_within_range(symbol, start_date, end_date, dir_option)
 
   return trade_dates_time
 
