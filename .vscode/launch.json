@@ -10,7 +10,9 @@
       "name": "Python: Current File",
       "type": "debugpy",
       "request": "launch",
-      "program": "dataset/test/test_us_equity.py",
+      // "program": "dataset/test/test_us_equity.py",
+      "program": "test/test_us_equity_xq_finance_calc.py",
+      // "program": "test/factors/alpha101.py",
       "console": "integratedTerminal",
       "justMyCode": true
     }
