@@ -10,7 +10,7 @@ webdriver_manager
 undetected_chromedriver
 
 ## AI module
-git+https://github.com/luozero/efinance.git
+git+https://github.com/wellzero/efinance.git
 
 ## misc module
 cufflinks
