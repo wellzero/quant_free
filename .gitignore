@@ -3,5 +3,6 @@
 *.pyc
 *.csv
 *.pkl
+*.png
 data
 config.json

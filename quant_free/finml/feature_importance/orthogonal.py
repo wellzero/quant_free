@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import weightedtau, kendalltau, spearmanr, pearsonr
+
 def get_eigen_vector(dot_matrix, variance_thresh):
     eigen_val, eigen_vec = np.linalg.eigh(dot_matrix)
     idx = eigen_val.argsort()[::-1]
@@ -12,10 +13,21 @@ def get_eigen_vector(dot_matrix, variance_thresh):
     dim = cum_var.values.searchsorted(variance_thresh)
     eigen_val, eigen_vec = eigen_val.iloc[:dim + 1], eigen_vec.iloc[:, :dim + 1]
     return eigen_val, eigen_vec
+  
 def _standardize_df(data_frame):
     return data_frame.sub(data_frame.mean(), axis=1).div(data_frame.std(), axis=1)
+  
 def get_orthogonal_features(feature_df, variance_thresh = 0.95):
     feature_df_standard = _standardize_df(feature_df)
+    
+    nan_columns = feature_df_standard.columns[feature_df_standard.isna().any()].tolist()
+    feature_df_standard = feature_df_standard.dropna(axis=1)
+    
+    # Check if there are any columns with NaN values
+    if nan_columns:
+        # Drop columns with NaN values
+        feature_df = feature_df.drop(columns=nan_columns)
+    
     dot_matrix = pd.DataFrame(np.dot(feature_df_standard.T, feature_df_standard), index=feature_df.columns,
                               columns=feature_df.columns)
     _, eigen_vec = get_eigen_vector(dot_matrix, variance_thresh)
