@@ -16,9 +16,9 @@ def apply_pt_sl_on_t1(close, events, pt_sl, molecule):
         stop_loss = pd.Series(index=events.index)
     for loc, vertical_barrier in events_['t1'].fillna(close.index[-1]).items():
         closing_prices = close[loc: vertical_barrier]
-        cum_returns = (closing_prices / close[loc] - 1) * events_.at[loc, 'side']
-        out.loc[loc, 'sl'] = cum_returns[cum_returns < stop_loss[loc]].index.min()
-        out.loc[loc, 'pt'] = cum_returns[cum_returns > profit_taking[loc]].index.min()
+        cum_returns = (closing_prices / close.loc[loc] - 1) * events_.at[loc, 'side']
+        out.loc[loc, 'sl'] = cum_returns[cum_returns < stop_loss[loc]].dropna().index.min()
+        out.loc[loc, 'pt'] = cum_returns[cum_returns > profit_taking[loc]].dropna().index.min()
     return out
 def add_vertical_barrier(t_events, close, num_days = 0, num_hours = 0, num_minutes = 0, num_seconds = 0):
     timedelta = pd.Timedelta(
@@ -41,8 +41,10 @@ def get_events(close, t_events, pt_sl, target, min_ret, num_threads, vertical_ba
     else:
         side_ = side_prediction.loc[target.index]
         pt_sl_ = pt_sl[:2]
-    events = pd.concat({'t1': vertical_barrier_times, 'trgt': target, 'side': side_}, axis=1)
+    events = pd.concat([vertical_barrier_times, target, side_], axis=1)
+    events.columns = ['t1', 'trgt', 'side']
     events = events.dropna(subset=['trgt'])
+    # events = events.dropna(subset=['t1'])
     first_touch_dates = mp_pandas_obj(func=apply_pt_sl_on_t1,
                                       pd_obj=('molecule', events.index),
                                       num_threads=num_threads,
