@@ -76,12 +76,22 @@ def barrier_touched(out_df, events):
     out_df['bin'] = store
     return out_df
 def meta_labeling(triple_barrier_events, close):
+    '''
+    Compute event's outcome (including side information, if provided).
+    events is a DataFrame where:
+    —events.index is event's starttime
+    —events[’t1’] is event's endtime
+    —events[’trgt’] is event's target
+    —events[’side’] (optional) implies the algo's position side
+    Case 1: (’side’ not in events): bin in (-1,1) <—label by price action
+    Case 2: (’side’ in events): bin in (0,1) <—label by pnl (meta-labeling)
+    '''
     events_ = triple_barrier_events.dropna(subset = ['t1'])
-    all_dates = events_.index.union(other = events_['t1'].values).drop_duplicates()
+    all_dates = events_.index.union(other = events_['t1']).drop_duplicates()
     prices = close.reindex(all_dates, method = 'bfill')
 
     out_df = pd.DataFrame(index = events_.index)
-    out_df['ret'] = np.log(prices.loc[events_['t1'].values].values / prices.loc[events_.index])
+    out_df['ret'] = np.log(prices.loc[events_['t1']].values / prices.loc[events_.index])
     out_df['trgt'] = events_['trgt']
 
     if 'side' in events_:
