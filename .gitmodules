@@ -1,3 +1,6 @@
 [submodule "QuantRL"]
 	path = QuantRL
 	url = git@github.com:luozero/QuantRL.git
+[submodule "lumibot"]
+	path = lumibot
+	url = git@github.com:Lumiwealth/lumibot.git
