@@ -1,3 +1,16 @@
 {
-  "jupyter.notebookFileRoot": "/home/disk1/quant_free"
+  "jupyter.notebookFileRoot": "/home/disk1/quant_free",
+  "terminal.integrated.env.windows": {
+      "HTTP_PROXY": "http://localhost:4080",
+      "HTTPS_PROXY": "http://localhost:4080"
+  },
+  "terminal.integrated.env.linux": {
+      "HTTP_PROXY": "http://localhost:4080",
+      "HTTPS_PROXY": "http://localhost:4080"
+  },
+  "terminal.integrated.env.osx": {
+      "HTTP_PROXY": "http://localhost:4080",
+      "HTTPS_PROXY": "http://localhost:4080"
+  }
+
 }

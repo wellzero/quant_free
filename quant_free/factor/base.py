@@ -22,6 +22,7 @@ import threading
 import multitasking
 from tqdm.auto import tqdm
 
+from quant_free.common.us_equity_common import *
 from quant_free.dataset.us_equity_load import *
 from quant_free.utils.us_equity_utils import *
 
@@ -31,8 +32,6 @@ class FactorBase(ABC):
     self.start_date = start_date
     self.end_date = end_date
     self.dir = dir
-    sector_file = 'us_equity_sector.csv'
-    self.sectors = list(us_dir1_load_csv(dir0 = 'symbol', dir1 = dir, filename = sector_file)['name'].values)
 
   @abstractmethod
   def preprocess(self, data):
@@ -358,7 +357,13 @@ class FactorBase(ABC):
       # return pd.DataFrame(na_lwma, index=df.index, columns=df.columns)
       return pd.Series(na_lwma, index=df.index, name=df.name)
 
-  def calc_1_symbol(self, symbol, sector_price_ratio):
+  def calc_1_symbol(self, symbol, sector_price_ratio = None):
+
+    if sector_price_ratio == None:
+      sector = us_equity_get_sector(symbol, self.dir)
+      sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
+      sector_price_ratio = sector_price_ratio.loc[:, sector]
+      sector_price_ratio.name = "sector_price_ratio"
 
     dict_data = us_equity_data_load_within_range(symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 
@@ -415,25 +420,24 @@ class FactorBase(ABC):
           start(symbol)
       multitasking.wait_for_tasks()
 
-  def calc(self):
-    for sector in self.sectors:
+  def calc(self, sector):
 
-      # sector = '互联网与直销零售'
+    # sector = '互联网与直销零售'
 
-      print(f"processing {sector} ...")
+    print(f"processing {sector} ...")
 
-      sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
+    sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
 
-      if (sector in sector_price_ratio.columns):
-        
-        sector_price_ratio = sector_price_ratio.loc[:, sector]
+    if (sector in sector_price_ratio.columns):
+      
+      sector_price_ratio = sector_price_ratio.loc[:, sector]
 
-        # sector_price_ratio.rename(columns = {sector:"sector_price_ratio"}, inplace=True)
-        # sector_price_ratio.rename(columns={sector:"sector_price_ratio"}, inplace=True)
-        sector_price_ratio.name = "sector_price_ratio"
+      # sector_price_ratio.rename(columns = {sector:"sector_price_ratio"}, inplace=True)
+      # sector_price_ratio.rename(columns={sector:"sector_price_ratio"}, inplace=True)
+      sector_price_ratio.name = "sector_price_ratio"
 
-        data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
-        if (data_symbols.empty == False):
-          symbols = data_symbols['symbol'].values
-          # symbols = ['OIS', 'FET', 'WTTR']
-          self.parallel_calc(symbols, sector_price_ratio)
+      data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
+      if (data_symbols.empty == False):
+        symbols = data_symbols['symbol'].values
+        # symbols = ['OIS', 'FET', 'WTTR']
+        self.parallel_calc(symbols, sector_price_ratio)
