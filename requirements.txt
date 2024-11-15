@@ -12,5 +12,8 @@ undetected_chromedriver
 ## AI module
 git+https://github.com/wellzero/efinance.git
 
+## factor repo
+git+https://github.com:wellzero/factorlab.git
+
 ## misc module
 cufflinks
