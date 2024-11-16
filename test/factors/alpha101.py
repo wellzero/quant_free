@@ -13,4 +13,4 @@ if __name__ == "__main__":
 
 
   alpha_101_ = Alpha101(start_date, end_date, dir = 'xq')
-  df = alpha_101_.calc()
+  df = alpha_101_.calc('互联网与直销零售')

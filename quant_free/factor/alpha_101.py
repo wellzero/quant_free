@@ -2,14 +2,8 @@
 # coding: utf-8
 
 
-from scipy.stats import rankdata
-from dateutil import parser
 import numpy as np
-import numpy.linalg as la
 import pandas as pd
-from datetime import datetime
-import scipy.stats as stats
-import matplotlib.pyplot as plt
 import copy
 
 from quant_free.factor.base import FactorBase

@@ -428,16 +428,14 @@ class FactorBase(ABC):
 
     sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
 
-    if (sector in sector_price_ratio.columns):
-      
-      sector_price_ratio = sector_price_ratio.loc[:, sector]
+    sector_price_ratio = sector_price_ratio.loc[:, sector]
 
-      # sector_price_ratio.rename(columns = {sector:"sector_price_ratio"}, inplace=True)
-      # sector_price_ratio.rename(columns={sector:"sector_price_ratio"}, inplace=True)
-      sector_price_ratio.name = "sector_price_ratio"
+    # sector_price_ratio.rename(columns = {sector:"sector_price_ratio"}, inplace=True)
+    # sector_price_ratio.rename(columns={sector:"sector_price_ratio"}, inplace=True)
+    sector_price_ratio.name = "sector_price_ratio"
 
-      data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
-      if (data_symbols.empty == False):
-        symbols = data_symbols['symbol'].values
-        # symbols = ['OIS', 'FET', 'WTTR']
-        self.parallel_calc(symbols, sector_price_ratio)
+    data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
+    if (data_symbols.empty == False):
+      symbols = data_symbols['symbol'].values
+      # symbols = ['OIS', 'FET', 'WTTR']
+      self.parallel_calc(symbols, sector_price_ratio)

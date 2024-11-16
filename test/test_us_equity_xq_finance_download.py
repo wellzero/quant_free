@@ -8,6 +8,8 @@ from quant_free.dataset.us_equity_load import *
 
 if __name__ == "__main__":
     # us_equity_symbol_download()
+    symbols = ['.IXIC', '.DJI', '.INX']
+    us_equity_xq_daily_data_download(symbols)
 
     # equity and sector download
     us_equity_xq_euquity_data_download()
@@ -19,4 +21,4 @@ if __name__ == "__main__":
     us_equity_xq_daily_data_download(symbols)
 
     # finance report
-    #us_equity_xq_finance_data_download(symbols)
+    # us_equity_xq_finance_data_download(symbols)
