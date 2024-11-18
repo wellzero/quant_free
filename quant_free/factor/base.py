@@ -359,7 +359,9 @@ class FactorBase(ABC):
 
   def calc_1_symbol(self, symbol, sector_price_ratio = None):
 
-    if sector_price_ratio == None:
+    subclass_name = self.__class__.__name__
+    
+    if sector_price_ratio == None and "Trend" != subclass_name:
       sector = us_equity_get_sector(symbol, self.dir)
       sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
       sector_price_ratio = sector_price_ratio.loc[:, sector]
@@ -379,15 +381,10 @@ class FactorBase(ABC):
 
       df_preprocess = self.preprocess(df)
 
-      df_preprocess.ffill(inplace=True)
-      df_preprocess.bfill(inplace=True)
-
-      df_stored =  copy.deepcopy(df_preprocess)
-
-      # Iterate over all attributes of the instance (methods and variables)
-      for method_name in dir(self):
-          # Check if the method name starts with 'alpha'
-          if method_name.startswith("alpha"):
+      if 'Trend' == subclass_name:
+        df_stored =  copy.deepcopy(df)
+        for method_name in dir(self):
+            if method_name.startswith("trend"):
               # Get the method by its name
               method = getattr(self, method_name)
 
@@ -395,14 +392,33 @@ class FactorBase(ABC):
               if callable(method):
                   # Call the method
                   print(f"Calling {method_name}...")
-                  params = inspect.signature(getattr(self, method_name)).parameters.keys()
-                  input_args = [df_preprocess[param].copy() for param in params]
-                  result = method(*input_args)
+                  result = method(df_preprocess)
                   
                   result.name = method_name
                   df_stored = pd.concat([df_stored, result], axis = 1)
+      else:
+        df_preprocess.ffill(inplace=True)
+        df_preprocess.bfill(inplace=True)
+
+        df_stored =  copy.deepcopy(df_preprocess)
+        # Iterate over all attributes of the instance (methods and variables)
+        for method_name in dir(self):
+            # Check if the method name starts with 'alpha'
+            if method_name.startswith("alpha"):
+                # Get the method by its name
+                method = getattr(self, method_name)
+
+                # Ensure that the attribute is a callable (method)
+                if callable(method):
+                    # Call the method
+                    print(f"Calling {method_name}...")
+                    params = inspect.signature(getattr(self, method_name)).parameters.keys()
+                    input_args = [df_preprocess[param].copy() for param in params]
+                    result = method(*input_args)
+                    
+                    result.name = method_name
+                    df_stored = pd.concat([df_stored, result], axis = 1)
       
-      subclass_name = self.__class__.__name__
       us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
 
   def parallel_calc(self, symbols, sector_price_ratio):

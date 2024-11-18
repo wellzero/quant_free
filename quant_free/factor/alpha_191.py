@@ -348,7 +348,7 @@ class Alpha191(FactorBase):
             xs = pd.DataFrame(np.tile([mkt_ret, smb_ret, hml_ret], (len(d.index),1)), index=d.index, columns=['mkt_ret', 'smb_ret', 'hml_ret'])
             return pd.concat([xs,ret],axis=1)
 
-        factors = excute_for_multidates(self, data, lambda x: make_factors(x),level=0)
+        factors = self.excute_for_multidates(self, data, lambda x: make_factors(x),level=0)
 
         fa_ = factors.dropna()
         date_index = fa_.index.get_level_values(0).unique()
@@ -381,7 +381,7 @@ class Alpha191(FactorBase):
         w = w/w.sum()
         
         residual = residual ** 2
-        final = excute_for_multidates(residual, lambda x: x.rolling(window=20, min_periods=20).apply(lambda x: np.dot(x, w)),level=1)
+        final = self.excute_for_multidates(residual, lambda x: x.rolling(window=20, min_periods=20).apply(lambda x: np.dot(x, w)),level=1)
 
         return final
 
