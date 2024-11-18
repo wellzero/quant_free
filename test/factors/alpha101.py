@@ -12,5 +12,10 @@ if __name__ == "__main__":
   end_date = get_json_config_value("end_date")
 
 
-  alpha_101_ = Alpha101(start_date, end_date, dir = 'xq')
-  df = alpha_101_.calc('互联网与直销零售')
+  # alpha_101_ = Alpha101(start_date, end_date, dir = 'xq')
+  # df = alpha_101_.calc('互联网与直销零售')
+
+  symbol = 'AAPL'
+  tend = Alpha101(start_date, end_date, dir = 'xq')
+  df = tend.calc_1_symbol(symbol)
+  print(df.tail(10))

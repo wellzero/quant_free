@@ -18,9 +18,9 @@ class Alpha191(FactorBase):
 
     def preprocess(self, data):
 
-        returns = self.get_current_return(data,'close')
+        returns = self.get_current_return(data, 1, 'close')
         returns.name = 'returns'
-        ret_forward = self.get_forward_return(data,'close')
+        ret_forward = self.get_forward_return(data, 1, 'close')
         ret_forward.name = 'ret_forward'
         # {'Open', 'cap', 'close', 'high', 'ind', 'low', 'returns', 'volume', 'vwap'}
         data = pd.concat([data, returns, ret_forward], axis=1)

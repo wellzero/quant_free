@@ -4,23 +4,21 @@ import numpy as np
 import pandas as pd
 
 from sklearn import linear_model
-import scipy.stats as st
 
 from scipy.stats import rankdata
 
 import numpy.linalg as la
 import pandas as pd
-from datetime import datetime
-import scipy.stats as stats
 import copy
 
 from abc import ABC, abstractmethod
 from typing import List
 import inspect
 
-import threading
 import multitasking
 from tqdm.auto import tqdm
+
+from factorlab.feature_engineering.transformations import Transform as TransformLib
 
 from quant_free.common.us_equity_common import *
 from quant_free.dataset.us_equity_load import *
@@ -41,27 +39,36 @@ class FactorBase(ABC):
     return data.groupby(level=level, group_keys=False).apply(func,**pramas)
                                                              
   ########### indicator #################
-  def get_forward_return(self, stocks_df,column):
+  def get_forward_return(self, stocks_df, lags = 1, column = 'close'):
       '''计算(未来)下一个回报率
       :param stocks_df: {pd.DataFrame 或 stock_struct}
       :param column: {string}
       :return: {pd.Series}
       '''
-      ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+
+      # ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+
+      if isinstance(stocks_df.index, pd.MultiIndex):
+        ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+      else:
+        ret = TransformLib(stocks_df[column]).returns(lags, forward = True)
       # ret = stocks_df[column].pct_change(1).shift(-1)
-      ret.name = 'ret_forward'
+      ret.columns = ['ret_forward_' + str(lags)]
       return ret
 
-  def get_current_return(self, stocks_df,column,stride=1):
+  def get_current_return(self, stocks_df, lags = 1, column = 'close'):
       '''计算当期的回报率
       :param stocks_df: {pd.DataFrame 或 stock_struct}
       :param column: {str} --用于计算收益的列名
       :param stride: {int} --计算收益的跨度
       注意：当期回报有可能也包含未来信息。
       '''
-      ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(stride)-1))
+      if isinstance(stocks_df.index, pd.MultiIndex):
+        ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(lags)-1))
+      else:
+        ret = TransformLib(stocks_df[column]).returns(lags)
       # ret = stocks_df[column].pct_change(stride)
-      ret.name = 'ret'
+      ret.columns = ['ret_' + str(lags)]
       return ret
 
 
@@ -425,9 +432,15 @@ class FactorBase(ABC):
                     
                     result.name = method_name
                     df_stored = pd.concat([df_stored, result], axis = 1)
-      
+
+      forward_return_1 = self.get_forward_return(df, 1)
+      df_stored = pd.concat([df_stored, forward_return_1], axis= 1)
+      forward_return_5 = self.get_forward_return(df, 5)
+      df_stored = pd.concat([df_stored, forward_return_5], axis= 1)
+      forward_return_10 = self.get_forward_return(df, 10)
+      df_stored = pd.concat([df_stored, forward_return_10], axis= 1)
       us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
-      
+
       return df_stored
 
   def parallel_calc(self, symbols, sector_price_ratio):
