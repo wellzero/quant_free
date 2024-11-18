@@ -1,5 +1,5 @@
 
-from factorlab.feature_engineering.factors.trend import Trend
+from factorlab.feature_engineering.factors.trend import Trend as TrendLib
 
 from quant_free.factor.base import FactorBase
 
@@ -11,7 +11,7 @@ class Trend(FactorBase):
     super().__init__(start_date, end_date, dir)
 
   def preprocess(self, data):
-    return Trend(data, vwap='vwap', log='log')
+    return TrendLib(data, vwap='vwap', log='log')
 
   def trend_breakout(self, df_trend):
     return df_trend.breakout()

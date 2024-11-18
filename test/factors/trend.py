@@ -14,4 +14,4 @@ if __name__ == "__main__":
   symbol = 'AAPL'
   tend = Trend(start_date, end_date, dir = 'xq')
   df = tend.calc_1_symbol(symbol)
-  print(df.head(10))
+  print(df.tail(10))

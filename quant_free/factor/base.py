@@ -375,14 +375,14 @@ class FactorBase(ABC):
       df = pd.concat([dict_data[symbol], sector_price_ratio], axis=1)
 
       # Insert symbol as the first level of a MultiIndex
-      df.index = pd.MultiIndex.from_product([[symbol], df.index])
 
       print(f'preprocessing {symbol}')
 
-      df_preprocess = self.preprocess(df)
-
       if 'Trend' == subclass_name:
-        df_stored =  copy.deepcopy(df)
+        # df.index = pd.MultiIndex.from_product([df.index, {'ticker': [symbol]}])
+        df_preprocess = self.preprocess(df)
+        df_stored = pd.DataFrame() 
+        
         for method_name in dir(self):
             if method_name.startswith("trend"):
               # Get the method by its name
@@ -394,9 +394,16 @@ class FactorBase(ABC):
                   print(f"Calling {method_name}...")
                   result = method(df_preprocess)
                   
-                  result.name = method_name
+                  if isinstance(result.index, pd.MultiIndex):
+                    result.index = result.index.get_level_values(0)
+
+                  # result.name = method_name
                   df_stored = pd.concat([df_stored, result], axis = 1)
       else:
+        
+        df.index = pd.MultiIndex.from_product([[symbol], df.index])
+        df_preprocess = self.preprocess(df)
+        
         df_preprocess.ffill(inplace=True)
         df_preprocess.bfill(inplace=True)
 
@@ -420,6 +427,8 @@ class FactorBase(ABC):
                     df_stored = pd.concat([df_stored, result], axis = 1)
       
       us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
+      
+      return df_stored
 
   def parallel_calc(self, symbols, sector_price_ratio):
 
