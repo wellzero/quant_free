@@ -17,9 +17,9 @@ class Alpha101(FactorBase):
 
   def preprocess(self, data):
       returns = self.get_current_return(data, 1, 'close')
-      returns.name = 'returns'
+      returns.rename(columns = {"ret_1":"returns"}, inplace=True)
       ret_forward = self.get_forward_return(data, 1, 'close')
-      ret_forward.name = 'ret_forward'
+      ret_forward.rename(columns = {"ret_forward_1":"ret_forward"}, inplace=True)
       # {'Open', 'cap', 'close', 'high', 'ind', 'low', 'returns', 'volume', 'vwap'}
       data = pd.concat([data, returns, ret_forward], axis=1)
       data = data.assign(vwap=data.amount/(data.volume*100))
@@ -38,17 +38,20 @@ class Alpha101(FactorBase):
       volume_ind = self.neutralize(data.volume, data['ind'],logarithmetics=['ind'])
       volume_ind.name = 'volume_ind'
 
-      adv20 = self.excute_for_multidates(data.volume, lambda x:x.rolling(20).agg('mean'), level=0)
+      # adv20 = self.excute_for_multidates(data.volume, lambda x:x.rolling(20).agg('mean'), level=0)
+      adv20 = data.volume.rolling(20).mean()
       adv20 = pd.concat([adv20,data['ind']],axis=1).dropna()
       adv20_ind = self.neutralize(adv20.volume, adv20['ind'],logarithmetics=['ind'])
       adv20_ind.name = 'adv20_ind'
 
-      adv40 = self.excute_for_multidates(data.volume, lambda x:x.rolling(40).agg('mean'), level=0)
+      # adv40 = self.excute_for_multidates(data.volume, lambda x:x.rolling(40).agg('mean'), level=0)
+      adv40 = data.volume.rolling(40).mean()
       adv40 = pd.concat([adv40, data['ind']],axis=1).dropna()
       adv40_ind = self.neutralize(adv40.volume, adv40['ind'],logarithmetics=['ind'])
       adv40_ind.name = 'adv40_ind'
 
-      adv81 = self.excute_for_multidates(data.volume, lambda x:x.rolling(81).agg('mean'), level=0)
+      # adv81 = self.excute_for_multidates(data.volume, lambda x:x.rolling(83).agg('mean'), level=0)
+      adv81 = data.volume.rolling(81).mean()
       adv81 = pd.concat([adv81, data['ind']],axis=1).dropna()
       adv81_ind = self.neutralize(adv81.volume, adv81['ind'],logarithmetics=['ind'])
       adv81_ind.name = 'adv81_ind'

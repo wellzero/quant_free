@@ -36,7 +36,10 @@ class FactorBase(ABC):
     pass
 
   def excute_for_multidates(self, data, func, level=0, **pramas):
-    return data.groupby(level=level, group_keys=False).apply(func,**pramas)
+    if isinstance(data.index, pd.MultiIndex):
+      return data.groupby(level=level, group_keys=False).apply(func,**pramas)
+    else:
+      return data.apply(func,**pramas)
                                                              
   ########### indicator #################
   def get_forward_return(self, stocks_df, lags = 1, column = 'close'):
@@ -410,7 +413,7 @@ class FactorBase(ABC):
 
       else:
         
-        df.index = pd.MultiIndex.from_product([[symbol], df.index])
+        # df.index = pd.MultiIndex.from_product([[symbol], df.index])
         df_preprocess = self.preprocess(df)
         
         df_preprocess.ffill(inplace=True)
