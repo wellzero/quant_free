@@ -37,4 +37,4 @@ class SectorsRatio:
      df = self.calc()
     #  print(df)
     #  df = df.fillna(0)
-     return df.pct_change(days).round(5)
+     return [df, df.pct_change(days).round(5)]

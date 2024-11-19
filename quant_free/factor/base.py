@@ -92,13 +92,14 @@ class FactorBase(ABC):
       X = data.copy()
       # 对数化
       if not logarithmetics is None:
-          X[logarithmetics] = X[logarithmetics].agg('log')
+          # X[logarithmetics] = X[logarithmetics].agg('log')
+          X = X.agg('log')
       # 哑变量
       if not categorical is None:
           X = pd.get_dummies(X,columns=categorical)
           
   #     print(X)
-          
+      X = X.values.reshape(-1, 1)
       model = linear_model.LinearRegression(fit_intercept=False).fit(X, factor)
       neutralize_factor = factor - model.predict(X)
 
@@ -364,22 +365,22 @@ class FactorBase(ABC):
       # return pd.DataFrame(na_lwma, index=df.index, columns=df.columns)
       return pd.Series(na_lwma, index=df.index, name=df.name)
 
-  def calc_1_symbol(self, symbol, sector_price_ratio = None):
+  def calc_1_symbol(self, symbol, sector_price = None):
 
     subclass_name = self.__class__.__name__
     
-    if sector_price_ratio == None and "Trend" != subclass_name:
+    if sector_price == None and "Trend" != subclass_name:
       sector = us_equity_get_sector(symbol, self.dir)
-      sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
-      sector_price_ratio = sector_price_ratio.loc[:, sector]
-      sector_price_ratio.name = "sector_price_ratio"
+      sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
+      sector_price = sector_price.loc[:, sector]
+      sector_price.name = "sector_price"
 
     dict_data = us_equity_data_load_within_range(symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 
                                       dir_option = "xq")
     
     if(len(dict_data) == 1):
-      df = pd.concat([dict_data[symbol], sector_price_ratio], axis=1)
+      df = pd.concat([dict_data[symbol], sector_price], axis=1)
 
       # Insert symbol as the first level of a MultiIndex
 
@@ -443,11 +444,11 @@ class FactorBase(ABC):
 
       return df_stored
 
-  def parallel_calc(self, symbols, sector_price_ratio):
+  def parallel_calc(self, symbols, sector_price):
 
       @multitasking.task
       def start(symbol: str):
-          s = self.calc_1_symbol(symbol, sector_price_ratio)
+          s = self.calc_1_symbol(symbol, sector_price)
           series.append(s)
           pbar.update()
           pbar.set_description(f'Processing => {symbol}')
@@ -464,16 +465,16 @@ class FactorBase(ABC):
 
     print(f"processing {sector} ...")
 
-    sector_price_ratio = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price_ratio.csv")
+    sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
 
-    sector_price_ratio = sector_price_ratio.loc[:, sector]
+    sector_price = sector_price.loc[:, sector]
 
-    # sector_price_ratio.rename(columns = {sector:"sector_price_ratio"}, inplace=True)
-    # sector_price_ratio.rename(columns={sector:"sector_price_ratio"}, inplace=True)
-    sector_price_ratio.name = "sector_price_ratio"
+    # sector_price.rename(columns = {sector:"sector_price"}, inplace=True)
+    # sector_price.rename(columns={sector:"sector_price"}, inplace=True)
+    sector_price.name = "sector_price"
 
     data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
     if (data_symbols.empty == False):
       symbols = data_symbols['symbol'].values
       # symbols = ['OIS', 'FET', 'WTTR']
-      self.parallel_calc(symbols, sector_price_ratio)
+      self.parallel_calc(symbols, sector_price)

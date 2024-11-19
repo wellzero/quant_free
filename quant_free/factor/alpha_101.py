@@ -23,46 +23,46 @@ class Alpha101(FactorBase):
       # {'Open', 'cap', 'close', 'high', 'ind', 'low', 'returns', 'volume', 'vwap'}
       data = pd.concat([data, returns, ret_forward], axis=1)
       data = data.assign(vwap=data.amount/(data.volume*100))
-      data.rename(columns = {"open":"Open",'market_capital':'cap','sector_price_ratio':'ind'}, inplace=True)
+      data.rename(columns = {"open":"Open",'market_capital':'cap','sector_price':'ind'}, inplace=True)
       data['cap']=data['cap']/data['close'] # 数据取出来的是市值
 
 
-      close_ind = self.neutralize(data.close, data['ind'],categorical=['ind'])
+      close_ind = self.neutralize(data.close, data['ind'],logarithmetics=['ind'])
       close_ind.name = 'close_ind'
-      vwap_ind = self.neutralize(data.vwap, data['ind'],categorical=['ind'])
+      vwap_ind = self.neutralize(data.vwap, data['ind'],logarithmetics=['ind'])
       vwap_ind.name = 'vwap_ind'
-      high_ind = self.neutralize(data.high, data['ind'],categorical=['ind'])
+      high_ind = self.neutralize(data.high, data['ind'],logarithmetics=['ind'])
       high_ind.name = 'high_ind'
-      low_ind = self.neutralize(data.low, data['ind'],categorical=['ind'])
+      low_ind = self.neutralize(data.low, data['ind'],logarithmetics=['ind'])
       low_ind.name = 'low_ind'
-      volume_ind = self.neutralize(data.volume, data['ind'],categorical=['ind'])
+      volume_ind = self.neutralize(data.volume, data['ind'],logarithmetics=['ind'])
       volume_ind.name = 'volume_ind'
 
       adv20 = self.excute_for_multidates(data.volume, lambda x:x.rolling(20).agg('mean'), level=0)
       adv20 = pd.concat([adv20,data['ind']],axis=1).dropna()
-      adv20_ind = self.neutralize(adv20.volume, adv20['ind'],categorical=['ind'])
+      adv20_ind = self.neutralize(adv20.volume, adv20['ind'],logarithmetics=['ind'])
       adv20_ind.name = 'adv20_ind'
 
       adv40 = self.excute_for_multidates(data.volume, lambda x:x.rolling(40).agg('mean'), level=0)
       adv40 = pd.concat([adv40, data['ind']],axis=1).dropna()
-      adv40_ind = self.neutralize(adv40.volume, adv40['ind'],categorical=['ind'])
+      adv40_ind = self.neutralize(adv40.volume, adv40['ind'],logarithmetics=['ind'])
       adv40_ind.name = 'adv40_ind'
 
       adv81 = self.excute_for_multidates(data.volume, lambda x:x.rolling(81).agg('mean'), level=0)
       adv81 = pd.concat([adv81, data['ind']],axis=1).dropna()
-      adv81_ind = self.neutralize(adv81.volume, adv81['ind'],categorical=['ind'])
+      adv81_ind = self.neutralize(adv81.volume, adv81['ind'],logarithmetics=['ind'])
       adv81_ind.name = 'adv81_ind'
 
       co_mixed = ((data.close * 0.60733) + (data.Open * (1 - 0.60733)))
-      co_mixed_ind = self.neutralize(co_mixed, data['ind'],categorical=['ind'])
+      co_mixed_ind = self.neutralize(co_mixed, data['ind'],logarithmetics=['ind'])
       co_mixed_ind.name = 'co_mixed_ind'
 
       oh_mixed = ((data.Open * 0.868128) + (data.high * (1 - 0.868128)))
-      oh_mixed_ind = self.neutralize(oh_mixed, data['ind'],categorical=['ind'])
+      oh_mixed_ind = self.neutralize(oh_mixed, data['ind'],logarithmetics=['ind'])
       oh_mixed_ind.name = 'oh_mixed_ind'
 
       lv_mixed = ((data.low * 0.721001) + (data.vwap * (1 - 0.721001)))
-      lv_mixed_ind = self.neutralize(lv_mixed, data['ind'],categorical=['ind'])
+      lv_mixed_ind = self.neutralize(lv_mixed, data['ind'],logarithmetics=['ind'])
       lv_mixed_ind.name = 'lv_mixed_ind'
 
       return pd.concat([data, close_ind, vwap_ind, low_ind, high_ind, volume_ind, adv20_ind, adv40_ind, adv81_ind, co_mixed_ind, oh_mixed_ind, lv_mixed_ind], axis=1)

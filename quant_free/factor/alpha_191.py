@@ -25,7 +25,7 @@ class Alpha191(FactorBase):
         # {'Open', 'cap', 'close', 'high', 'ind', 'low', 'returns', 'volume', 'vwap'}
         data = pd.concat([data, returns, ret_forward], axis=1)
         data = data.assign(vwap=data.amount/(data.volume*100))
-        data.rename(columns = {"open":"Open",'market_value':'cap','sector_price_ratio':'ind'}, inplace=True)
+        data.rename(columns = {"open":"Open",'market_value':'cap','sector_price':'ind'}, inplace=True)
         
         df_ids = data.index.get_level_values(0)
 
