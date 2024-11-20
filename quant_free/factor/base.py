@@ -407,6 +407,8 @@ class FactorBase(ABC):
                   
                   if isinstance(result.index, pd.MultiIndex):
                     result.index = result.index.get_level_values(0)
+                  
+                  result.columns = ['trend_' + col for col in result.columns]
 
                   # result.name = method_name
                   df_stored = pd.concat([df_stored, result], axis = 1)
@@ -444,6 +446,8 @@ class FactorBase(ABC):
       df_stored = pd.concat([df_stored, forward_return_5], axis= 1)
       forward_return_10 = self.get_forward_return(df, 10)
       df_stored = pd.concat([df_stored, forward_return_10], axis= 1)
+
+      df_stored.index.name = "date"
 
       us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
 
