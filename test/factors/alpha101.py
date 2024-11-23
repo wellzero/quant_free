@@ -19,3 +19,8 @@ if __name__ == "__main__":
   tend = Alpha101(start_date, end_date, dir = 'xq')
   df = tend.calc_1_symbol(symbol)
   print(df.tail(10))
+
+  # sector = "电脑与外围设备"
+
+  # tend = Alpha101(start_date, end_date, dir = 'xq')
+  # df = tend.calc_1_sym_in_sector(sector)

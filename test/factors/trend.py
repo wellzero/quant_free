@@ -11,7 +11,13 @@ if __name__ == "__main__":
   start_date = get_json_config_value("start_date")
   end_date = get_json_config_value("end_date")
 
-  symbol = 'AAPL'
+  # symbol = 'AAPL'
+  # tend = Trend(start_date, end_date, dir = 'xq')
+  # df = tend.calc_1_symbol(symbol)
+  # print(df.tail(10))
+
+  # sector = "半导体产品与设备"
+  sector = "电脑与外围设备"
+
   tend = Trend(start_date, end_date, dir = 'xq')
-  df = tend.calc_1_symbol(symbol)
-  print(df.tail(10))
+  df = tend.calc_1_sym_in_sector(sector)

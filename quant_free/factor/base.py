@@ -22,6 +22,7 @@ from factorlab.feature_engineering.transformations import Transform as Transform
 
 from quant_free.common.us_equity_common import *
 from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.us_equity_store import *
 from quant_free.utils.us_equity_utils import *
 
 class FactorBase(ABC):
@@ -51,11 +52,8 @@ class FactorBase(ABC):
 
       # ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
 
-      if isinstance(stocks_df.index, pd.MultiIndex):
-        ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
-      else:
-        ret = TransformLib(stocks_df[column]).returns(lags, forward = True)
-      # ret = stocks_df[column].pct_change(1).shift(-1)
+      ret = TransformLib(stocks_df[column]).returns(lags, forward = True)
+
       ret.columns = ['ret_forward_' + str(lags)]
       return ret
 
@@ -66,11 +64,9 @@ class FactorBase(ABC):
       :param stride: {int} --计算收益的跨度
       注意：当期回报有可能也包含未来信息。
       '''
-      if isinstance(stocks_df.index, pd.MultiIndex):
-        ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(lags)-1))
-      else:
-        ret = TransformLib(stocks_df[column]).returns(lags)
-      # ret = stocks_df[column].pct_change(stride)
+      ret = TransformLib(stocks_df[column]).returns(lags)
+
+      # ret.name = 'ret_' + str(lags)
       ret.columns = ['ret_' + str(lags)]
       return ret
 
@@ -367,6 +363,77 @@ class FactorBase(ABC):
           na_lwma[row, ] = (np.dot(x.T, y))
       # return pd.DataFrame(na_lwma, index=df.index, columns=df.columns)
       return pd.Series(na_lwma, index=df.index, name=df.name)
+
+
+  def calc_1_sym_in_sector(self, sector):
+
+    subclass_name = self.__class__.__name__
+
+    df = us_equity_sector_multiindex_daily_data_load(sector_name = sector, start_date = self.start_date, end_date = self.end_date, dir_option = self.dir)
+
+
+    # Insert symbol as the first level of a MultiIndex
+
+    print(f'preprocessing {sector}')
+
+    if 'Trend' == subclass_name:
+      # df.index = pd.MultiIndex.from_product([df.index, {'ticker': [symbol]}])
+      df_preprocess = self.preprocess(df)
+      df_stored = pd.DataFrame() 
+      
+      for method_name in dir(self):
+          if method_name.startswith("trend"):
+            # Get the method by its name
+            method = getattr(self, method_name)
+
+            # Ensure that the attribute is a callable (method)
+            if callable(method):
+                # Call the method
+                print(f"Calling {method_name}...")
+                result = method(df_preprocess)
+
+                result.columns = ['trend_' + col for col in result.columns]
+
+                # result.name = method_name
+                df_stored = pd.concat([df_stored, result], axis = 1)
+
+    else:
+      
+      # df.index = pd.MultiIndex.from_product([[symbol], df.index])
+      df_preprocess = self.preprocess(df)
+      
+      df_preprocess.ffill(inplace=True)
+      df_preprocess.bfill(inplace=True)
+
+      df_stored =  copy.deepcopy(df_preprocess)
+      # Iterate over all attributes of the instance (methods and variables)
+      for method_name in dir(self):
+          # Check if the method name starts with 'alpha'
+          if method_name.startswith("alpha"):
+              # Get the method by its name
+              method = getattr(self, method_name)
+
+              # Ensure that the attribute is a callable (method)
+              if callable(method):
+                  # Call the method
+                  print(f"Calling {method_name}...")
+                  params = inspect.signature(getattr(self, method_name)).parameters.keys()
+                  input_args = [df_preprocess[param].copy() for param in params]
+                  result = method(*input_args)
+                  
+                  result.name = method_name
+                  df_stored = pd.concat([df_stored, result], axis = 1)
+
+    forward_return_1 = self.get_forward_return(df, 1)
+    df_stored = pd.concat([df_stored, forward_return_1], axis= 1)
+    forward_return_5 = self.get_forward_return(df, 5)
+    df_stored = pd.concat([df_stored, forward_return_5], axis= 1)
+    forward_return_10 = self.get_forward_return(df, 10)
+    df_stored = pd.concat([df_stored, forward_return_10], axis= 1)
+
+    us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
+
+    return df_stored
 
   def calc_1_symbol(self, symbol, sector_price = None):
 

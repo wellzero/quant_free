@@ -101,8 +101,46 @@ def us_equity_data_load_within_range(symbols = ['AAPL'], start_date = '2023-05-2
     print(f"miss these daily trade files {lack_list}")
   return data
 
-def us_equity_sector_daily_data_load(sector_name = '半导体产品与设备', start_date = '2023-05-29', end_date = '2024-05-29', column_option = all, dir_option = 'xq'):
+def us_equity_sector_daily_data_load(sector_name = '半导体产品与设备', start_date = '2023-05-29', end_date = '2024-05-29', column_option = 'all', dir_option = 'xq'):
 
   symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename= sector_name +'.csv')['symbol'].values
 
   return us_equity_data_load_within_range(symbols = symbols, start_date = start_date, end_date = end_date, column_option = column_option, dir_option = dir_option)
+
+def us_equity_sector_multiindex_daily_data_load(sector_name = '半导体产品与设备', start_date = '2023-05-29', end_date = '2024-05-29', dir_option = 'xq'):
+
+  """Converts a dictionary of DataFrames to a single MultiIndex DataFrame.
+
+  Args:
+      dict_df: A dictionary where keys represent the second level index 
+                and values are the corresponding DataFrames.
+
+  Returns:
+      A pandas DataFrame with a MultiIndex. 
+      Returns an empty DataFrame if the input dictionary is empty.
+  """
+
+  dict_df = us_equity_sector_daily_data_load(sector_name = sector_name, start_date = start_date, end_date = end_date, column_option = 'all', dir_option = dir_option)
+  if not dict_df:
+      return pd.DataFrame()
+
+  # Ensure all dataframes have the same columns
+  first_key = next(iter(dict_df))
+  columns = dict_df[first_key].columns
+
+  for key, df in dict_df.items():
+    if not df.columns.equals(columns):
+      raise ValueError("All DataFrames in the dictionary must have the same columns.")
+
+
+  list_df = []
+  for key, df in dict_df.items():
+      df.index.name = 'date'
+      df['ticker'] = key  # Add the dictionary key as a column
+      df = df.set_index('ticker', append=True) # Make the key a level in MultiIndex
+      list_df.append(df)
+
+
+  multi_index_df = pd.concat(list_df)
+
+  return multi_index_df
