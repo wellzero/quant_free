@@ -2,10 +2,10 @@
 
 This project mainly focus on US equity. and do following things
 
-> spider US stock daily trade data and financial data freely
-> do some statistcal research for history trade and financial data with machin learning
-> Backtest
-> Live trade
+ spider US stock daily trade data and financial data freely
+ do some statistcal research for history trade and financial data with machin learning
+ Backtest
+ Live trade
 
 ## install
 ### requirement installation
