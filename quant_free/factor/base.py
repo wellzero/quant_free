@@ -365,11 +365,15 @@ class FactorBase(ABC):
       return pd.Series(na_lwma, index=df.index, name=df.name)
 
 
-  def calc_1_sym_in_sector(self, sector):
+  def calc_1_sector(self, sector):
 
     subclass_name = self.__class__.__name__
 
-    df = us_equity_sector_multiindex_daily_data_load(sector_name = sector, start_date = self.start_date, end_date = self.end_date, dir_option = self.dir)
+    df = us_quity_multi_index_data_load(
+        sector_name = sector,
+        start_date = self.start_date,
+        end_date = self.end_date,
+        dir_option = self.dir)
 
 
     # Insert symbol as the first level of a MultiIndex

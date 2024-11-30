@@ -4,36 +4,52 @@ from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 
-def us_equity_data_load(symbol = 'AAPL', dir_option = '', flie_name = 'daily.csv'):
+def us_equity_data_load(
+    symbol = 'AAPL',
+    dir_option = '',
+    flie_name = 'daily.csv',
+    interval = 'day'):
+  
   equity_folder = us_equity_folder(symbol = symbol)
   if dir_option == '':
     equity_file = os.path.join(equity_folder, flie_name)
   else:
     equity_file = os.path.join(equity_folder, dir_option, flie_name)
   data = pd.read_csv(equity_file)
+
   if 'timestamp' in data.columns:
     data.rename(columns={'timestamp': 'date'}, inplace=True)
   elif 'Unnamed: 0' in data.columns and 'Unnamed: 1' in data.columns :
     # Assuming df is your DataFrame
     data.rename(columns = {'Unnamed: 0' : 'symbol', 'Unnamed: 1' : 'date'}, inplace=True)
 
-    # Rename the index levels
-    # data.index.names = ['symbol', 'date']
-
   data.set_index('date', inplace=True)
   data = data.sort_index()
+
+  if interval == 'day':
+    data.index = pd.to_datetime(pd.to_datetime(data.index).date)
+  else:
+    data.index = pd.to_datetime(data.index)
+
   return data
 
-def us_equity_tradedate_load_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
+
+def us_equity_tradedate_load_within_range(
+    symbol = "AAPL",
+    start_date = '2023-05-29',
+    end_date = '2024-05-29',
+    dir_option = ''):
 
     # Download historical stock data
   stock_data = us_equity_data_load(symbol = symbol, dir_option = dir_option)
 
-  filtered_data = stock_data.loc[start_date:end_date]
-  
-  trade_dates = filtered_data.index
+  if isinstance(start_date, str):
+    start_date = pd.to_datetime(start_date)
+  if isinstance(end_date, str):
+    end_date = pd.to_datetime(end_date)
 
-  trade_dates_time = pd.to_datetime(pd.to_datetime(trade_dates).date)
+  filtered_data = stock_data.loc[start_date:end_date]
+  trade_dates_time = filtered_data.index
 
   return trade_dates_time
 
@@ -46,9 +62,19 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def us_equity_data_load_within_range(symbols = ['AAPL'], start_date = '2023-05-29', end_date = '2024-05-29', column_option = "all", dir_option = '', file_name = 'daily.csv'):
+def us_equity_data_load_within_range(
+    symbols = ['AAPL'],
+    start_date = '2023-05-29',
+    end_date = '2024-05-29',
+    column_option = "all",
+    dir_option = '',
+    file_name = 'daily.csv'):
+  
   data = {}
-  trade_date_time = us_equity_tradedate_load_within_range(start_date = start_date, end_date = end_date, dir_option = 'xq')
+  trade_date_time = us_equity_tradedate_load_within_range(
+    start_date = start_date,
+    end_date = end_date,
+    dir_option = 'xq')
 
   # symbols = symbols.remove(0)
 
@@ -84,7 +110,10 @@ def us_equity_data_load_within_range(symbols = ['AAPL'], start_date = '2023-05-2
           # df_filled = df_filled.reindex(trade_date_time, fill_value=0)
 
           df_filled_select = df_filled.loc[trade_date_time,:]
-          # df_filled_select.index = df_filled_select.index.strftime('%Y-%m-%d')
+
+          # fill end
+          df_filled_select = df_filled_select.bfill()
+          df_filled_select = df_filled_select.ffill()
 
           if(column_option == "all"):
             data[symbol] = df_filled_select
@@ -101,13 +130,32 @@ def us_equity_data_load_within_range(symbols = ['AAPL'], start_date = '2023-05-2
     print(f"miss these daily trade files {lack_list}")
   return data
 
-def us_equity_sector_daily_data_load(sector_name = '半导体产品与设备', start_date = '2023-05-29', end_date = '2024-05-29', column_option = 'all', dir_option = 'xq'):
+# load data fro a sector
+def us_equity_sector_daily_data_load(
+    sector_name = '半导体产品与设备',
+    start_date = '2023-05-29',
+    end_date = '2024-05-29',
+    column_option = 'all',
+    dir_option = 'xq'):
 
-  symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename= sector_name +'.csv')['symbol'].values
+  symbols = us_dir1_load_csv(
+    dir0 = 'symbol', dir1 = 'xq',
+    filename= sector_name +'.csv')['symbol'].values
 
-  return us_equity_data_load_within_range(symbols = symbols, start_date = start_date, end_date = end_date, column_option = column_option, dir_option = dir_option)
+  return us_equity_data_load_within_range(
+    symbols = symbols,
+    start_date = start_date,
+    end_date = end_date,
+    column_option = column_option,
+    dir_option = dir_option)
 
-def us_equity_sector_multiindex_daily_data_load(sector_name = '半导体产品与设备', start_date = '2023-05-29', end_date = '2024-05-29', dir_option = 'xq'):
+# multi index load [date ticker]
+def us_quity_multi_index_data_load(
+    sector_name = '半导体产品与设备', 
+    start_date = '2023-05-29',
+    end_date = '2024-05-29', 
+    dir_option = 'xq',
+    file_name = 'daily.csv'):
 
   """Converts a dictionary of DataFrames to a single MultiIndex DataFrame.
 
@@ -119,10 +167,13 @@ def us_equity_sector_multiindex_daily_data_load(sector_name = '半导体产品�
       A pandas DataFrame with a MultiIndex. 
       Returns an empty DataFrame if the input dictionary is empty.
   """
-
-  dict_df = us_equity_sector_daily_data_load(sector_name = sector_name, start_date = start_date, end_date = end_date, column_option = 'all', dir_option = dir_option)
-  if not dict_df:
-      return pd.DataFrame()
+  dict_df = us_equity_data_load_within_range(
+    symbols = sector_name,
+    start_date = start_date,
+    end_date = end_date,
+    column_option = 'all',
+    dir_option = dir_option,
+    file_name = file_name)
 
   # Ensure all dataframes have the same columns
   first_key = next(iter(dict_df))
