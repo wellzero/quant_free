@@ -44,10 +44,12 @@ class Trend(Strategy):
     """
 
     parameters = {
-        "symbol": "AAPL",
+        "symbol": "INTC",
         "take_profit_price": 405,
         "stop_loss_price": 395,
         "quantity": 10,
+        "forward_period": 5,
+        "factors": ['trend_divergence_30','trend_snr_30','trend_breakout_30','trend_time_trend_30','trend_price_mom_30'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),
         'test_start_date': get_json_config_value("test_start_date"),
@@ -82,12 +84,12 @@ class Trend(Strategy):
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
       like = 'trend'
-      trnsX = factor.filter(like=like).astype(np.float64)
+      trnsX = factor.loc[:, self.parameters['factors']].filter(like=like).astype(np.float64)
 
-      y_data = factor.loc[:, 'ret_forward_1']
+      y_data = factor.loc[:, f'ret_forward_{self.parameters['forward_period']}']
       cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
       cont = pd.concat([cont, y_data], axis = 1)
-      cont.columns = ['bin', 'price_ratio_1']
+      cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
       forest = RandomForestClassifier(
@@ -108,7 +110,7 @@ class Trend(Strategy):
           column_option = "all",
           # dir_option = 'xq',
           file_name = self.__class__.__name__ + '.csv')[symbol]
-      self.test_factors = test_factors.filter(like=like).astype(np.float64)
+      self.test_factors = test_factors.loc[:, self.parameters['factors']].filter(like=like).astype(np.float64)
 
     def on_trading_iteration(self):
         # Get parameters for this iteration
@@ -118,6 +120,7 @@ class Trend(Strategy):
         predict = self.fit.predict(factor)
 
         symbol = self.parameters["symbol"]
+
         if predict == 1:
           quantity = self.parameters["quantity"]
           main_order = self.create_order(
@@ -128,7 +131,7 @@ class Trend(Strategy):
           positions = self.get_positions()
           for position in positions:
               if position.asset == Asset(symbol=symbol, asset_type="stock"):
-                quantity = position.quantity
+                quantity = self.parameters["quantity"]
                 main_order = self.create_order(
                     position.asset, quantity, "sell", quote=self.quote_asset
                 )
