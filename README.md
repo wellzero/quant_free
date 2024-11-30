@@ -1,11 +1,11 @@
 # quant_free
 
-This project mainly focus on US equity. and do following things
+This project mainly focus on US equity. **do following things**
 
- ** spider US stock daily trade data and financial data freely **
- ** do some statistcal research for history trade and financial data with machin learning **
- ** Backtest **
- ** Live trade **
+ 1. spider US stock daily trade data and financial data freely
+ 2. do some statistcal research for history trade and financial data with machin learning
+ 3. Backtest
+ 4. Live trade
 
 ## install
 ### requirement installation
