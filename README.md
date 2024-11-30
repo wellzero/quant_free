@@ -1,6 +1,11 @@
 # quant_free
 
-This project used to spider US stock daily trade data and financial data freely, and do some statistcal research for history trade and financial data. this project only used to research US equity.
+This project mainly focus on US equity. and do following things
+
+> spider US stock daily trade data and financial data freely
+> do some statistcal research for history trade and financial data with machin learning
+> Backtest
+> Live trade
 
 ## install
 ### requirement installation
