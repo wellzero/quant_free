@@ -117,18 +117,22 @@ class Trend(Strategy):
         factor = self.test_factors.loc[[dt]] 
         predict = self.fit.predict(factor)
 
-        if predict > 0:
+        symbol = self.parameters["symbol"]
+        if predict == 1:
           quantity = self.parameters["quantity"]
-          asset = self.parameters["symbol"]
           main_order = self.create_order(
-              asset, quantity, "buy", quote=self.quote_asset
+              symbol, quantity, "buy", quote=self.quote_asset
           )
           self.submit_order(main_order)
-        elif predict <0:
-          main_order = self.create_order(
-              asset, self.get_postions(), "sell", quote=self.quote_asset
-          )
-          self.submit_order(main_order)
+        elif predict == 0:
+          positions = self.get_positions()
+          for position in positions:
+              if position.asset == Asset(symbol=symbol, asset_type="stock"):
+                quantity = position.quantity
+                main_order = self.create_order(
+                    position.asset, quantity, "sell", quote=self.quote_asset
+                )
+                self.submit_order(main_order)
 
         else:
             print(f"not exsist pridict {predict}")
