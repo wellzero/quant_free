@@ -44,7 +44,7 @@ class Trend(Strategy):
     """
 
     parameters = {
-        "symbol": "INTC",
+        "symbol": "AAPL",
         "take_profit_price": 405,
         "stop_loss_price": 395,
         "quantity": 10,
@@ -132,6 +132,7 @@ class Trend(Strategy):
           for position in positions:
               if position.asset == Asset(symbol=symbol, asset_type="stock"):
                 quantity = self.parameters["quantity"]
+                # quantity = position.quantity
                 main_order = self.create_order(
                     position.asset, quantity, "sell", quote=self.quote_asset
                 )

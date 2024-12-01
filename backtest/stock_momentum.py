@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
         # Backtest this strategy
         backtesting_start = datetime(2023, 1, 1)
-        backtesting_end = datetime(2023, 8, 1)
+        backtesting_end = datetime(2024, 8, 1)
 
         results = Momentum.backtest(
             YahooDataBacktesting,
