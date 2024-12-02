@@ -16,8 +16,12 @@ if __name__ == "__main__":
   # df = tend.calc_1_symbol(symbol)
   # print(df.tail(10))
 
-  sector = "半导体产品与设备"
-  # sector = "电脑与外围设备"
+  # sector = "半导体产品与设备"
+  sector = "电脑与外围设备"
 
-  tend = Trend(start_date, end_date, dir = 'xq')
-  df = tend.calc_1_sector(sector)
+  trend = Trend(start_date, end_date, dir = 'xq')
+  
+  df = trend.calc_1_sector(sector)
+  
+  # sectors = ["半导体产品与设备", "电脑与外围设备"]
+  # df = trend.calc_sectors(sectors)

@@ -91,13 +91,13 @@ class Trend(Strategy):
 
         symbol = self.parameters["symbol"]
 
-        if factor > 0:
+        if factor < 0:
           quantity = self.parameters["quantity"]
           main_order = self.create_order(
               symbol, quantity, "buy", quote=self.quote_asset
           )
           self.submit_order(main_order)
-        elif factor < 0:
+        elif factor > 0:
           positions = self.get_positions()
           for position in positions:
               if position.asset == Asset(symbol=symbol, asset_type="stock"):
@@ -170,7 +170,8 @@ if __name__ == "__main__":
             backtesting_start,
             backtesting_end,
             pandas_data=pandas_data,
-            benchmark_asset="SPY",
+            # benchmark_asset="SPY",
+            benchmark_asset=symbol,
             sleeptime = '1D',
             parameters={
                 "asset": asset,

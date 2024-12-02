@@ -363,6 +363,23 @@ class FactorBase(ABC):
           na_lwma[row, ] = (np.dot(x.T, y))
       # return pd.DataFrame(na_lwma, index=df.index, columns=df.columns)
       return pd.Series(na_lwma, index=df.index, name=df.name)
+    
+  def add_forward_returns(self, df, df_stored, periods = [1, 5, 10, 15, 20]):
+      """
+      Adds forward returns for specified periods to the stored DataFrame.
+
+      Parameters:
+      - df: pd.DataFrame, the input DataFrame
+      - periods: list of int, the forward periods to calculate
+      - df_stored: pd.DataFrame, the DataFrame to append results to
+
+      Returns:
+      - pd.DataFrame: The updated DataFrame with forward returns
+      """
+      for period in periods:
+          forward_return = self.get_forward_return(df, period)
+          df_stored = pd.concat([df_stored, forward_return], axis=1)
+      return df_stored
 
 
   def calc_1_sector(self, sector):
@@ -428,16 +445,13 @@ class FactorBase(ABC):
                   result.name = method_name
                   df_stored = pd.concat([df_stored, result], axis = 1)
 
-    forward_return_1 = self.get_forward_return(df, 1)
-    df_stored = pd.concat([df_stored, forward_return_1], axis= 1)
-    forward_return_5 = self.get_forward_return(df, 5)
-    df_stored = pd.concat([df_stored, forward_return_5], axis= 1)
-    forward_return_10 = self.get_forward_return(df, 10)
-    df_stored = pd.concat([df_stored, forward_return_10], axis= 1)
-
+    df_stored = self.add_forward_returns(df, df_stored)
     us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
-
     return df_stored
+
+  def calc_sectors(self, sectors):
+    for sector in sectors:
+        self.calc_1_sector(sector)
 
   def calc_1_symbol(self, symbol, sector_price = None):
 
@@ -511,15 +525,9 @@ class FactorBase(ABC):
                     result.name = method_name
                     df_stored = pd.concat([df_stored, result], axis = 1)
 
-      forward_return_1 = self.get_forward_return(df, 1)
-      df_stored = pd.concat([df_stored, forward_return_1], axis= 1)
-      forward_return_5 = self.get_forward_return(df, 5)
-      df_stored = pd.concat([df_stored, forward_return_5], axis= 1)
-      forward_return_10 = self.get_forward_return(df, 10)
-      df_stored = pd.concat([df_stored, forward_return_10], axis= 1)
+      df_stored = self.add_forward_returns(df, df_stored)
 
       df_stored.index.name = "date"
-
       us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
 
       return df_stored

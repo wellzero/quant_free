@@ -167,8 +167,13 @@ def us_quity_multi_index_data_load(
       A pandas DataFrame with a MultiIndex. 
       Returns an empty DataFrame if the input dictionary is empty.
   """
+
+  symbols = us_dir1_load_csv(
+    dir0 = 'symbol', dir1 = dir_option,
+    filename= sector_name +'.csv')['symbol'].values
+  
   dict_df = us_equity_data_load_within_range(
-    symbols = sector_name,
+    symbols = symbols,
     start_date = start_date,
     end_date = end_date,
     column_option = 'all',
