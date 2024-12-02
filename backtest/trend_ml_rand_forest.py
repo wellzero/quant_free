@@ -48,7 +48,7 @@ class Trend(Strategy):
         "take_profit_price": 405,
         "stop_loss_price": 395,
         "quantity": 10,
-        "forward_period": 10,
+        "forward_period": 15,
         "factors": ['trend_divergence_30','trend_snr_30','trend_breakout_30','trend_time_trend_30','trend_price_mom_30'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),

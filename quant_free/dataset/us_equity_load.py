@@ -173,7 +173,7 @@ def us_quity_multi_index_data_load(
     dir1 = dir_option,
     filename= sector_name +'.csv')
 
-  if df_symbol is None:
+  if df_symbol is None or df_symbol.empty == True:
     return None
   else:
     symbols = df_symbol['symbol'].values
