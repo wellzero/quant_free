@@ -385,52 +385,26 @@ class FactorBase(ABC):
   def calc_1_sector(self, sector):
 
     subclass_name = self.__class__.__name__
+    
+    print(f'preprocessing {sector}')
 
     df = us_quity_multi_index_data_load(
         sector_name = sector,
         start_date = self.start_date,
         end_date = self.end_date,
         dir_option = self.dir)
-
-
-    # Insert symbol as the first level of a MultiIndex
-
-    print(f'preprocessing {sector}')
-
-    if 'Trend' == subclass_name:
-      # df.index = pd.MultiIndex.from_product([df.index, {'ticker': [symbol]}])
-      df_preprocess = self.preprocess(df)
-      df_stored = pd.DataFrame() 
-      
-      for method_name in dir(self):
-          if method_name.startswith("trend"):
-            # Get the method by its name
-            method = getattr(self, method_name)
-
-            # Ensure that the attribute is a callable (method)
-            if callable(method):
-                # Call the method
-                print(f"Calling {method_name}...")
-                result = method(df_preprocess)
-
-                result.columns = ['trend_' + col for col in result.columns]
-
-                # result.name = method_name
-                df_stored = pd.concat([df_stored, result], axis = 1)
-
+    
+    if df is None:
+      print(f"Skip this sector {sector}, no equity in it!")
     else:
-      
-      # df.index = pd.MultiIndex.from_product([[symbol], df.index])
-      df_preprocess = self.preprocess(df)
-      
-      df_preprocess.ffill(inplace=True)
-      df_preprocess.bfill(inplace=True)
-
-      df_stored =  copy.deepcopy(df_preprocess)
-      # Iterate over all attributes of the instance (methods and variables)
-      for method_name in dir(self):
-          # Check if the method name starts with 'alpha'
-          if method_name.startswith("alpha"):
+      # Insert symbol as the first level of a MultiIndex
+      if 'Trend' == subclass_name:
+        # df.index = pd.MultiIndex.from_product([df.index, {'ticker': [symbol]}])
+        df_preprocess = self.preprocess(df)
+        df_stored = pd.DataFrame() 
+        
+        for method_name in dir(self):
+            if method_name.startswith("trend"):
               # Get the method by its name
               method = getattr(self, method_name)
 
@@ -438,16 +412,43 @@ class FactorBase(ABC):
               if callable(method):
                   # Call the method
                   print(f"Calling {method_name}...")
-                  params = inspect.signature(getattr(self, method_name)).parameters.keys()
-                  input_args = [df_preprocess[param].copy() for param in params]
-                  result = method(*input_args)
-                  
-                  result.name = method_name
+                  result = method(df_preprocess)
+
+                  result.columns = ['trend_' + col for col in result.columns]
+
+                  # result.name = method_name
                   df_stored = pd.concat([df_stored, result], axis = 1)
 
-    df_stored = self.add_forward_returns(df, df_stored)
-    us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
-    return df_stored
+      else:
+        
+        # df.index = pd.MultiIndex.from_product([[symbol], df.index])
+        df_preprocess = self.preprocess(df)
+        
+        df_preprocess.ffill(inplace=True)
+        df_preprocess.bfill(inplace=True)
+
+        df_stored =  copy.deepcopy(df_preprocess)
+        # Iterate over all attributes of the instance (methods and variables)
+        for method_name in dir(self):
+            # Check if the method name starts with 'alpha'
+            if method_name.startswith("alpha"):
+                # Get the method by its name
+                method = getattr(self, method_name)
+
+                # Ensure that the attribute is a callable (method)
+                if callable(method):
+                    # Call the method
+                    print(f"Calling {method_name}...")
+                    params = inspect.signature(getattr(self, method_name)).parameters.keys()
+                    input_args = [df_preprocess[param].copy() for param in params]
+                    result = method(*input_args)
+                    
+                    result.name = method_name
+                    df_stored = pd.concat([df_stored, result], axis = 1)
+
+      df_stored = self.add_forward_returns(df, df_stored)
+      us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
+      return df_stored
 
   def calc_sectors(self, sectors):
     for sector in sectors:

@@ -168,9 +168,15 @@ def us_quity_multi_index_data_load(
       Returns an empty DataFrame if the input dictionary is empty.
   """
 
-  symbols = us_dir1_load_csv(
-    dir0 = 'symbol', dir1 = dir_option,
-    filename= sector_name +'.csv')['symbol'].values
+  df_symbol = us_dir1_load_csv(
+    dir0 = 'symbol',
+    dir1 = dir_option,
+    filename= sector_name +'.csv')
+
+  if df_symbol is None:
+    return None
+  else:
+    symbols = df_symbol['symbol'].values
   
   dict_df = us_equity_data_load_within_range(
     symbols = symbols,
