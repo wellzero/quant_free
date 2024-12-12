@@ -49,7 +49,7 @@ class Trend(Strategy):
         "stop_loss_price": 395,
         "quantity": 10,
         "forward_period": 5,
-        "factors": ['trend_ewma_diff_2'],
+        "factors": ['trend_triple_ewma_diff_2'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),
         'test_start_date': get_json_config_value("test_start_date"),

@@ -17,3 +17,11 @@ git+https://github.com:wellzero/factorlab.git
 
 ## misc module
 cufflinks
+
+yfinance
+
+openbb
+
+ta
+
+autots

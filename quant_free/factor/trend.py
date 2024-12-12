@@ -158,7 +158,7 @@ class Trend(FactorBase):
     """
     return df_trend.mw_diff()
 
-  def trend_ewma_diff(self, df_trend):
+  def trend_triple_ewma_diff(self, df_trend):
     """
     Computes the exponentially weighted moving average (EWMA) crossover trend factor.
 
@@ -183,7 +183,7 @@ class Trend(FactorBase):
         Series or DataFrame with DatetimeIndex (level 0), tickers (level 1) and
         ewma crossover trend factor values (cols).
     """
-    return df_trend.ewma_diff()
+    return df_trend.triple_ewma_diff()
 
   def trend_energy(self, df_trend):
     return df_trend.energy()

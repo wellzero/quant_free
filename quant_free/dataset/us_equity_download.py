@@ -5,13 +5,17 @@ from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 from openbb import obb
 import yfinance as yf
+import financedatabase as fd
 
 # Read directory from JSON file
 
 def us_equity_symbol_download(provider="sec"):
   # Get all companies from SEC
-  us_all_companies = obb.equity.search("", provider=provider)
-  csv_us_all_companies = us_all_companies.to_dataframe()
+  # us_all_companies = obb.equity.search("", provider=provider)
+  # csv_us_all_companies = us_all_companies.to_dataframe()
+
+  equities = fd.Equities()
+  csv_us_all_companies = equities.search(exclude_exchanges=True, market = ["NASDAQ Global Select", "New York Stock Exchange"]).reset_index()
 
   # us_symbol_f = us_symbol_file()
 
