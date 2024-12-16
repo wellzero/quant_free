@@ -10,8 +10,8 @@ class Trend(FactorBase):
 
     super().__init__(start_date, end_date, dir)
 
-  def preprocess(self, data):
-    return TrendLib(data, vwap='vwap', log='log')
+  def preprocess(self, data, window_size = 30):
+    return TrendLib(data, window_size = window_size, vwap='vwap', log='log')
 
   def trend_breakout(self, df_trend):
     """

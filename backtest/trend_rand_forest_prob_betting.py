@@ -44,13 +44,15 @@ class Trend(Strategy):
     """
 
     parameters = {
-        "symbol": "INTC",
+        # "symbol": "INTC",
+        "symbol": "AAPL",
         "take_profit_price": 405,
         "stop_loss_price": 395,
         "quantity": 10,
+        "thr": 0.02,
         "forward_period": 5,
         "num_classes": 2,
-        "factors": ['trend_divergence_30','trend_snr_30','trend_breakout_30','trend_time_trend_30','trend_price_mom_30'],
+        "factors": ['trend_divergence_30', 'trend_ewma_30', 'trend_adx_30', 'trend_energy_30', 'trend_price_acc_30',], #'trend_snr_30','trend_breakout_30','trend_time_trend_30','trend_price_mom_30'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),
         'test_start_date': get_json_config_value("test_start_date"),
@@ -88,7 +90,7 @@ class Trend(Strategy):
       trnsX = factor.loc[:, self.parameters['factors']].filter(like=like).astype(np.float64)
 
       y_data = factor.loc[:, f'ret_forward_{self.parameters['forward_period']}']
-      cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
+      cont = pd.DataFrame(y_data.map(lambda x: 1 if x > self.parameters['thr'] else -1 if x < -self.parameters['thr'] else 0))
       cont = pd.concat([cont, y_data], axis = 1)
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
@@ -126,13 +128,13 @@ class Trend(Strategy):
         betingSize = (prob - 1/self.parameters["num_classes"]) / (prob * (1 - prob))**0.5
         betingSize = abs(round(betingSize.squeeze() * self.parameters["quantity"]))
 
-        if betingSize != 0:
+        if betingSize != 0 and predict != 0:
           if predict == 1:
             main_order = self.create_order(
                 symbol, betingSize, "buy", quote=self.quote_asset
             )
             self.submit_order(main_order)
-          elif predict == 0:
+          elif predict == -1:
             positions = self.get_positions()
             for position in positions:
                 if position.asset == Asset(symbol=symbol, asset_type="stock"):

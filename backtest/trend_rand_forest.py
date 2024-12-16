@@ -44,7 +44,8 @@ class Trend(Strategy):
     """
 
     parameters = {
-        "symbol": "INTC",
+        # "symbol": "INTC",
+        "symbol": "AAPL",
         "take_profit_price": 405,
         "stop_loss_price": 395,
         "quantity": 10,

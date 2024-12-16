@@ -400,24 +400,27 @@ class FactorBase(ABC):
       # Insert symbol as the first level of a MultiIndex
       if 'Trend' == subclass_name:
         # df.index = pd.MultiIndex.from_product([df.index, {'ticker': [symbol]}])
-        df_preprocess = self.preprocess(df)
+        window_size = [5, 10, 15, 20, 25, 30]
+       
         df_stored = pd.DataFrame() 
-        
-        for method_name in dir(self):
-            if method_name.startswith("trend"):
-              # Get the method by its name
-              method = getattr(self, method_name)
+        for window in window_size:
+          df_preprocess = self.preprocess(df, window)
+          
+          for method_name in dir(self):
+              if method_name.startswith("trend"):
+                # Get the method by its name
+                method = getattr(self, method_name)
 
-              # Ensure that the attribute is a callable (method)
-              if callable(method):
-                  # Call the method
-                  print(f"Calling {method_name}...")
-                  result = method(df_preprocess)
+                # Ensure that the attribute is a callable (method)
+                if callable(method):
+                    # Call the method
+                    print(f"Calling {method_name}...")
+                    result = method(df_preprocess)
 
-                  result.columns = ['trend_' + col for col in result.columns]
+                    result.columns = ['trend_' + col for col in result.columns]
 
-                  # result.name = method_name
-                  df_stored = pd.concat([df_stored, result], axis = 1)
+                    # result.name = method_name
+                    df_stored = pd.concat([df_stored, result], axis = 1)
 
       else:
         
