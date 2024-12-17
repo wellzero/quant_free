@@ -212,3 +212,7 @@ class Trend(FactorBase):
     '''
 
     return df_trend.adx()
+
+  def calc_sectors(self, sectors):
+    for sector in sectors:
+        self.calc_1_sector(sector)

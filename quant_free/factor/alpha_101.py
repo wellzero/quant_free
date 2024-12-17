@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from quant_free.dataset.us_equity_load import *
 
 import numpy as np
 import pandas as pd
@@ -873,3 +874,23 @@ class Alpha101(FactorBase):
       alpha = -1 * (r2 - r3) * (volume_ind / adv20)
       return alpha
 
+  def calc_sectors(self, sectors):
+
+    # sector = '互联网与直销零售'
+    for sector in sectors:
+
+      print(f"processing {sector} ...")
+
+      sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
+
+      sector_price = sector_price.loc[:, sector]
+
+      # sector_price.rename(columns = {sector:"sector_price"}, inplace=True)
+      # sector_price.rename(columns={sector:"sector_price"}, inplace=True)
+      sector_price.name = "sector_price"
+
+      data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
+      if (data_symbols.empty == False):
+        symbols = data_symbols['symbol'].values
+        # symbols = ['OIS', 'FET', 'WTTR']
+        self.parallel_calc(symbols, sector_price)

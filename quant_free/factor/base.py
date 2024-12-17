@@ -36,6 +36,10 @@ class FactorBase(ABC):
   def preprocess(self, data):
     pass
 
+  @abstractmethod
+  def calc_sectors(self, sectors):
+    pass
+
   def excute_for_multidates(self, data, func, level=0, **pramas):
     if isinstance(data.index, pd.MultiIndex):
       return data.groupby(level=level, group_keys=False).apply(func,**pramas)
@@ -388,11 +392,13 @@ class FactorBase(ABC):
     
     print(f'preprocessing {sector}')
 
-    df = us_quity_multi_index_data_load(
+    df = copy.deepcopy(
+        us_quity_multi_index_data_load(
         sector_name = sector,
         start_date = self.start_date,
         end_date = self.end_date,
         dir_option = self.dir)
+        )
     
     if df is None:
       print(f"Skip this sector {sector}, no equity in it!")
@@ -453,15 +459,26 @@ class FactorBase(ABC):
       us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
       return df_stored
 
-  def calc_sectors(self, sectors):
-    for sector in sectors:
-        self.calc_1_sector(sector)
+  def parallel_calc_sectors(self, sectors):
+
+      @multitasking.task
+      def start(sector: str):
+          s = self.calc_1_sector(sector)
+          series.append(s)
+          pbar.update()
+          pbar.set_description(f'Processing => {sector}')
+
+      series: List[pd.Series] = []
+      pbar = tqdm(total=len(sectors))
+      for sector in sectors:
+          start(sector)
+      multitasking.wait_for_tasks()
 
   def calc_1_symbol(self, symbol, sector_price = None):
 
     subclass_name = self.__class__.__name__
     
-    if sector_price == None and "Trend" != subclass_name:
+    if sector_price is None and "Trend" != subclass_name:
       sector = us_equity_get_sector(symbol, self.dir)
       sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
       sector_price = sector_price.loc[:, sector]
@@ -550,23 +567,3 @@ class FactorBase(ABC):
       for symbol in symbols:
           start(symbol)
       multitasking.wait_for_tasks()
-
-  def calc(self, sector):
-
-    # sector = '互联网与直销零售'
-
-    print(f"processing {sector} ...")
-
-    sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
-
-    sector_price = sector_price.loc[:, sector]
-
-    # sector_price.rename(columns = {sector:"sector_price"}, inplace=True)
-    # sector_price.rename(columns={sector:"sector_price"}, inplace=True)
-    sector_price.name = "sector_price"
-
-    data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
-    if (data_symbols.empty == False):
-      symbols = data_symbols['symbol'].values
-      # symbols = ['OIS', 'FET', 'WTTR']
-      self.parallel_calc(symbols, sector_price)

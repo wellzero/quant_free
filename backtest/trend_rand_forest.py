@@ -44,13 +44,14 @@ class Trend(Strategy):
     """
 
     parameters = {
-        # "symbol": "INTC",
-        "symbol": "AAPL",
+        "symbol": "INTC",
+        # "symbol": "AAPL",
         "take_profit_price": 405,
         "stop_loss_price": 395,
         "quantity": 10,
-        "forward_period": 15,
-        "factors": ['trend_divergence_30','trend_snr_30','trend_breakout_30','trend_time_trend_30','trend_price_mom_30'],
+        "forward_period": 5,
+        "factor_window": 5,
+        "factors": ['trend_divergence','trend_snr','trend_breakout','trend_time_trend','trend_price_mom'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),
         'test_start_date': get_json_config_value("test_start_date"),
@@ -61,6 +62,8 @@ class Trend(Strategy):
       # Set the initial variables or constants
 
       self.sleeptime = "1D"
+      
+      self.factor_names = [f"{factor_name}_{self.parameters['factor_window']}" for factor_name in self.parameters['factors']]
 
       # Variable initial states
       self.last_compute = None
@@ -74,6 +77,8 @@ class Trend(Strategy):
 
     def load_factor_model_train(self, symbol):
 
+      self.factor_names = [f"{factor_name}_{self.parameters['factor_window']}" for factor_name in self.parameters['factors']]
+
       factor = us_equity_data_load_within_range(
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
@@ -85,7 +90,7 @@ class Trend(Strategy):
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
       like = 'trend'
-      trnsX = factor.loc[:, self.parameters['factors']].filter(like=like).astype(np.float64)
+      trnsX = factor.loc[:, self.factor_names].filter(like=like).astype(np.float64)
 
       y_data = factor.loc[:, f'ret_forward_{self.parameters['forward_period']}']
       cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
@@ -111,7 +116,7 @@ class Trend(Strategy):
           column_option = "all",
           # dir_option = 'xq',
           file_name = self.__class__.__name__ + '.csv')[symbol]
-      self.test_factors = test_factors.loc[:, self.parameters['factors']].filter(like=like).astype(np.float64)
+      self.test_factors = test_factors.loc[:, self.factor_names].filter(like=like).astype(np.float64)
 
     def on_trading_iteration(self):
         # Get parameters for this iteration
