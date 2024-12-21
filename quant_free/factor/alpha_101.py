@@ -702,10 +702,17 @@ class Alpha101(FactorBase):
 
 
   def alpha48(self, close_ind, close, ind):
-      r1 = (self.correlation(self.delta(close_ind, 1), self.delta(self.delay(close_ind, 1), 1), 250)
-            * self.delta(close_ind, 1)) / close
+
+      # r1 = (self.correlation(self.delta(close_ind, 1), self.delta(self.delay(close_ind, 1), 1), 250)
+      #       * self.delta(close_ind, 1)) / close
+      # r2 = self.ts_sum((pow((self.delta(close, 1) / self.delay(close, 1)), 2)), 250)
+      # # alpha = IndNeutralize(r1, ind) / r2
+      # alpha = r1 / r2
+
+      r1 = (self.correlation(self.delta(close, 1), self.delta(self.delay(close, 1), 1), 250)
+            * self.delta(close, 1)) / close
       r2 = self.ts_sum((pow((self.delta(close, 1) / self.delay(close, 1)), 2)), 250)
-      # alpha = IndNeutralize(r1, ind) / r2
+      alpha = self.neutralize(r1, ind) / r2
       alpha = r1 / r2
       return alpha
 
@@ -714,6 +721,7 @@ class Alpha101(FactorBase):
       x = vwap_ind
       # x = IndNeutralize(vwap, ind)
       alpha = -1 * self.ts_rank(self.decay_linear(self.correlation(x, volume, 4), 8), 6)
+
       return alpha
 
 
@@ -862,16 +870,32 @@ class Alpha101(FactorBase):
       return alpha
 
 
-  def alpha100(self, volume_ind, close_ind, low_ind, high_ind, ind):
-      adv20 = self.sma(volume_ind, 20)
-      # r1 = IndNeutralize(self.rank(((((close - low) - (high - close)) / (high - low)) * volume)), ind)
-      # r2 = 1.5 * self.scale(IndNeutralize(r1, ind))
-      # r3 = self.scale(IndNeutralize((self.correlation(close, self.rank(adv20), 5) - self.rank(self.ts_argmin(close, 30))), ind))
-      r1 = self.rank(((((close_ind - low_ind) - (high_ind - close_ind)) / (high_ind - low_ind)) * volume_ind))
-      r2 = 1.5 * self.scale(r1)
-      r3 = self.scale((self.correlation(close_ind, self.rank(adv20), 5) - self.rank(self.ts_argmin(close_ind, 30))))
+  def alpha100(self, volume_ind, close_ind, low_ind, high_ind, volume, close, low, high, ind):
+      # adv20 = self.sma(volume_ind, 20)
+      # # r1 = IndNeutralize(self.rank(((((close - low) - (high - close)) / (high - low)) * volume)), ind)
+      # # r2 = 1.5 * self.scale(IndNeutralize(r1, ind))
+      # # r3 = self.scale(IndNeutralize((self.correlation(close, self.rank(adv20), 5) - self.rank(self.ts_argmin(close, 30))), ind))
+      # r1 = self.rank(((((close_ind - low_ind) - (high_ind - close_ind)) / (high_ind - low_ind)) * volume_ind))
+      # r2 = 1.5 * self.scale(r1)
+      # r3 = self.scale((self.correlation(close_ind, self.rank(adv20), 5) - self.rank(self.ts_argmin(close_ind, 30))))
 
-      alpha = -1 * (r2 - r3) * (volume_ind / adv20)
+      # alpha = -1 * (r2 - r3) * (volume_ind / adv20)
+
+      #Alpha#100: 
+      # (0 - (1 * (((1.5 * 
+      # scale(indneutralize(indneutralize(rank(((((close - low) - (high - close)) / (high - low)) * volume)),
+      #                       IndClass.subindustry),
+      #       IndClass.subindustry))
+      #) 
+      #  - scale(indneutralize((correlation(close, rank(adv20), 5) - rank(ts_argmin(close, 30))), IndClass.subindustry))) * (volume / adv20)))) 
+
+      adv20 = self.sma(volume, 20)
+
+      r1 = self.neutralize(self.rank(((((close - low) - (high - close)) / (high - low)) * volume)), ind)
+      r2 = 1.5 * self.scale(self.neutralize(r1, ind))
+      r3 = self.scale(self.neutralize((self.correlation(close, self.rank(adv20), 5) - self.rank(self.ts_argmin(close, 30))), ind))
+
+      alpha = -1 * (r2 - r3) * (volume / adv20)
       return alpha
 
   def calc_sectors(self, sectors):
@@ -893,4 +917,5 @@ class Alpha101(FactorBase):
       if (data_symbols.empty == False):
         symbols = data_symbols['symbol'].values
         # symbols = ['OIS', 'FET', 'WTTR']
-        self.parallel_calc(symbols, sector_price)
+        # self.parallel_calc(symbols, sector_price)
+        self.parallel_calc_debug(symbols, sector_price)

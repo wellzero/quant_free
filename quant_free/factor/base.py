@@ -83,11 +83,14 @@ class FactorBase(ABC):
           注：一般来说，顺序是 去极值->中性化->标准化
           注：单截面操作
       '''
+      data.replace([np.inf, -np.inf], np.nan, inplace=True)
+      factor.replace([np.inf, -np.inf], np.nan, inplace=True)
+
       data.ffill(inplace=True)
       data.bfill(inplace=True)
       factor.ffill(inplace=True)
       factor.bfill(inplace=True)
-      
+
       if factor.index.is_monotonic_increasing == False or data.index.is_monotonic_increasing == False:
           import warnings
           warnings.warn('factor or data should be sorted, 否则有可能会造成会自变量和因变量匹配错误',UserWarning)
@@ -266,11 +269,11 @@ class FactorBase(ABC):
 
 
   def IndNeutralize(self, vwap, ind):
-      # vwap_ = vwap.fillna(value=0)
-      # for i in range(len(vwap_)):
-      #     vwap_.iloc[i] = neutral(vwap_.iloc[i], ind)
-      # return vwap_
-      return vwap
+      vwap_ = vwap.fillna(value=0)
+      for i in range(len(vwap_)):
+          vwap_.iloc[i] = self.neutral(vwap_.iloc[i], ind)
+      return vwap_
+      # return vwap
 
   # 移动求和
   def ts_sum(self, df, window):
@@ -567,3 +570,8 @@ class FactorBase(ABC):
       for symbol in symbols:
           start(symbol)
       multitasking.wait_for_tasks()
+
+  def parallel_calc_debug(self, symbols, sector_price):
+
+      for symbol in symbols:
+          self.calc_1_symbol(symbol, sector_price)

@@ -62,9 +62,10 @@ if __name__ == "__main__":
 
 
 
-  # sectors = ["电脑与外围设备"]
 
   sector_file = 'us_equity_sector.csv'
   sectors = list(us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename=sector_file)['name'].values)
 
+  sectors = ["电脑与外围设备"]
+  
   df = alpha_101_.calc_sectors(sectors)
