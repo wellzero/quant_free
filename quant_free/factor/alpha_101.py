@@ -917,5 +917,5 @@ class Alpha101(FactorBase):
       if (data_symbols.empty == False):
         symbols = data_symbols['symbol'].values
         # symbols = ['OIS', 'FET', 'WTTR']
-        # self.parallel_calc(symbols, sector_price)
-        self.parallel_calc_debug(symbols, sector_price)
+        self.parallel_calc(symbols, sector_price)
+        # self.parallel_calc_debug(symbols, sector_price)
