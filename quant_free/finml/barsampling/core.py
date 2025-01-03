@@ -1,7 +1,7 @@
 from quant_free.finml.barsampling.imbalance_data_structures import *
 from quant_free.finml.barsampling.standard_data_structures import *
 from quant_free.finml.barsampling.run_data_structures import *
-from finml.barsampling.time_data_structures import *
+from quant_free.finml.barsampling.time_data_structures import *
 
 class StandardBarFeatures :
     def __init__(self,

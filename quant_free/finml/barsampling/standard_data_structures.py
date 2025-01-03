@@ -1,7 +1,7 @@
 from typing import Union, Iterable, Optional
 import numpy as np
 import pandas as pd
-from quant_free.FinML.barsampling.base_bars import BaseBars
+from quant_free.finml.barsampling.base_bars import BaseBars
 
 class StandardBars(BaseBars):
     def __init__(self, metric: str,
