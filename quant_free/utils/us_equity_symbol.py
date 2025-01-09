@@ -6,6 +6,9 @@ import pandas as pd
 
 _this_dir = Path(__file__).parent.parent
 
+
+# write a sort function. AI!
+
 def us_symbol_file():
   
   # Read directory from JSON file
