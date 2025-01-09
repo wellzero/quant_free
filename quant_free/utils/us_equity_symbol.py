@@ -7,7 +7,17 @@ import pandas as pd
 _this_dir = Path(__file__).parent.parent
 
 
-# write a sort function. AI!
+def sort_symbols(symbols: list[str]) -> list[str]:
+    """Sort a list of US equity symbols alphabetically.
+    
+    Args:
+        symbols: List of ticker symbols to sort
+        
+    Returns:
+        List of symbols sorted alphabetically
+    """
+    return sorted(symbols, key=lambda s: s.upper())
+
 
 def us_symbol_file():
   
