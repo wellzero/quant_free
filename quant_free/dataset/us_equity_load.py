@@ -132,7 +132,7 @@ def us_equity_data_load_within_range(
 
 # load data fro a sector
 def us_equity_sector_daily_data_load(
-    sector_name = '半导体产品与设备',
+    sector_name = 'Semiconductor Products and Equipment',
     start_date = '2023-05-29',
     end_date = '2024-05-29',
     column_option = 'all',
