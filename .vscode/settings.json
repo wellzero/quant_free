@@ -1,5 +1,7 @@
 {
     "python.defaultInterpreterPath": "/opt/quantfree/bin/python",
     "jupyter.notebookFileRoot": "${workspaceFolder}",
-    "jupyter.pythonPath": "/opt/quantfree/bin/python"
+    "jupyter.pythonPath": "/opt/quantfree/bin/python",
+    "aider-composer.inlineDiff.enable": true,
+    "aider-composer.pythonPath": "/opt/quantfree/bin/"
 }
