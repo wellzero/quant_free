@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-# pls give following code formula AI!
+# pls give formular of following code AI?
 
 
 
