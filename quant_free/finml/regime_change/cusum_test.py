@@ -1,7 +1,11 @@
 import pandas as pd
 import numpy as np
 
-# pls give formular of following code AI?
+# CUSUM test formulas:
+# 1. σ²_t = 1/(t-1) * Σ(Δx_i)² where Δx_i = x_i - x_{i-1}
+# 2. S_n(t) = 1/(σ_t * √(t-k)) * (x_t - x_k) for one-sided test
+#    S_n(t) = 1/(σ_t * √(t-k)) * |x_t - x_k| for two-sided test
+# 3. Critical value = √(4.6 + ln(t-k))
 
 
 
