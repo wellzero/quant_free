@@ -6,6 +6,9 @@ import numpy as np
 
 
 from quant_free.finml.utils.multiprocess import mp_pandas_obj
+# Calculate the difference between values based on test type
+# For one-sided: x_t - x_k
+# For two-sided: |x_t - x_k|
 def get_values_diff(test_type, series, index, ind):
     if test_type == 'one_sided':
         values_diff = series.loc[index] - series.loc[ind]
@@ -15,6 +18,9 @@ def get_values_diff(test_type, series, index, ind):
         raise ValueError('Test type is unknown: can be either one_sided or two_sided')
 
     return values_diff
+# Calculate S_n(t) statistic for each time point t in molecule
+# S_n(t) = max_{k<t} [1/(σ_t * √(t-k)) * (x_t - x_k)] for one-sided
+# or max_{k<t} [1/(σ_t * √(t-k)) * |x_t - x_k|] for two-sided
 def get_s_n_for_t(series: pd.Series, test_type: str, molecule: list) -> pd.DataFrame:
     s_n_t_series = pd.DataFrame(index = molecule, columns = ['stat', 'critical_value'])
     for index in molecule:
@@ -38,6 +44,8 @@ def get_s_n_for_t(series: pd.Series, test_type: str, molecule: list) -> pd.DataF
     return s_n_t_series
 
 
+# Chu-Stinchcombe-White test for structural breaks
+# Computes S_n(t) statistics in parallel for all t >= 2
 def get_chu_stinchcombe_white_statistics(series: pd.Series, test_type: str = 'one_sided',
                                          num_threads: int = 8) -> pd.Series:
     molecule = series.index[2:series.shape[0]]
