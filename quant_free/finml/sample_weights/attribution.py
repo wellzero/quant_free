@@ -12,7 +12,7 @@ def _apply_weight_by_return(label_endtime, num_conc_events, close_series, molecu
     )
 
     for t_in, t_out in label_endtime.loc[weights.index].items():
-        weights.loc[t_in] = (ret.loc[t_in:t_out] / num_conc_events.loc[t_in:t_out]).sum()
+        weights.loc[t_in] = (ret.loc[t_in:t_out].values / num_conc_events.loc[t_in:t_out].values).sum()
     return weights.abs()
 
 def weights_by_return(triple_barrier_events, close_series, num_threads=5):

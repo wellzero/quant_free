@@ -24,7 +24,7 @@ def get_values_diff(test_type, series, index, ind):
     return values_diff
 # Calculate S_n(t) statistic for each time point t in molecule
 # S_n(t) = max_{k<t} [1/(σ_t * √(t-k)) * (x_t - x_k)] for one-sided
-# or max_{k<t} [1/(σ_t * √(t-k)) * |x_t - x_k|] for two-sided
+# or       max_{k<t} [1/(σ_t * √(t-k)) * |x_t - x_k|] for two-sided
 def get_s_n_for_t(series: pd.Series, test_type: str, molecule: list) -> pd.DataFrame:
     s_n_t_series = pd.DataFrame(index = molecule, columns = ['stat', 'critical_value'])
     for index in molecule:
