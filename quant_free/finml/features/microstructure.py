@@ -118,6 +118,33 @@ def alpha(beta: pd.Series, gamma: pd.Series) -> pd.Series:
     return alpha
 
 def corwin_schultz_estimator(high: pd.Series, low: pd.Series, window: int = 20) -> pd.Series:
+    """
+    Calculate the Corwin-Schultz bid-ask spread estimator using high and low prices.
+    
+    The Corwin-Schultz estimator is based on the work of Corwin & Schultz (2012) and uses the following components:
+    
+    1. Beta (β): Rolling mean of squared log returns of high/low prices over 2 periods, then averaged over window
+       β = mean[(log(high_t/low_t))^2]
+    
+    2. Gamma (γ): Squared log returns of 2-period max high and min low prices
+       γ = [log(max(high_t, high_t-1)/min(low_t, low_t-1))]^2
+    
+    3. Alpha (α): Intermediate calculation combining β and γ
+       α = [(√2 - 1) * √β] / den - √(γ / den)
+       where den = 3 - 2√2 ≈ 0.171573
+    
+    The final spread estimate is calculated as:
+    S = 2 * (e^α - 1) / (1 + e^α)
+    
+    Parameters:
+    high (pd.Series): Series of high prices
+    low (pd.Series): Series of low prices
+    window (int): Rolling window size for beta calculation
+    
+    Returns:
+    pd.Series: Corwin-Schultz spread estimate
+    """
+
     beta_ = beta(high, low, window)
     gamma_ = gamma(high, low)
     alpha_ = alpha(beta_, gamma_)
@@ -128,6 +155,32 @@ def corwin_schultz_estimator(high: pd.Series, low: pd.Series, window: int = 20) 
     return spread.Spread
 
 def becker_parkinson_vol(high: pd.Series, low: pd.Series, window: int = 20) -> pd.Series:
+    """
+    Calculate the Becker-Parkinson volatility estimator using high and low prices.
+    
+    The formula is based on the work of Becker & Parkinson (2012) and uses the following components:
+    
+    1. Beta (β): Rolling mean of squared log returns of high/low prices over 2 periods, then averaged over window
+       β = mean[(log(high_t/low_t))^2]
+    
+    2. Gamma (γ): Squared log returns of 2-period max high and min low prices
+       γ = [log(max(high_t, high_t-1)/min(low_t, low_t-1))]^2
+    
+    The final volatility estimate is calculated as:
+    σ = [(2^(-0.5) - 1) * β^0.5] / (k2 * den) + [γ / (k2^2 * den)]^0.5
+    
+    Where:
+    - k2 = sqrt(8/π) ≈ 1.595769
+    - den = 3 - 2*sqrt(2) ≈ 0.171573
+    
+    Parameters:
+    high (pd.Series): Series of high prices
+    low (pd.Series): Series of low prices
+    window (int): Rolling window size for beta calculation
+    
+    Returns:
+    pd.Series: Becker-Parkinson volatility estimate
+    """
     Beta = beta(high, low, window)
     Gamma = gamma(high, low)
 
@@ -449,11 +502,60 @@ def pin_likelihood(params, buy_orders, sell_orders):
     return -likelihood
 
 def estimate_pin(buy_orders, sell_orders, alpha=0.05, delta=0.5, mu=0.5, epsilon_b=0.5, epsilon_s=0.5):
+    """
+    Estimates the Probability of Informed Trading (PIN) using the Easley, Kiefer, O'Hara, and Paperman (1996) model.
+    
+    The PIN model assumes:
+    - α: Probability that an information event occurs
+    - δ: Probability that news is bad given an information event
+    - μ: Arrival rate of informed traders
+    - ε_b: Arrival rate of uninformed buy orders
+    - ε_s: Arrival rate of uninformed sell orders
+    
+    The likelihood function is based on the following probabilities:
+    - π_buy = (αμ + ε_b) / (αμ + ε_b + ε_s + (1-α)μ)
+    - π_sell = (α(1-δ)μ + ε_s) / (αμ + ε_b + ε_s + (1-α)μ)
+    
+    The PIN is calculated as:
+    PIN = αμ / (αμ + ε_b + ε_s)
+    
+    Parameters:
+    -----------
+    buy_orders : array-like
+        Number of buy orders in each time period
+    sell_orders : array-like
+        Number of sell orders in each time period
+    alpha : float, optional
+        Initial guess for probability of information event (default: 0.05)
+    delta : float, optional
+        Initial guess for probability of bad news (default: 0.5)
+    mu : float, optional
+        Initial guess for informed trader arrival rate (default: 0.5)
+    epsilon_b : float, optional
+        Initial guess for uninformed buy order rate (default: 0.5)
+    epsilon_s : float, optional
+        Initial guess for uninformed sell order rate (default: 0.5)
+    
+    Returns:
+    --------
+    float
+        Estimated Probability of Informed Trading (PIN)
+    """
+
     initial_guess = [alpha, delta, mu, epsilon_b, epsilon_s]
     bounds = [(0.01, 0.99), (0.01, 0.99), (0.01, None), (0.01, None), (0.01, None)]
 
     options = {'maxiter': 1000, 'disp': False}
 
+    # minimize() is a function from scipy.optimize that finds the minimum of a scalar function
+    # Here it's minimizing the pin_likelihood function using the L-BFGS-B method
+    # The output is an OptimizeResult object containing:
+    # - x: the solution array [alpha, delta, mu, epsilon_b, epsilon_s]
+    # - success: boolean indicating if optimization succeeded
+    # - message: description of the cause of termination
+    # - fun: value of the objective function at the solution
+    # - jac: gradient of the objective function
+    # - nfev: number of function evaluations
     result = minimize(pin_likelihood, initial_guess, args=(buy_orders, sell_orders), bounds=bounds, options=options, method='L-BFGS-B')
 
     if result.success:
