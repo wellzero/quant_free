@@ -567,6 +567,7 @@ def estimate_pin(buy_orders, sell_orders, alpha=0.05, delta=0.5, mu=0.5, epsilon
 
 def probability_of_informed_trading(buy_orders, sell_orders, alpha=0.05, delta=0.5, mu=0.5, epsilon_b=0.5,
                                     epsilon_s=0.5, window=21):
+    
     buy_orders = buy_orders.reset_index(drop=True)
     sell_orders = sell_orders.reset_index(drop=True)
 
