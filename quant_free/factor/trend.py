@@ -150,6 +150,8 @@ class Trend(FactorBase):
     """
     Computes the moving window difference trend factor.
 
+    (smooth_short_window - smooth_long_window) / std(price)
+
     Returns
     -------
     mw_diff: pd.Series or pd.DataFrame - MultiIndex

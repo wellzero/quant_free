@@ -7,5 +7,6 @@
 *.png
 data
 Data
+aider.sh
 config.json
 .aider*

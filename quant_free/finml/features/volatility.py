@@ -3,6 +3,40 @@ import pandas as pd
 import arch
 
 def daily_volatility(close: pd.Series, lookback: int = 100) -> pd.Series:
+    """
+    Calculates daily volatility using exponentially weighted moving standard deviation.
+    
+    The function works as follows:
+    
+    1. df0 = close.index.searchsorted(close.index - pd.Timedelta(days=1))
+       - Finds the index positions of the previous trading day for each date
+       - Uses searchsorted to efficiently find where each date minus 1 day would fit in the index
+       
+    2. df0 = df0[df0 > 0]
+       - Filters out any indices where the previous day is not available (index 0)
+       
+    3. df0 = (pd.Series(close.index[df0 - 1], index=close.index[close.shape[0] - df0.shape[0]:]))
+       - Creates a mapping between current dates and their previous trading days
+       - The index contains current dates, values contain corresponding previous dates
+       
+    4. df0 = close.loc[df0.index] / close.loc[df0].values - 1
+       - Calculates daily returns as percentage change from previous day
+       - close.loc[df0.index] gets current prices
+       - close.loc[df0].values gets previous day prices
+       - Division and subtraction calculates percentage change
+       
+    5. df0 = df0.ewm(span = lookback).std()
+       - Computes exponentially weighted moving standard deviation of returns
+       - Uses a span of 'lookback' periods (default 100)
+       - This gives more weight to recent observations
+       
+    Parameters:
+        close (pd.Series): Series of closing prices with datetime index
+        lookback (int): Span for the exponential moving window (default 100)
+        
+    Returns:
+        pd.Series: Series of daily volatility values
+    """
     df0 = close.index.searchsorted(close.index - pd.Timedelta(days=1))
     df0 = df0[df0 > 0]
     df0 = (pd.Series(close.index[df0 - 1],
@@ -10,7 +44,6 @@ def daily_volatility(close: pd.Series, lookback: int = 100) -> pd.Series:
     df0 = close.loc[df0.index] / close.loc[df0].values - 1  # daily rets
     df0 = df0.ewm(span = lookback).std()
     return df0
-
 def parkinson_volatility(high: pd.Series, low : pd.Series, window : int = 20) -> pd.Series :
     ret = np.log(high / low)
     estimator = 1 / (4 * np.log(2)) * (ret ** 2)
@@ -86,6 +119,19 @@ def yang_zhang_volatility(series, window=21):
     return yz_volatility
 
 def intrinsic_entropy(series, total_volume, window=21):
+    # Intrinsic Entropy Calculation
+    # The intrinsic entropy measures the uncertainty in the price movement and volume.
+    # It is calculated using the formula:
+    #
+    # h_co = -E[(log(Open/Close_{t-1}) * (Volume_t / Total_Volume) * log(Volume_{t-1} / Total_Volume))]
+    # h_oc = -E[(log(Close/Open) * (Volume_t / Total_Volume) * log(Volume_t / Total_Volume))]
+    # h_ohlc = -E[((log(Open/High) * log(High/Close)) + (log(Low/Open) * log(Low/Close))) * (Volume_t / Total_Volume) * log(Volume_t / Total_Volume)]
+    #
+    # Where E[] denotes the rolling expectation over the given window.
+    # The final intrinsic entropy h is calculated as:
+    # h = |h_co + k * h_oc + (1 - k) * h_ohlc|
+    # Where k is a scaling factor defined as 0.34 / (1.34 + (window + 1) / (window - 1))
+
     h_co = - (
             np.log(series['Open'] / series['Close'].shift(1)) *
             (series['Volume'] / total_volume) *

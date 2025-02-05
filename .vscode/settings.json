@@ -1,11 +1,24 @@
 {
     "python.defaultInterpreterPath": "/opt/quantfree/bin/python",
+    "python.pythonPath": "/opt/quantfree/bin/python",
     "jupyter.notebookFileRoot": "${workspaceFolder}",
     "jupyter.pythonPath": "/opt/quantfree/bin/python",
     "aider-composer.inlineDiff.enable": true,
-    "aider-composer.pythonPath": "/opt/quantfree/bin/",
+    "aider-composer.pythonPath": "/opt/quantfree/bin",
     "workbench.colorCustomizations": {
-        "selection.background": "#90EE90",
-        "selection.foreground": "#000000"
-    }
+        "editor.selectionBackground": "#FFD700",
+        "selection.background": "#FFD700", // This should match the foreground
+        "editor.selectionHighlightBackground": "#FFA500"
+    },
+    "python.analysis.autoImportCompletions": true,
+    "marscode.codeCompletionPro": {
+        "enableCodeCompletionPro": false
+    },
+    "marscode.enableInlineCommand": true,
+    "marscode.enableCodelens": {
+        "enableInlineDocumentation": true,
+        "enableInlineUnitTest": true,
+        "enableInlineExplain": true
+    },
+    "marscode.chatLanguage": "en"
 }

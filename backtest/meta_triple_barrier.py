@@ -8,6 +8,7 @@ from autots import AutoTS
 from lumibot.backtesting import PandasDataBacktesting
 from lumibot.brokers import Alpaca
 from lumibot.entities import Asset, Data
+from lumibot.entities.asset import Asset
 from lumibot.strategies.strategy import Strategy
 from lumibot.traders import Trader
 from sklearn.ensemble import RandomForestRegressor
@@ -30,18 +31,35 @@ from quant_free.finml.labeling.labeling import *
 from quant_free.finml.features.volatility import daily_volatility
 
 
-# Generic sort function
-def sort_data(data):
-    return sorted(data)
-
 class Trend(Strategy):
     """Parameters:
 
     symbol (str, optional): The symbol that we want to trade. Defaults to "SRNE".
+    compute_frequency (int, optional): The time (in minutes) that we should retrain our model.
+    lookback_period (int, optional): The amount of data (in minutes) that we get from our data source to use in the model.
+    pct_portfolio_per_trade (float, optional): The size that each trade will be (in percent of the total portfolio).
+    price_change_threshold_up (float, optional): The difference between predicted price and the current price that will trigger a buy order (in percentage change).
+    price_change_threshold_down (float, optional): The difference between predicted price and the current price that will trigger a sell order (in percentage change).
+    max_pct_portfolio (float, optional): The maximum that the strategy will buy or sell as a percentage of the portfolio (eg. if this is 0.8 - or 80% - and our portfolio is worth $100k, then we will stop buying when we own $80k worth of the symbol)
+    take_profit_factor: Where you place your limit order based on the prediction
+    stop_loss_factor: Where you place your stop order based on the prediction
     """
-
+# pls clean parameters are not used in following code
     parameters = {
+        # "symbol": "INTC",
         "symbol": "AAPL",
+        "take_profit_ratio": 2,
+        "stop_loss_ratio": 1,
+        "quantity": 10,
+        "forward_period": 5,
+        "factor_window": 5,
+        "min_ret": 0.01,
+        "vertical_day": 15,
+        'training_start_date': get_json_config_value("training_start_date"),
+        'training_end_date': get_json_config_value("training_end_date"),
+        'test_start_date': get_json_config_value("test_start_date"),
+        'test_end_date': get_json_config_value("test_end_date"),
+        "lookback": 60
     }
 
     def initialize(self):
@@ -49,7 +67,7 @@ class Trend(Strategy):
 
       self.sleeptime = "1D"
       
-      self.factor_names = [f"{factor_name}_{self.parameters['factor_window']}" for factor_name in self.parameters['factors']]
+    #   self.factor_names = [f"{factor_name}_{self.parameters['factor_window']}" for factor_name in self.parameters['factors']]
 
       # Variable initial states
       self.last_compute = None
@@ -73,7 +91,7 @@ class Trend(Strategy):
         vertical_barrier = add_vertical_barrier(
             data.index, 
             data['close'], 
-            num_days = 7 # expariation limit
+            num_days =  self.parameters['vertical_day']# expariation limit
         )
 
         volatility = daily_volatility(
@@ -84,9 +102,9 @@ class Trend(Strategy):
         triple_barrier_events = get_events(
             close = data['close'],
             t_events = data.index[2:],
-            pt_sl = [1, 1], # profit taking 2, stopping loss 1
+            pt_sl = [self.parameters['take_profit_ratio'], self.parameters['stop_loss_ratio']], # profit taking 2, stopping loss 1
             target = volatility, # dynamic threshold
-            min_ret = 0.01, # minimum position return
+            min_ret = self.parameters['min_ret'], # minimum position return
             num_threads = 1, # number of multi-thread 
             vertical_barrier_times = vertical_barrier, # add vertical barrier
             side_prediction = None # betting side prediction (primary model)
