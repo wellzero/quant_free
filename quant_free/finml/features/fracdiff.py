@@ -44,7 +44,20 @@ class FractionalDifferentiatedFeatures :
         return df
     @staticmethod
     def fracDiff(series, d, thres=.01):
-# pls explain this function with formula AI!
+        """Apply fractional differentiation to a pandas series using the Grünwald–Letnikov approximation.
+        
+        The fractional derivative is calculated using the expansion:
+        (1 - L)^d = ∑_{k=0}^∞ (-1)^k * binomial(d, k) * L^k
+        Where L is the lag operator and d is the fractional differentiation order
+        
+        Args:
+            series: pandas DataFrame with time series to differentiate
+            d: fractional differentiation order (0 < d < 1)
+            thres: threshold for weight truncation (0 < thres < 1)
+            
+        Returns:
+            pd.DataFrame: Fractionally differentiated series
+        """
         w = FractionalDifferentiatedFeatures.getWeights(d, series.shape[0])
         w_ = np.cumsum(abs(w))
         w_ /= w_[-1]
