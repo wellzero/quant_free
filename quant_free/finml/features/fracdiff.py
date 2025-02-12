@@ -44,6 +44,7 @@ class FractionalDifferentiatedFeatures :
         return df
     @staticmethod
     def fracDiff(series, d, thres=.01):
+# pls explain this function with formula AI!
         w = FractionalDifferentiatedFeatures.getWeights(d, series.shape[0])
         w_ = np.cumsum(abs(w))
         w_ /= w_[-1]
