@@ -3,8 +3,8 @@
     "python.pythonPath": "/opt/quantfree/bin/python",
     "jupyter.notebookFileRoot": "${workspaceFolder}",
     "jupyter.pythonPath": "/opt/quantfree/bin/python",
-    "aider-composer.inlineDiff.enable": true,
-    "aider-composer.pythonPath": "/opt/quantfree/bin",
+    "aider-composer.inlineDiff.enable": false,
+    "aider-composer.pythonPath": "/opt/quantfree/bin/",
     "workbench.colorCustomizations": {
         "editor.selectionBackground": "#FFD700",
         "selection.background": "#FFD700", // This should match the foreground

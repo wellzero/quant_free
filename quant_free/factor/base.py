@@ -61,6 +61,20 @@ class FactorBase(ABC):
       ret.columns = ['ret_forward_' + str(lags)]
       return ret
 
+  def get_backward_return(self, stocks_df, lags = 1, column = 'close'):
+      '''计算(未来)下一个回报率
+      :param stocks_df: {pd.DataFrame 或 stock_struct}
+      :param column: {string}
+      :return: {pd.Series}
+      '''
+
+      # ret = stocks_df[column].groupby(level=0, group_keys=False).apply(lambda x:(x/x.shift(1)-1).shift(-1))
+
+      ret = TransformLib(stocks_df[column]).returns(lags, forward = False)
+
+      ret.columns = ['ret_backward_' + str(lags)]
+      return ret
+
   def get_current_return(self, stocks_df, lags = 1, column = 'close'):
       '''计算当期的回报率
       :param stocks_df: {pd.DataFrame 或 stock_struct}
@@ -387,6 +401,23 @@ class FactorBase(ABC):
           forward_return = self.get_forward_return(df, period)
           df_stored = pd.concat([df_stored, forward_return], axis=1)
       return df_stored
+  
+  def add_backward_returns(self, df, df_stored, periods = [1, 5, 10, 15, 20]):
+      """
+      Adds forward returns for specified periods to the stored DataFrame.
+
+      Parameters:
+      - df: pd.DataFrame, the input DataFrame
+      - periods: list of int, the forward periods to calculate
+      - df_stored: pd.DataFrame, the DataFrame to append results to
+
+      Returns:
+      - pd.DataFrame: The updated DataFrame with forward returns
+      """
+      for period in periods:
+          backward_return = self.get_backward_return(df, period)
+          df_stored = pd.concat([df_stored, backward_return], axis=1)
+      return df_stored
 
 
   def calc_1_sector(self, sector):
@@ -458,6 +489,7 @@ class FactorBase(ABC):
                     result.name = method_name
                     df_stored = pd.concat([df_stored, result], axis = 1)
 
+      df_stored = self.add_backward_returns(df, df_stored)
       df_stored = self.add_forward_returns(df, df_stored)
       us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
       return df_stored
@@ -549,6 +581,7 @@ class FactorBase(ABC):
                     result.name = method_name
                     df_stored = pd.concat([df_stored, result], axis = 1)
 
+      df_stored = self.add_backward_returns(df, df_stored)
       df_stored = self.add_forward_returns(df, df_stored)
 
       df_stored.index.name = "date"

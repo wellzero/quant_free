@@ -48,7 +48,9 @@ def mean_decrease_accuracy(model, X, y, cv_gen, sample_weight=None, scoring=log_
     if scoring == log_loss:
         importance = importance / -features_metrics_values
     else:
-        importance = importance / (1.0 - features_metrics_values)
+        denominator = (1.0 - features_metrics_values)
+        denominator[denominator == 0] = np.nan  # Protect against division by zero
+        importance = importance / denominator
     importance = pd.concat({'mean': importance.mean(), 'std': importance.std() * importance.shape[0] ** -.5}, axis=1)
     importance.replace([-np.inf, np.nan], 0, inplace=True)
 

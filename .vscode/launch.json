@@ -13,8 +13,8 @@
       // "program": "dataset/test/test_us_equity.py",
       // "program": "test/test_us_equity_xq_finance_calc.py",
       // "program": "backtest/trend_ml_rand_forest.py",
-      "program": "backtest/meta_triple_barrier.py",
-      // "program": "test/factors/alpha101.py",
+      // "program": "backtest/meta_triple_barrier.py",
+      "program": "test/factors/alpha101.py",
       "console": "integratedTerminal",
       "justMyCode": true
     }

@@ -70,3 +70,4 @@ if __name__ == "__main__":
   sectors = ["半导体产品与设备"]
   
   df = alpha_101_.calc_sectors(sectors)
+  

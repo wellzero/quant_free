@@ -23,13 +23,13 @@ if __name__ == "__main__":
   
   # df = trend.calc_1_sector(sector)
   
-  sectors = ["半导体产品与设备", "电脑与外围设备"]
   # sectors = ["互联网与直销零售"]
 
   sector_file = 'us_equity_sector.csv'
   sectors = list(us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename=sector_file)['name'].values)
 
   # sectors = ["互联网与直销零售"]
+  sectors = ["半导体产品与设备", "电脑与外围设备"]
 
   df = trend.calc_sectors(sectors)
   # df = trend.parallel_calc_sectors(sectors)
