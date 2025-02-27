@@ -29,7 +29,7 @@ from quant_free.dataset.us_equity_load import *
 
 
 
-class Trend(Strategy):
+class Alpha101(Strategy):
     """Parameters:
 
     symbol (str, optional): The symbol that we want to trade. Defaults to "SRNE".
@@ -44,9 +44,9 @@ class Trend(Strategy):
     """
 
     parameters = {
-        "symbol": "QCOM",
+        # "symbol": "QCOM",
         # "symbol": "TSM",
-        # "symbol": "INTC",
+        "symbol": "INTC",
         # "symbol": "AAPL",
         "quantity": 10,
         "forward_period": 5,
@@ -73,7 +73,7 @@ class Trend(Strategy):
       self.load_factor_model_train(self.parameters["symbol"])
 
     def factor_filter(self, factor):
-      like1 = 'trend'
+      like1 = 'alpha'
       like2 = 'ret_backward_'
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
@@ -143,14 +143,14 @@ class Trend(Strategy):
           self.submit_order(main_order)
         elif predict == 0:
           positions = self.get_positions()
-          for position in positions:
-              if position.asset == Asset(symbol=symbol, asset_type="stock"):
-                quantity = self.parameters["quantity"]
-                # quantity = position.quantity
-                main_order = self.create_order(
-                    position.asset, quantity, "sell", quote=self.quote_asset
-                )
-                self.submit_order(main_order)
+          # for position in positions:
+          # if position.asset == Asset(symbol=symbol, asset_type="stock"):
+          quantity = self.parameters["quantity"]
+          # quantity = position.quantity
+          main_order = self.create_order(
+              symbol, quantity, "sell", quote=self.quote_asset
+          )
+          self.submit_order(main_order)
 
         else:
             print(f"not exsist pridict {predict}")
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
         broker = Alpaca(ac)
 
-        strategy = Trend(
+        strategy = Alpha101(
             broker=broker,
         )
 
@@ -183,13 +183,13 @@ if __name__ == "__main__":
         # Backtest
         ####
 
-        backtesting_start = pd.to_datetime(Trend.parameters["test_start_date"])
-        backtesting_end = pd.to_datetime(Trend.parameters["test_end_date"])
+        backtesting_start = pd.to_datetime(Alpha101.parameters["test_start_date"])
+        backtesting_end = pd.to_datetime(Alpha101.parameters["test_end_date"])
 
         ####
         # Get and Organize Data
         ####
-        symbol = Trend.parameters["symbol"] # "AAPL"
+        symbol = Alpha101.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
         df = us_equity_data_load_within_range(
@@ -210,7 +210,7 @@ if __name__ == "__main__":
             timestep="day",
         )
 
-        Trend.backtest(
+        Alpha101.backtest(
             PandasDataBacktesting,
             backtesting_start,
             backtesting_end,
