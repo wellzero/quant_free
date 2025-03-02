@@ -44,9 +44,9 @@ class Alpha101(Strategy):
     """
 
     parameters = {
-        # "symbol": "QCOM",
+        "symbol": "QCOM",
         # "symbol": "TSM",
-        "symbol": "INTC",
+        # "symbol": "INTC",
         # "symbol": "AAPL",
         "quantity": 10,
         "forward_period": 5,
