@@ -104,6 +104,7 @@ class Alpha101(Strategy):
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
+# pls replace SVM with LDA AI!
       from sklearn.pipeline import make_pipeline
       from sklearn.preprocessing import StandardScaler
       from sklearn.svm import SVC
