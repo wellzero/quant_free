@@ -104,9 +104,10 @@ class Alpha101(Strategy):
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
+# Write a tranformer to repace SVM AI!
       from sklearn.svm import SVC
       svm = SVC(
-          kernel='rbf',
+          kernel='poly',
           class_weight='balanced',
           probability=True,
           random_state=42,
