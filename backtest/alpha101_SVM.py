@@ -104,17 +104,23 @@ class Alpha101(Strategy):
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
-# Write a tranformer to repace SVM AI!
+      from sklearn.pipeline import make_pipeline
+      from sklearn.preprocessing import StandardScaler
       from sklearn.svm import SVC
-      svm = SVC(
-          kernel='poly',
-          class_weight='balanced',
-          probability=True,
-          random_state=42,
-          gamma='scale')
-      self.fit = svm.fit(X = trnsX, y = cont['bin'])
+      
+      # Create pipeline with scaling and SVM
+      self.fit = make_pipeline(
+          StandardScaler(),
+          SVC(
+              kernel='poly',
+              class_weight='balanced',
+              probability=True,
+              random_state=42,
+              gamma='scale'
+          )
+      ).fit(X = trnsX, y = cont['bin'])
 
-      # Calculate accuracy score instead of OOB score for SVM
+      # Calculate accuracy score
       train_pred = self.fit.predict(trnsX)
       accuracy = accuracy_score(cont['bin'], train_pred)
       print(f"Training accuracy: {accuracy}")
