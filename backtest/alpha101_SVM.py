@@ -104,21 +104,14 @@ class Alpha101(Strategy):
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
-# pls replace SVM with LDA AI!
       from sklearn.pipeline import make_pipeline
       from sklearn.preprocessing import StandardScaler
-      from sklearn.svm import SVC
+      from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
       
-      # Create pipeline with scaling and SVM
+      # Create pipeline with scaling and LDA
       self.fit = make_pipeline(
           StandardScaler(),
-          SVC(
-              kernel='poly',
-              class_weight='balanced',
-              probability=True,
-              random_state=42,
-              gamma='scale'
-          )
+          LinearDiscriminantAnalysis()
       ).fit(X = trnsX, y = cont['bin'])
 
       # Calculate accuracy score
