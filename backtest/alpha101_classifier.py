@@ -29,7 +29,7 @@ from quant_free.dataset.us_equity_load import *
 
 
 
-class Alpha101(Strategy):
+class Alpha101_classifier(Strategy):
     """Parameters:
 
     symbol (str, optional): The symbol that we want to trade. Defaults to "SRNE".
@@ -44,10 +44,12 @@ class Alpha101(Strategy):
     """
 
     parameters = {
+        "factor_name":"Alpha101",
         # "symbol": "QCOM",
         # "symbol": "TSM",
         "symbol": "INTC",
         # "symbol": "AAPL",
+        "model": "LDA", # SVM LDA
         "quantity": 10,
         "forward_period": 5,
         'training_start_date': get_json_config_value("training_start_date"),
@@ -73,7 +75,7 @@ class Alpha101(Strategy):
       self.load_factor_model_train(self.parameters["symbol"])
 
     def factor_filter(self, factor):
-      like1 = 'alpha'
+      like1 = 'Alpha101'
       like2 = 'ret_backward_'
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
@@ -91,7 +93,7 @@ class Alpha101(Strategy):
           end_date = self.parameters["training_end_date"],
           column_option = "all",
           # dir_option = 'xq',
-          file_name = self.__class__.__name__ + '.csv')[symbol]
+          file_name = self.parameters["factor_name"] + '.csv')[symbol]
 
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
@@ -104,15 +106,36 @@ class Alpha101(Strategy):
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
-      from sklearn.pipeline import make_pipeline
-      from sklearn.preprocessing import StandardScaler
-      from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-      
-      # Create pipeline with scaling and LDA
-      self.fit = make_pipeline(
-          StandardScaler(),
-          LinearDiscriminantAnalysis()
-      ).fit(X = trnsX, y = cont['bin'])
+
+      if self.parameters["model"] == "SVM":
+        from sklearn.pipeline import make_pipeline
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.svm import SVC
+        
+        # Create pipeline with scaling and SVM
+        self.fit = make_pipeline(
+            StandardScaler(),
+            SVC(
+                kernel='poly',
+                class_weight='balanced',
+                probability=True,
+                random_state=42,
+                gamma='scale'
+            )
+        ).fit(X = trnsX, y = cont['bin'])
+
+      elif self.parameters["model"] == "LDA":
+        from sklearn.pipeline import make_pipeline
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+        # Create pipeline with scaling and LDA
+        self.fit = make_pipeline(
+            StandardScaler(),
+            LinearDiscriminantAnalysis()
+        ).fit(X = trnsX, y = cont['bin'])
+      else:
+         print("pls configure model correctly")
 
       # Calculate accuracy score
       train_pred = self.fit.predict(trnsX)
@@ -125,7 +148,7 @@ class Alpha101(Strategy):
           end_date = self.parameters["test_end_date"],
           column_option = "all",
           # dir_option = 'xq',
-          file_name = self.__class__.__name__ + '.csv')[symbol]
+          file_name = self.parameters["factor_name"] + '.csv')[symbol]
       self.test_factors = trnsX = self.factor_filter(test_factors)
 
     def on_trading_iteration(self):
@@ -172,7 +195,7 @@ if __name__ == "__main__":
 
         broker = Alpaca(ac)
 
-        strategy = Alpha101(
+        strategy = Alpha101_classifier(
             broker=broker,
         )
 
@@ -185,13 +208,13 @@ if __name__ == "__main__":
         # Backtest
         ####
 
-        backtesting_start = pd.to_datetime(Alpha101.parameters["test_start_date"])
-        backtesting_end = pd.to_datetime(Alpha101.parameters["test_end_date"])
+        backtesting_start = pd.to_datetime(Alpha101_classifier.parameters["test_start_date"])
+        backtesting_end = pd.to_datetime(Alpha101_classifier.parameters["test_end_date"])
 
         ####
         # Get and Organize Data
         ####
-        symbol = Alpha101.parameters["symbol"] # "AAPL"
+        symbol = Alpha101_classifier.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
         df = us_equity_data_load_within_range(
@@ -212,7 +235,7 @@ if __name__ == "__main__":
             timestep="day",
         )
 
-        Alpha101.backtest(
+        Alpha101_classifier.backtest(
             PandasDataBacktesting,
             backtesting_start,
             backtesting_end,
