@@ -104,19 +104,19 @@ class Alpha101(Strategy):
       cont.columns = ['bin', 'price_ratio']
       cont['t1'] = cont.index
 
-#pls replave RandomForest with  SVM AI!
-      forest = RandomForestClassifier(
-          criterion = 'log_loss',
-          class_weight = 'balanced_subsample',
-          min_weight_fraction_leaf = 0.0,
-          random_state = 42,
-          n_estimators = 1000,
-          max_features = 1,
-          oob_score = True,
-          n_jobs = 1)
-      self.fit = forest.fit(X = trnsX, y = cont['bin'])
+      from sklearn.svm import SVC
+      svm = SVC(
+          kernel='rbf',
+          class_weight='balanced',
+          probability=True,
+          random_state=42,
+          gamma='scale')
+      self.fit = svm.fit(X = trnsX, y = cont['bin'])
 
-      print(f"oob score {self.fit.oob_score_}")
+      # Calculate accuracy score instead of OOB score for SVM
+      train_pred = self.fit.predict(trnsX)
+      accuracy = accuracy_score(cont['bin'], train_pred)
+      print(f"Training accuracy: {accuracy}")
 
       test_factors = us_equity_data_load_within_range(
           symbols = [symbol],
