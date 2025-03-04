@@ -256,7 +256,15 @@ if __name__ == "__main__":
                 "asset": asset,
             },
         )
-        result_folder = _this_dir = Path(__file__).parent + \
-                        f'{Alpha101_classifier.parameters["symbol"]}_{Alpha101_classifier.parameters["model"]}_{Alpha101_classifier.parameters["factor_name"]}'
+        result_folder = Path(__file__).parent / \
+                       f'{Alpha101_classifier.parameters["symbol"]}_{Alpha101_classifier.parameters["model"]}_{Alpha101_classifier.parameters["factor_name"]}'
         
-        # mv logs folder to result_folder AI!
+        # Create result folder if it doesn't exist
+        result_folder.mkdir(parents=True, exist_ok=True)
+        
+        # Move logs folder
+        logs_folder = Path(__file__).parent / 'logs'
+        if logs_folder.exists():
+            for log_file in logs_folder.iterdir():
+                log_file.rename(result_folder / log_file.name)
+            logs_folder.rmdir()
