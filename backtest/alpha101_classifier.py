@@ -256,3 +256,7 @@ if __name__ == "__main__":
                 "asset": asset,
             },
         )
+        result_folder = _this_dir = Path(__file__).parent + \
+                        f'{Alpha101_classifier.parameters["symbol"]}_{Alpha101_classifier.parameters["model"]}_{Alpha101_classifier.parameters["factor_name"]}'
+        
+        # mv logs folder to result_folder AI!
