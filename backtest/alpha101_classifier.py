@@ -256,9 +256,9 @@ if __name__ == "__main__":
                 "asset": asset,
             },
         )
-        result_folder = Path(__file__).parent / \
-                       f'{Alpha101_classifier.parameters["symbol"]}_{Alpha101_classifier.parameters["model"]}_{Alpha101_classifier.parameters["factor_name"]}'
         
+        result_folder = Path(__file__).parent /'result'/ \
+                       f'{Alpha101_classifier.parameters["factor_name"]}_{Alpha101_classifier.parameters["symbol"]}_{Alpha101_classifier.parameters["model"]}'
         # Create result folder if it doesn't exist
         result_folder.mkdir(parents=True, exist_ok=True)
         
