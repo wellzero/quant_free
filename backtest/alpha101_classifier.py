@@ -45,11 +45,11 @@ class Alpha101_classifier(Strategy):
 
     parameters = {
         "factor_name":"Alpha101",
-        # "symbol": "QCOM",
+        "symbol": "QCOM",
         # "symbol": "TSM",
-        "symbol": "INTC",
+        # "symbol": "INTC",
         # "symbol": "AAPL",
-        "model": "QDA", # SVM LDA QDA
+        "model": "QDA", # SVM or QDA
         "quantity": 10,
         "forward_period": 5,
         'training_start_date': get_json_config_value("training_start_date"),
