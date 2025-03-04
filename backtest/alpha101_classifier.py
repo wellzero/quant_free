@@ -49,7 +49,7 @@ class Alpha101_classifier(Strategy):
         # "symbol": "TSM",
         "symbol": "INTC",
         # "symbol": "AAPL",
-        "model": "LDA", # SVM LDA
+        "model": "QDA", # SVM LDA QDA
         "quantity": 10,
         "forward_period": 5,
         'training_start_date': get_json_config_value("training_start_date"),
