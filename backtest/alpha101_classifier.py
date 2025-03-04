@@ -124,16 +124,6 @@ class Alpha101_classifier(Strategy):
             )
         ).fit(X = trnsX, y = cont['bin'])
 
-      elif self.parameters["model"] == "LDA":
-        from sklearn.pipeline import make_pipeline
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-
-        # Create pipeline with scaling and LDA
-        self.fit = make_pipeline(
-            StandardScaler(),
-            LinearDiscriminantAnalysis()
-        ).fit(X = trnsX, y = cont['bin'])
       elif self.parameters["model"] == "QDA":
         from sklearn.pipeline import make_pipeline
         from sklearn.preprocessing import StandardScaler
