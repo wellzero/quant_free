@@ -137,13 +137,12 @@ class Alpha101_classifier(Strategy):
       elif self.parameters["model"] == "QDA":
         from sklearn.pipeline import make_pipeline
         from sklearn.preprocessing import StandardScaler
-        # pls chnange LDA to QDA AI!
-        from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+        from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
-        # Create pipeline with scaling and LDA
+        # Create pipeline with scaling and QDA
         self.fit = make_pipeline(
             StandardScaler(),
-            LinearDiscriminantAnalysis()
+            QuadraticDiscriminantAnalysis()
         ).fit(X = trnsX, y = cont['bin'])
       else:
          print("pls configure model correctly")
