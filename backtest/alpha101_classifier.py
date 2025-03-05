@@ -257,14 +257,5 @@ if __name__ == "__main__":
             },
         )
         
-        result_folder = Path(__file__).parent /'result'/ \
-                       f'{Alpha101_classifier.parameters["factor_name"]}_{Alpha101_classifier.parameters["symbol"]}_{Alpha101_classifier.parameters["model"]}'
-        # Create result folder if it doesn't exist
-        result_folder.mkdir(parents=True, exist_ok=True)
-        
-        # Move logs folder
-        logs_folder = Path(__file__).parent / 'logs'
-        if logs_folder.exists():
-            for log_file in logs_folder.iterdir():
-                log_file.rename(result_folder / log_file.name)
-            logs_folder.rmdir()
+        from quant_free.utils.backtest_utill import *
+        backtest_store_result(Path(__file__).parent, Alpha101_classifier.parameters)
