@@ -144,8 +144,20 @@ class Alpha101_classifier(Strategy):
             StandardScaler(),
             LinearDiscriminantAnalysis()
         ).fit(X = trnsX, y = cont['bin'])
+      elif self.parameters["model"] == "RAND_FOREST":
+
+        forest = RandomForestClassifier(
+          criterion = 'log_loss',
+          class_weight = 'balanced_subsample',
+          min_weight_fraction_leaf = 0.0,
+          random_state = 42,
+          n_estimators = 1000,
+          max_features = 1,
+          oob_score = True,
+          n_jobs = 1)
+        self.fit = forest.fit(X = trnsX, y = cont['bin'])
       else:
-         print("pls configure model correctly")
+         print("pls configure model correctly:", self.parameters["model"])
 
       # Calculate accuracy score
       train_pred = self.fit.predict(trnsX)
@@ -198,17 +210,18 @@ if __name__ == "__main__":
 
     # Show help if requested or no args
     if len(sys.argv) == 1 or sys.argv[1].lower() in ['-h', '--help']:
+
         print("""
-Usage: python alpha101_classifier.py [SYMBOL] [MODEL]
+            Usage: python alpha101_classifier.py [SYMBOL] [MODEL]
 
-Parameters:
-  SYMBOL    Stock ticker symbol to trade (default: TSM)
-  MODEL     Classification model to use: SVM, QDA or LDA (default: LDA)
+            Parameters:
+            SYMBOL    Stock ticker symbol to trade (default: TSM)
+            MODEL     Classification model to use: SVM, QDA LDA, rand_forest(default: LDA)
 
-Examples:
-  python alpha101_classifier.py AAPL LDA
-  python alpha101_classifier.py QCOM SVM
-""")
+            Examples:
+            python alpha101_classifier.py AAPL LDA
+            python alpha101_classifier.py QCOM SVM
+            """)
         sys.exit(0)
 
     # Get symbol from command line if provided
@@ -219,6 +232,7 @@ Examples:
         model = sys.argv[2].upper()
         Alpha101_classifier.parameters["model"] = model
 
+    print(f"symbol: {symbol} model: {model}")
     if is_live:
         ####
         # Run the strategy
