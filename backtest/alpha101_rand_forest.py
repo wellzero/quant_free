@@ -163,7 +163,10 @@ class Alpha101(Strategy):
 if __name__ == "__main__":
     is_live = False
 
-    # input symbol from command and pass it into alpha paramters['symbol'] AI!
+    # Get symbol from command line if provided
+    if len(sys.argv) > 1:
+        symbol = sys.argv[1].upper()
+        Alpha101.parameters["symbol"] = symbol
 
     if is_live:
         ####
