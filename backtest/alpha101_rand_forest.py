@@ -44,12 +44,14 @@ class Alpha101(Strategy):
     """
 
     parameters = {
-        "symbol": "QCOM",
+        # "symbol": "QCOM",
         # "symbol": "TSM",
-        # "symbol": "INTC",
+        "symbol": "INTC",
         # "symbol": "AAPL",
         "quantity": 10,
         "forward_period": 5,
+        "factor_name": 'Alpha101',
+        "model": 'rand_forest',
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),
         'test_start_date': get_json_config_value("test_start_date"),
@@ -161,6 +163,8 @@ class Alpha101(Strategy):
 if __name__ == "__main__":
     is_live = False
 
+    # input symbol from command and pass it into alpha paramters['symbol'] AI!
+
     if is_live:
         ####
         # Run the strategy
@@ -221,3 +225,6 @@ if __name__ == "__main__":
                 "asset": asset,
             },
         )
+
+        from quant_free.utils.backtest_utill import *
+        backtest_store_result(Path(__file__).parent, Alpha101.parameters)
