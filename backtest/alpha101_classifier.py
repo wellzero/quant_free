@@ -195,7 +195,21 @@ class Alpha101_classifier(Strategy):
 
 if __name__ == "__main__":
     is_live = False
-# add help guide for input parameter AI!
+
+    # Show help if requested or no args
+    if len(sys.argv) == 1 or sys.argv[1].lower() in ['-h', '--help']:
+        print("""
+Usage: python alpha101_classifier.py [SYMBOL] [MODEL]
+
+Parameters:
+  SYMBOL    Stock ticker symbol to trade (default: TSM)
+  MODEL     Classification model to use: SVM, QDA or LDA (default: LDA)
+
+Examples:
+  python alpha101_classifier.py AAPL LDA
+  python alpha101_classifier.py QCOM SVM
+""")
+        sys.exit(0)
 
     # Get symbol from command line if provided
     if len(sys.argv) > 1:
