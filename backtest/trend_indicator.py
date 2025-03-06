@@ -50,6 +50,8 @@ class Trend(Strategy):
         "stop_loss_price": 395,
         "quantity": 10,
         "forward_period": 5,
+        "factor_name": 'Trend',
+        "model": 'indicator',
         "factors": ['trend_divergence_30'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),

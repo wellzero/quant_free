@@ -52,6 +52,8 @@ class Trend(Strategy):
         "thr": 0.02,
         "forward_period": 5,
         "num_classes": 2,
+        "factor_name": 'Trend',
+        "model": 'rand_forest_prob_bet',
         "factors": ['trend_divergence_30', 'trend_ewma_30', 'trend_adx_30', 'trend_energy_30', 'trend_price_acc_30',], #'trend_snr_30','trend_breakout_30','trend_time_trend_30','trend_price_mom_30'],
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),

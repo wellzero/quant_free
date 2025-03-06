@@ -2,7 +2,8 @@
 
 def backtest_store_result(path, parameters):
     result_folder = path /'result'/ \
-                    f'{parameters["factor_name"]}_{parameters["symbol"]}_{parameters["model"]}'
+                    f'{parameters["symbol"]}_{parameters["factor_name"]}_{parameters["model"]}'
+    print("result folder: ", result_folder)
     # Create result folder if it doesn't exist
     result_folder.mkdir(parents=True, exist_ok=True)
     

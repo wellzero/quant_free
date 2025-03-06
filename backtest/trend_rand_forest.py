@@ -44,12 +44,14 @@ class Trend(Strategy):
     """
 
     parameters = {
-        "symbol": "QCOM",
-        # "symbol": "TSM",
+        # "symbol": "QCOM",
+        "symbol": "TSM",
         # "symbol": "INTC",
         # "symbol": "AAPL",
         "quantity": 10,
         "forward_period": 5,
+        "factor_name": 'Trend',
+        "model": 'rand_forest',
         'training_start_date': get_json_config_value("training_start_date"),
         'training_end_date': get_json_config_value("training_end_date"),
         'test_start_date': get_json_config_value("test_start_date"),
@@ -142,15 +144,23 @@ class Trend(Strategy):
           )
           self.submit_order(main_order)
         elif predict == 0:
-          positions = self.get_positions()
-          for position in positions:
-              if position.asset == Asset(symbol=symbol, asset_type="stock"):
-                quantity = self.parameters["quantity"]
-                # quantity = position.quantity
-                main_order = self.create_order(
-                    position.asset, quantity, "sell", quote=self.quote_asset
-                )
-                self.submit_order(main_order)
+          
+        #   positions = self.get_positions()
+        #   for position in positions:
+        #       if position.asset == Asset(symbol=symbol, asset_type="stock"):
+        #         quantity = self.parameters["quantity"]
+        #         # quantity = position.quantity
+        #         main_order = self.create_order(
+        #             position.asset, quantity, "sell", quote=self.quote_asset
+        #         )
+        #         self.submit_order(main_order)
+
+          quantity = self.parameters["quantity"]
+          # quantity = position.quantity
+          main_order = self.create_order(
+              symbol, quantity, "sell", quote=self.quote_asset
+          )
+          self.submit_order(main_order)
 
         else:
             print(f"not exsist pridict {predict}")
@@ -160,6 +170,11 @@ class Trend(Strategy):
 
 if __name__ == "__main__":
     is_live = False
+
+    # Get symbol from command line if provided
+    if len(sys.argv) > 1:
+        symbol = sys.argv[1].upper()
+        Trend.parameters["symbol"] = symbol
 
     if is_live:
         ####
@@ -221,3 +236,5 @@ if __name__ == "__main__":
                 "asset": asset,
             },
         )
+        from quant_free.utils.backtest_utill import *
+        backtest_store_result(Path(__file__).parent, Trend.parameters)

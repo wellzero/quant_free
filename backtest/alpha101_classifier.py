@@ -45,11 +45,11 @@ class Alpha101_classifier(Strategy):
 
     parameters = {
         "factor_name":"Alpha101",
-        "symbol": "QCOM",
-        # "symbol": "TSM",
+        # "symbol": "QCOM",
+        "symbol": "TSM",
         # "symbol": "INTC",
         # "symbol": "AAPL",
-        "model": "QDA", # SVM or QDA
+        "model": "LDA", # SVM or QDA LDA
         "quantity": 10,
         "forward_period": 5,
         'training_start_date': get_json_config_value("training_start_date"),
@@ -195,6 +195,10 @@ class Alpha101_classifier(Strategy):
 
 if __name__ == "__main__":
     is_live = False
+    # Get symbol from command line if provided
+    if len(sys.argv) > 1:
+        symbol = sys.argv[1].upper()
+        Alpha101_classifier.parameters["symbol"] = symbol
 
     if is_live:
         ####
