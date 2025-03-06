@@ -75,7 +75,7 @@ class Alpha101_classifier(Strategy):
       self.load_factor_model_train(self.parameters["symbol"])
 
     def factor_filter(self, factor):
-      like1 = 'Alpha101'
+      like1 = 'alpha'
       like2 = 'ret_backward_'
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
@@ -99,6 +99,7 @@ class Alpha101_classifier(Strategy):
       factor = factor.loc[:, (factor != 0).any(axis=0)]
 
       trnsX = self.factor_filter(factor)
+      print(f"used factor: {trnsX.columns}")
 
       y_data = factor.loc[:, f'ret_forward_{self.parameters['forward_period']}']
       cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
@@ -172,6 +173,16 @@ class Alpha101_classifier(Strategy):
           # dir_option = 'xq',
           file_name = self.parameters["factor_name"] + '.csv')[symbol]
       self.test_factors = trnsX = self.factor_filter(test_factors)
+
+    # Calculate accuracy score
+      y_data = test_factors.loc[:, f'ret_forward_{self.parameters['forward_period']}']
+      cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
+      cont = pd.concat([cont, y_data], axis = 1)
+      cont.columns = ['bin', 'price_ratio']
+      cont['t1'] = cont.index
+      test_pred = self.fit.predict(trnsX)
+      accuracy = accuracy_score(cont['bin'], test_pred)
+      print(f"Test accuracy: {accuracy}")
 
     def on_trading_iteration(self):
         # Get parameters for this iteration
