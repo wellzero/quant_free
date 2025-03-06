@@ -44,7 +44,7 @@ class factors_classifier(Strategy):
     """
 
     parameters = {
-        "factor_name":"factors",
+        "factor_name":"Alpha101",
         # "symbol": "QCOM",
         "symbol": "TSM",
         # "symbol": "INTC",
@@ -75,10 +75,12 @@ class factors_classifier(Strategy):
       self.load_factor_model_train(self.parameters["symbol"])
 
     def factor_filter(self, factor):
-      like1 = 'factors'
+      like1 = self.parameters["factor_name"].lower()[:4]
       like2 = 'ret_backward_'
       factor = factor.replace({True: 1, False: 0})
       factor = factor.loc[:, (factor != 0).any(axis=0)]
+
+      factor.columns = factor.columns.str.lower()
       filtered_1 = factor.filter(like=like1)
       filtered_2 = factor.filter(like=like2)
       trnsX = pd.concat([filtered_1, filtered_2], axis=1)
@@ -99,6 +101,8 @@ class factors_classifier(Strategy):
       factor = factor.loc[:, (factor != 0).any(axis=0)]
 
       trnsX = self.factor_filter(factor)
+
+      print(f"used factor: {trnsX.columns}")
 
       y_data = factor.loc[:, f'ret_forward_{self.parameters['forward_period']}']
       cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
@@ -173,6 +177,20 @@ class factors_classifier(Strategy):
           file_name = self.parameters["factor_name"] + '.csv')[symbol]
       self.test_factors = trnsX = self.factor_filter(test_factors)
 
+    # Calculate accuracy score
+      y_data = test_factors.loc[:, f'ret_forward_{self.parameters['forward_period']}']
+      cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
+      cont = pd.concat([cont, y_data], axis = 1)
+      cont.columns = ['bin', 'price_ratio']
+      cont['t1'] = cont.index
+
+      test_pred = self.fit.predict(trnsX)
+      accuracy = accuracy_score(cont['bin'], test_pred)
+      print(f"Test accuracy: {accuracy}")
+
+      if (accuracy < 0.6):
+         sys.exit(0)
+
     def on_trading_iteration(self):
         # Get parameters for this iteration
         dt = pd.to_datetime(self.get_datetime().date())
@@ -212,16 +230,17 @@ if __name__ == "__main__":
     if len(sys.argv) == 1 or sys.argv[1].lower() in ['-h', '--help']:
 
         print("""
-            Usage: python alpha101_classifier.py [SYMBOL] [MODEL]
+            Usage: python classifier.py [SYMBOL] [MODEL] [factor_name]
 
             Parameters:
-            SYMBOL    Stock ticker symbol to trade (default: TSM)
-            MODEL     Classification model to use: SVM, QDA LDA, rand_forest(default: LDA)
-            factor_name Alpha101, Trend (default: Alpha101)
+            SYMBOL          Stock ticker symbol to trade (default: TSM)
+            MODEL           Classification model to use: SVM, QDA LDA, rand_forest (default: LDA)
+            factor_name     used factor option: Alpha101, Trend (default: Alpha101)
 
             Examples:
-            python alpha101_classifier.py AAPL LDA Alpha101
-            python alpha101_classifier.py QCOM SVM Alpha101
+            python classifier.py AAPL LDA Alpha101
+            python classifier.py QCOM SVM Alpha101
+            python classifier.py QCOM rand_forest Trend
             """)
         sys.exit(0)
 
