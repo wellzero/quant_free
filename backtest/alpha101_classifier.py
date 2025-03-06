@@ -195,10 +195,15 @@ class Alpha101_classifier(Strategy):
 
 if __name__ == "__main__":
     is_live = False
+# add help guide for input parameter AI!
+
     # Get symbol from command line if provided
     if len(sys.argv) > 1:
         symbol = sys.argv[1].upper()
         Alpha101_classifier.parameters["symbol"] = symbol
+    if len(sys.argv) > 2:
+        model = sys.argv[2].upper()
+        Alpha101_classifier.parameters["model"] = model
 
     if is_live:
         ####
