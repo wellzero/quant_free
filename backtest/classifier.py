@@ -97,12 +97,9 @@ class factors_classifier(Strategy):
           # dir_option = 'xq',
           file_name = self.parameters["factor_name"] + '.csv')[symbol]
 
-      factor = factor.replace({True: 1, False: 0})
-      factor = factor.loc[:, (factor != 0).any(axis=0)]
-
       trnsX = self.factor_filter(factor)
 
-      print(f"used factor: {trnsX.columns}")
+      print(f"used training factor: {trnsX.columns}")
 
       y_data = factor.loc[:, f'ret_forward_{self.parameters['forward_period']}']
       cont = pd.DataFrame(y_data.map(lambda x: 1 if x > 0 else 0 if x < 0 else 0))
@@ -119,12 +116,15 @@ class factors_classifier(Strategy):
         # Create pipeline with scaling and SVM
         self.fit = make_pipeline(
             StandardScaler(),
+            # SVC(
+            #     kernel='poly',
+            #     class_weight='balanced',
+            #     probability=True,
+            #     random_state=42,
+            #     gamma='scale'
+            # )
             SVC(
-                kernel='poly',
-                class_weight='balanced',
-                probability=True,
-                random_state=42,
-                gamma='scale'
+                kernel='linear', C=0.5, class_weight='balanced'
             )
         ).fit(X = trnsX, y = cont['bin'])
 
@@ -176,6 +176,8 @@ class factors_classifier(Strategy):
           # dir_option = 'xq',
           file_name = self.parameters["factor_name"] + '.csv')[symbol]
       self.test_factors = trnsX = self.factor_filter(test_factors)
+
+    #   print(f"used test factor: {trnsX.columns}")
 
     # Calculate accuracy score
       y_data = test_factors.loc[:, f'ret_forward_{self.parameters['forward_period']}']
