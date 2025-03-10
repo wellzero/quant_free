@@ -62,23 +62,30 @@ class DNNClassifier(Strategy):
         self.load_factor_model_train(self.parameters["symbol"])
 
     def transformer_encoder(self, inputs):
-        # Enhanced transformer encoder block
-        x = MultiHeadAttention(num_heads=4, key_dim=8)(inputs, inputs)
+        # Transformer-like attention mechanism
+        x = MultiHeadAttention(num_heads=2, key_dim=2)(inputs, inputs)
         x = Dropout(self.parameters["dropout_rate"])(x)
         x = LayerNormalization(epsilon=1e-6)(x + inputs)
-        
-        # Feed-forward network
-        x = Dense(self.parameters["dnn_units"][0], activation='relu')(x)
-        x = LayerNormalization(epsilon=1e-6)(x)
         return x
+    
+    # The DNN (Deep Neural Network) model consists of several key components:
+    # 1. Input Layer: Accepts the feature data with a shape defined by the number of features.
+    # 2. Dense Layers: Fully connected layers where each neuron is connected to every neuron in the previous layer.
+    #    - The first dense layer has a number of units specified by the first element in the 'dnn_units' list and uses ReLU activation.
+    #    - Subsequent dense layers have units specified by the remaining elements in the 'dnn_units' list, also using ReLU activation.
+    # 3. Dropout Layers: Regularization layers that randomly set a fraction of input units to 0 at each update during training time, which helps prevent overfitting.
+    #    - Dropout rate is controlled by the 'dropout_rate' parameter.
+    # 4. Transformer Encoder Block: Incorporates a multi-head self-attention mechanism followed by a feed-forward neural network, similar to the architecture used in transformers.
+    #    - It includes a multi-head attention layer, dropout, and layer normalization.
+    # 5. Output Layer: A single neuron with a sigmoid activation function, suitable for binary classification tasks.
+    # 6. Compilation: The model is compiled with the Adam optimizer, binary cross-entropy loss, and accuracy as a metric.
 
     def build_dnn_model(self, input_shape):
-        # Proper Functional API implementation
-        inputs = Input(shape=input_shape)
-        x = Dense(self.parameters["dnn_units"][0], activation='relu')(inputs)
+        model = Sequential()
+        input_layer = Input(shape=input_shape)
+        x = Dense(self.parameters["dnn_units"][0], activation='relu')(input_layer)
         
-        # Stack two transformer blocks
-        x = self.transformer_encoder(x)
+        # Transformer encoder block with proper input handling
         x = self.transformer_encoder(x)
         
         # Add dense layers
@@ -86,8 +93,7 @@ class DNNClassifier(Strategy):
             x = Dense(units, activation='relu')(x)
             x = Dropout(self.parameters["dropout_rate"])(x)
             
-        outputs = Dense(1, activation='sigmoid')(x)
-        model = Model(inputs=inputs, outputs=outputs)
+        model.add(Dense(1, activation='sigmoid'))
         
         model.compile(optimizer=Adam(learning_rate=self.parameters["learning_rate"]),
                      loss='binary_crossentropy',
@@ -124,32 +130,13 @@ class DNNClassifier(Strategy):
         # Build and train DNN model
         self.model = self.build_dnn_model((X_train.shape[1],))
         
-        # Add test metrics and proper validation split
-        early_stop = EarlyStopping(monitor='val_accuracy', patience=10, restore_best_weights=True)
-        
-        # Time-series friendly validation split (last 20% of data)
-        split_idx = int(len(X_train) * 0.8)
-        X_val = X_train[split_idx:]
-        y_val = y_train[split_idx:]
-        X_train = X_train[:split_idx]
-        y_train = y_train[:split_idx]
-        
+        early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         self.model.fit(X_train, y_train,
                       epochs=self.parameters["epochs"],
                       batch_size=self.parameters["batch_size"],
-                      validation_data=(X_val, y_val),
+                      validation_split=0.2,
                       callbacks=[early_stop],
                       verbose=1)
-        
-        # Print classification report
-        from sklearn.metrics import classification_report
-        y_pred = self.model.predict(X_val).round()
-        print("\nValidation Classification Report:")
-        print(classification_report(y_val, y_pred))
-        
-        # Print model summary
-        print("\nModel Architecture Summary:")
-        self.model.summary()
 
         # Load test data
         test_factors = us_equity_data_load_within_range(
