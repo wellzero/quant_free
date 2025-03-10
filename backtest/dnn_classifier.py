@@ -20,6 +20,8 @@ from lumibot.strategies.strategy import Strategy
 from lumibot.traders import Trader
 
 from credentials import AlpacaConfig
+_this_dir = Path(__file__).parent.parent
+sys.path.append(str(_this_dir))
 from quant_free.utils.us_equity_utils import *
 from quant_free.dataset.us_equity_load import *
 
@@ -70,6 +72,7 @@ class DNNClassifier(Strategy):
         model.add(Dense(self.parameters["dnn_units"][0], activation='relu', input_shape=input_shape))
         
         # Add transformer encoder block
+        # there is a issue for  transformer_encoder input AI!
         model.add(self.transformer_encoder(model.layers[-1].output))
         
         # Add dense layers
