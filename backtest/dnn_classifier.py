@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras import Input
 from tensorflow.keras.layers import Dense, Dropout, LayerNormalization, MultiHeadAttention
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
@@ -69,16 +70,16 @@ class DNNClassifier(Strategy):
 
     def build_dnn_model(self, input_shape):
         model = Sequential()
-        model.add(Dense(self.parameters["dnn_units"][0], activation='relu', input_shape=input_shape))
+        input_layer = Input(shape=input_shape)
+        x = Dense(self.parameters["dnn_units"][0], activation='relu')(input_layer)
         
-        # Add transformer encoder block
-        # there is a issue for  transformer_encoder input AI!
-        model.add(self.transformer_encoder(model.layers[-1].output))
+        # Transformer encoder block with proper input handling
+        x = self.transformer_encoder(x)
         
         # Add dense layers
         for units in self.parameters["dnn_units"][1:]:
-            model.add(Dense(units, activation='relu'))
-            model.add(Dropout(self.parameters["dropout_rate"]))
+            x = Dense(units, activation='relu')(x)
+            x = Dropout(self.parameters["dropout_rate"])(x)
             
         model.add(Dense(1, activation='sigmoid'))
         
