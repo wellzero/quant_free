@@ -62,18 +62,23 @@ class DNNClassifier(Strategy):
         self.load_factor_model_train(self.parameters["symbol"])
 
     def transformer_encoder(self, inputs):
-        # Transformer-like attention mechanism
-        x = MultiHeadAttention(num_heads=2, key_dim=2)(inputs, inputs)
+        # Enhanced transformer encoder block
+        x = MultiHeadAttention(num_heads=4, key_dim=8)(inputs, inputs)
         x = Dropout(self.parameters["dropout_rate"])(x)
         x = LayerNormalization(epsilon=1e-6)(x + inputs)
+        
+        # Feed-forward network
+        x = Dense(self.parameters["dnn_units"][0], activation='relu')(x)
+        x = LayerNormalization(epsilon=1e-6)(x)
         return x
 
     def build_dnn_model(self, input_shape):
-        model = Sequential()
-        input_layer = Input(shape=input_shape)
-        x = Dense(self.parameters["dnn_units"][0], activation='relu')(input_layer)
+        # Proper Functional API implementation
+        inputs = Input(shape=input_shape)
+        x = Dense(self.parameters["dnn_units"][0], activation='relu')(inputs)
         
-        # Transformer encoder block with proper input handling
+        # Stack two transformer blocks
+        x = self.transformer_encoder(x)
         x = self.transformer_encoder(x)
         
         # Add dense layers
@@ -81,7 +86,8 @@ class DNNClassifier(Strategy):
             x = Dense(units, activation='relu')(x)
             x = Dropout(self.parameters["dropout_rate"])(x)
             
-        model.add(Dense(1, activation='sigmoid'))
+        outputs = Dense(1, activation='sigmoid')(x)
+        model = Model(inputs=inputs, outputs=outputs)
         
         model.compile(optimizer=Adam(learning_rate=self.parameters["learning_rate"]),
                      loss='binary_crossentropy',
@@ -118,13 +124,32 @@ class DNNClassifier(Strategy):
         # Build and train DNN model
         self.model = self.build_dnn_model((X_train.shape[1],))
         
-        early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+        # Add test metrics and proper validation split
+        early_stop = EarlyStopping(monitor='val_accuracy', patience=10, restore_best_weights=True)
+        
+        # Time-series friendly validation split (last 20% of data)
+        split_idx = int(len(X_train) * 0.8)
+        X_val = X_train[split_idx:]
+        y_val = y_train[split_idx:]
+        X_train = X_train[:split_idx]
+        y_train = y_train[:split_idx]
+        
         self.model.fit(X_train, y_train,
                       epochs=self.parameters["epochs"],
                       batch_size=self.parameters["batch_size"],
-                      validation_split=0.2,
+                      validation_data=(X_val, y_val),
                       callbacks=[early_stop],
                       verbose=1)
+        
+        # Print classification report
+        from sklearn.metrics import classification_report
+        y_pred = self.model.predict(X_val).round()
+        print("\nValidation Classification Report:")
+        print(classification_report(y_val, y_pred))
+        
+        # Print model summary
+        print("\nModel Architecture Summary:")
+        self.model.summary()
 
         # Load test data
         test_factors = us_equity_data_load_within_range(
