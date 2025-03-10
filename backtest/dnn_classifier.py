@@ -87,6 +87,7 @@ class DNNClassifier(Strategy):
         
         # Transformer encoder block with proper input handling
         x = self.transformer_encoder(x)
+        x = self.transformer_encoder(x)  # Second transformer layer
         
         # Add dense layers
         for units in self.parameters["dnn_units"][1:]:
