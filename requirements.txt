@@ -25,3 +25,4 @@ openbb
 ta
 
 autots
+torch
