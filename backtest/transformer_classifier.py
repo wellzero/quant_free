@@ -192,7 +192,7 @@ class TransformerClassifier(Strategy):
     # 6. Compilation: The model is compiled with the Adam optimizer, binary cross-entropy loss, and accuracy as a metric.
 
     def build_dnn_model(self, input_shape):
-        input_dim = input_shape[0]
+        input_dim = input_shape  # Fixed subscript error by removing [0]
         hidden_dim = self.parameters["dnn_units"][0]
         num_heads = 4
         num_layers = 2
@@ -299,13 +299,27 @@ class TransformerClassifier(Strategy):
         input_shape = X_train.shape[1]
         self.model = self.build_dnn_model(input_shape)
 
-        # Use PyTorch training loop (requires additional changes)
-        # Placeholder: this part needs PyTorch training implementation
-        # Example: 
-        # criterion = nn.BCEWithLogitsLoss()
-        # optimizer = torch.optim.Adam(self.model.parameters(), lr=self.parameters["learning_rate"])
-        # for epoch in range(self.parameters["epochs"]):
-        #     ...
+        # Full PyTorch training implementation
+        criterion = nn.BCEWithLogitsLoss()
+        optimizer = torch.optim.Adam(self.model.parameters(), 
+                                    lr=self.parameters["learning_rate"])
+
+        X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+        y_train_tensor = torch.tensor(y_train, dtype=torch.float32).view(-1, 1)
+
+        self.model.train()  # Set training mode
+
+        for epoch in range(self.parameters["epochs"]):
+            optimizer.zero_grad()
+            outputs = self.model(X_train_tensor)
+            loss = criterion(outputs, y_train_tensor)
+            loss.backward()
+            optimizer.step()
+
+            if (epoch + 1) % 10 == 0:
+                print(f'Epoch {epoch+1}/{self.parameters["epochs"]}, Loss: {loss.item():.4f}')
+
+        print("Training complete.")
 
         # Load test data
         test_factors = us_equity_data_load_within_range(
