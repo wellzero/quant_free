@@ -333,7 +333,13 @@ class TransformerClassifier(Strategy):
         factor = self.test_factors.loc[[dt]]
         X = self.scaler.transform(factor)
         
-        prediction = self.model.predict(X, verbose=0)[0][0]
+        # Convert to tensor and add batch dimension
+        X_tensor = torch.tensor(X, dtype=torch.float32)
+        self.model.eval()
+        with torch.no_grad():
+            output = self.model(X_tensor)
+            prediction = torch.sigmoid(output).item()
+        
         action = 1 if prediction > 0.5 else 0
         
         symbol = self.parameters["symbol"]
