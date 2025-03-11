@@ -103,6 +103,46 @@ class DNNClassifier(Strategy):
     #     return model
 
     def build_dnn_model(self, input_shape):
+        """Hybrid DNN-Transformer Architecture for Stock Prediction                                                                                                
+                                                                                                                                                            
+        Architecture Components:                                                                                                                                   
+        1. Input Layer:                                                                                                                                            
+        - Accepts feature vectors of shape (input_shape,)                                                                                                       
+        - Initializes the neural network input                                                                                                                  
+                                                                                                                                                            
+        2. Initial Dense Layer:                                                                                                                                    
+        - 128 units with ReLU activation                                                                                                                        
+        - 30% dropout for regularization                                                                                                                        
+        - Reduces dimensionality while introducing non-linearity                                                                                                
+                                                                                                                                                            
+        3. Transformer Encoder Blocks (2 layers):                                                                                                                  
+        - MultiHeadAttention (4 heads) to capture feature interactions                                                                                          
+        - Residual connections + LayerNormalization for stability                                                                                               
+        - Dropout (30%) to prevent overfitting                                                                                                                  
+        - Enables attention-based feature weighting                                                                                                             
+                                                                                                                                                            
+        4. Regularized Dense Layers:                                                                                                                               
+        - 64 units with ReLU and L2 regularization (kernel_regularizer='l2')                                                                                    
+        - 32 units with ReLU and L2 regularization                                                                                                              
+        - Additional 30% dropout between layers                                                                                                                 
+        - Balances complexity with regularization                                                                                                               
+                                                                                                                                                            
+        5. Output Layer:                                                                                                                                           
+        - Single sigmoid unit for binary classification (buy/sell)                                                                                              
+        - Maps model outputs to [0,1] probability range                                                                                                         
+                                                                                                                                                            
+        Compilation:                                                                                                                                               
+        - Optimizer: Adam (1e-3 learning rate)                                                                                                                  
+        - Loss: Binary cross-entropy (for classification)                                                                                                       
+        - Metrics: Accuracy tracking                                                                                                                            
+        - EarlyStopping for training stability                                                                                                                  
+                                                                                                                                                            
+        Key Design Choices:                                                                                                                                        
+        - Combines dense layers' pattern recognition with transformer's attention                                                                                  
+        - Regularization (dropout + L2) prevents overfitting on financial time-series                                                                              
+        - Progressive dimensionality reduction (128 → 64 → 32) maintains efficiency                                                                                
+        - Attention mechanisms help capture temporal dependencies in features                                                                                      
+        """ 
         model = Sequential()
         input_layer = Input(shape=input_shape)
         
