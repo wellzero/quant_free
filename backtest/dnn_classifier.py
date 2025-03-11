@@ -80,92 +80,92 @@ class DNNClassifier(Strategy):
     # 5. Output Layer: A single neuron with a sigmoid activation function, suitable for binary classification tasks.
     # 6. Compilation: The model is compiled with the Adam optimizer, binary cross-entropy loss, and accuracy as a metric.
 
-    # def build_dnn_model(self, input_shape):
-    #     model = Sequential()
-    #     input_layer = Input(shape=input_shape)
-    #     x = Dense(self.parameters["dnn_units"][0], activation='relu')(input_layer)
-        
-    #     # Transformer encoder block with proper input handling
-    #     x = Dropout(self.parameters["dropout_rate"])(x)
-    #     x = self.transformer_encoder(x)
-    #     # x = self.transformer_encoder(x)  # Second transformer layer
-        
-    #     # Add dense layers
-    #     for units in self.parameters["dnn_units"][1:]:
-    #         x = Dense(units, activation='relu', kernel_regularizer='l2')(x)
-    #         x = Dropout(self.parameters["dropout_rate"])(x)
-            
-    #     model.add(Dense(1, activation='sigmoid'))
-        
-    #     model.compile(optimizer=Adam(learning_rate=self.parameters["learning_rate"]),
-    #                  loss='binary_crossentropy',
-    #                  metrics=['accuracy'])
-    #     return model
-
     def build_dnn_model(self, input_shape):
-        """Hybrid DNN-Transformer Architecture for Stock Prediction                                                                                                
-                                                                                                                                                            
-        Architecture Components:                                                                                                                                   
-        1. Input Layer:                                                                                                                                            
-        - Accepts feature vectors of shape (input_shape,)                                                                                                       
-        - Initializes the neural network input                                                                                                                  
-                                                                                                                                                            
-        2. Initial Dense Layer:                                                                                                                                    
-        - 128 units with ReLU activation                                                                                                                        
-        - 30% dropout for regularization                                                                                                                        
-        - Reduces dimensionality while introducing non-linearity                                                                                                
-                                                                                                                                                            
-        3. Transformer Encoder Blocks (2 layers):                                                                                                                  
-        - MultiHeadAttention (4 heads) to capture feature interactions                                                                                          
-        - Residual connections + LayerNormalization for stability                                                                                               
-        - Dropout (30%) to prevent overfitting                                                                                                                  
-        - Enables attention-based feature weighting                                                                                                             
-                                                                                                                                                            
-        4. Regularized Dense Layers:                                                                                                                               
-        - 64 units with ReLU and L2 regularization (kernel_regularizer='l2')                                                                                    
-        - 32 units with ReLU and L2 regularization                                                                                                              
-        - Additional 30% dropout between layers                                                                                                                 
-        - Balances complexity with regularization                                                                                                               
-                                                                                                                                                            
-        5. Output Layer:                                                                                                                                           
-        - Single sigmoid unit for binary classification (buy/sell)                                                                                              
-        - Maps model outputs to [0,1] probability range                                                                                                         
-                                                                                                                                                            
-        Compilation:                                                                                                                                               
-        - Optimizer: Adam (1e-3 learning rate)                                                                                                                  
-        - Loss: Binary cross-entropy (for classification)                                                                                                       
-        - Metrics: Accuracy tracking                                                                                                                            
-        - EarlyStopping for training stability                                                                                                                  
-                                                                                                                                                            
-        Key Design Choices:                                                                                                                                        
-        - Combines dense layers' pattern recognition with transformer's attention                                                                                  
-        - Regularization (dropout + L2) prevents overfitting on financial time-series                                                                              
-        - Progressive dimensionality reduction (128 → 64 → 32) maintains efficiency                                                                                
-        - Attention mechanisms help capture temporal dependencies in features                                                                                      
-        """ 
         model = Sequential()
         input_layer = Input(shape=input_shape)
+        x = Dense(self.parameters["dnn_units"][0], activation='relu')(input_layer)
         
-        # Balanced architecture
-        x = Dense(128, activation='relu')(input_layer)
-        x = Dropout(0.3)(x)
-        
-        # Add one transformer layer back
+        # Transformer encoder block with proper input handling
+        x = Dropout(self.parameters["dropout_rate"])(x)
         x = self.transformer_encoder(x)
-        x = self.transformer_encoder(x)
+        x = self.transformer_encoder(x)  # Second transformer layerkan
         
-        # Two dense layers with moderate regularization
-        x = Dense(64, activation='relu', kernel_regularizer='l2')(x)
-        x = Dropout(0.3)(x)
-        x = Dense(32, activation='relu', kernel_regularizer='l2')(x)
-        
+        # Add dense layers
+        for units in self.parameters["dnn_units"][1:]:
+            x = Dense(units, activation='relu', kernel_regularizer='l2')(x)
+            x = Dropout(self.parameters["dropout_rate"])(x)
+            
         model.add(Dense(1, activation='sigmoid'))
         
-        # Balanced learning rate
-        model.compile(optimizer=Adam(learning_rate=1e-3),
-                    loss='binary_crossentropy',
-                    metrics=['accuracy'])
+        model.compile(optimizer=Adam(learning_rate=self.parameters["learning_rate"]),
+                     loss='binary_crossentropy',
+                     metrics=['accuracy'])
         return model
+
+    # def build_dnn_model(self, input_shape):
+    #     """Hybrid DNN-Transformer Architecture for Stock Prediction                                                                                                
+                                                                                                                                                            
+    #     Architecture Components:                                                                                                                                   
+    #     1. Input Layer:                                                                                                                                            
+    #     - Accepts feature vectors of shape (input_shape,)                                                                                                       
+    #     - Initializes the neural network input                                                                                                                  
+                                                                                                                                                            
+    #     2. Initial Dense Layer:                                                                                                                                    
+    #     - 128 units with ReLU activation                                                                                                                        
+    #     - 30% dropout for regularization                                                                                                                        
+    #     - Reduces dimensionality while introducing non-linearity                                                                                                
+                                                                                                                                                            
+    #     3. Transformer Encoder Blocks (2 layers):                                                                                                                  
+    #     - MultiHeadAttention (4 heads) to capture feature interactions                                                                                          
+    #     - Residual connections + LayerNormalization for stability                                                                                               
+    #     - Dropout (30%) to prevent overfitting                                                                                                                  
+    #     - Enables attention-based feature weighting                                                                                                             
+                                                                                                                                                            
+    #     4. Regularized Dense Layers:                                                                                                                               
+    #     - 64 units with ReLU and L2 regularization (kernel_regularizer='l2')                                                                                    
+    #     - 32 units with ReLU and L2 regularization                                                                                                              
+    #     - Additional 30% dropout between layers                                                                                                                 
+    #     - Balances complexity with regularization                                                                                                               
+                                                                                                                                                            
+    #     5. Output Layer:                                                                                                                                           
+    #     - Single sigmoid unit for binary classification (buy/sell)                                                                                              
+    #     - Maps model outputs to [0,1] probability range                                                                                                         
+                                                                                                                                                            
+    #     Compilation:                                                                                                                                               
+    #     - Optimizer: Adam (1e-3 learning rate)                                                                                                                  
+    #     - Loss: Binary cross-entropy (for classification)                                                                                                       
+    #     - Metrics: Accuracy tracking                                                                                                                            
+    #     - EarlyStopping for training stability                                                                                                                  
+                                                                                                                                                            
+    #     Key Design Choices:                                                                                                                                        
+    #     - Combines dense layers' pattern recognition with transformer's attention                                                                                  
+    #     - Regularization (dropout + L2) prevents overfitting on financial time-series                                                                              
+    #     - Progressive dimensionality reduction (128 → 64 → 32) maintains efficiency                                                                                
+    #     - Attention mechanisms help capture temporal dependencies in features                                                                                      
+    #     """ 
+    #     model = Sequential()
+    #     input_layer = Input(shape=input_shape)
+        
+    #     # Balanced architecture
+    #     x = Dense(128, activation='relu')(input_layer)
+    #     x = Dropout(0.3)(x)
+        
+    #     # Add one transformer layer back
+    #     x = self.transformer_encoder(x)
+    #     x = self.transformer_encoder(x)
+        
+    #     # Two dense layers with moderate regularization
+    #     x = Dense(64, activation='relu', kernel_regularizer='l2')(x)
+    #     x = Dropout(0.3)(x)
+    #     x = Dense(32, activation='relu', kernel_regularizer='l2')(x)
+        
+    #     model.add(Dense(1, activation='sigmoid'))
+        
+    #     # Balanced learning rate
+    #     model.compile(optimizer=Adam(learning_rate=1e-3),
+    #                 loss='binary_crossentropy',
+    #                 metrics=['accuracy'])
+    #     return model
 
     def factor_filter(self, factor):
         like1 = self.parameters["factor_name"].lower()[:4]
