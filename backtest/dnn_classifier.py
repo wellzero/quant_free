@@ -63,7 +63,7 @@ class DNNClassifier(Strategy):
 
     def transformer_encoder(self, inputs):
         # Transformer-like attention mechanism
-        x = MultiHeadAttention(num_heads=2, key_dim=2)(inputs, inputs)
+        x = MultiHeadAttention(num_heads=4, key_dim=2)(inputs, inputs)
         x = Dropout(self.parameters["dropout_rate"])(x)
         x = LayerNormalization(epsilon=1e-6)(x + inputs)
         return x
