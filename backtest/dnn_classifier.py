@@ -173,6 +173,11 @@ class DNNClassifier(Strategy):
             column_option="all",
             file_name=self.parameters["factor_name"] + '.csv'
         )[symbol]
+
+        # Compute test labels
+        self.y_test = test_factors.loc[:, f'ret_forward_{self.parameters["forward_period"]}']
+        self.y_test = self.y_test.map(lambda x: 1 if x > 0 else 0).values
+
         self.test_factors = self.factor_filter(test_factors)
 
         # Evaluate model on test set
