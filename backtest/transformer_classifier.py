@@ -192,25 +192,12 @@ class TransformerClassifier(Strategy):
     # 6. Compilation: The model is compiled with the Adam optimizer, binary cross-entropy loss, and accuracy as a metric.
 
     def build_dnn_model(self, input_shape):
-        model = Sequential()
-        input_layer = Input(shape=input_shape)
-        x = Dense(self.parameters["dnn_units"][0], activation='relu')(input_layer)
-        
-        # Transformer encoder block with proper input handling
-        x = Dropout(self.parameters["dropout_rate"])(x)
-        x = self.transformer_encoder(x)
-        x = self.transformer_encoder(x)  # Second transformer layerkan
-        
-        # Add dense layers
-        for units in self.parameters["dnn_units"][1:]:
-            x = Dense(units, activation='relu', kernel_regularizer='l2')(x)
-            x = Dropout(self.parameters["dropout_rate"])(x)
-            
-        model.add(Dense(1, activation='sigmoid'))
-        
-        model.compile(optimizer=Adam(learning_rate=self.parameters["learning_rate"]),
-                     loss='binary_crossentropy',
-                     metrics=['accuracy'])
+        input_dim = input_shape[0]
+        hidden_dim = self.parameters["dnn_units"][0]
+        num_heads = 4
+        num_layers = 2
+        output_dim = 1
+        model = Transformer(input_dim, hidden_dim, num_heads, num_layers, output_dim)
         return model
 
     # def build_dnn_model(self, input_shape):
@@ -308,16 +295,17 @@ class TransformerClassifier(Strategy):
         y_train = factor.loc[:, f'ret_forward_{self.parameters["forward_period"]}']
         y_train = y_train.map(lambda x: 1 if x > 0 else 0).values
 
-        # Build and train DNN model
-        self.model = self.build_dnn_model((X_train.shape[1],))
-        
-        early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-        self.model.fit(X_train, y_train,
-                      epochs=self.parameters["epochs"],
-                      batch_size=self.parameters["batch_size"],
-                      validation_split=0.2,
-                      callbacks=[early_stop],
-                      verbose=1)
+        # Build and train Transformer model
+        input_shape = X_train.shape[1]
+        self.model = self.build_dnn_model(input_shape)
+
+        # Use PyTorch training loop (requires additional changes)
+        # Placeholder: this part needs PyTorch training implementation
+        # Example: 
+        # criterion = nn.BCEWithLogitsLoss()
+        # optimizer = torch.optim.Adam(self.model.parameters(), lr=self.parameters["learning_rate"])
+        # for epoch in range(self.parameters["epochs"]):
+        #     ...
 
         # Load test data
         test_factors = us_equity_data_load_within_range(
