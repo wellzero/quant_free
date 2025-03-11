@@ -27,6 +27,7 @@ from quant_free.utils.us_equity_utils import *
 from quant_free.dataset.us_equity_load import *
 
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
 
