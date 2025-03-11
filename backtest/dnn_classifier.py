@@ -175,6 +175,12 @@ class DNNClassifier(Strategy):
         )[symbol]
         self.test_factors = self.factor_filter(test_factors)
 
+        # Evaluate model on test set
+        X_test = self.scaler.transform(self.test_factors)
+        y_pred = (self.model.predict(X_test) > 0.5).astype(int)
+        test_acc = accuracy_score(self.y_test, y_pred)
+        print(f"Test Accuracy: {test_acc:.4f}")
+
     def on_trading_iteration(self):
         dt = pd.to_datetime(self.get_datetime().date())
         factor = self.test_factors.loc[[dt]]
