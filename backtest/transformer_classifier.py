@@ -121,23 +121,17 @@ class Transformer(nn.Module):
         super(Transformer, self).__init__()
         self.input_layer = nn.Linear(input_dim, hidden_dim)
         self.encoder_layers = nn.ModuleList([EncoderLayer(hidden_dim, num_heads) for _ in range(num_layers)])
-        self.decoder_layers = nn.ModuleList([DecoderLayer(hidden_dim, num_heads) for _ in range(num_layers)])
         self.output_layer = nn.Linear(hidden_dim, output_dim)
  
     def forward(self, x):
         x = self.input_layer(x)
-
-        encoder_output = x.transpose(0, 1)
+        x = x.unsqueeze(1)  # Add sequence dimension (batch, 1, hidden_dim)
+        encoder_output = x.transpose(0, 1)  # (1, batch, hidden_dim)
         for layer in self.encoder_layers:
             encoder_output = layer(encoder_output)
-
-        decoder_output = encoder_output
-        for layer in self.decoder_layers:
-            decoder_output = layer(decoder_output, encoder_output)
-
-        decoder_output = decoder_output[-1, :, :]
-
-        output = self.output_layer(decoder_output)
+        # Take the first token (only one here)
+        encoder_output = encoder_output[0, :, :]
+        output = self.output_layer(encoder_output)
         return output
 
 class TransformerClassifier(Strategy):
