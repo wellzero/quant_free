@@ -353,7 +353,11 @@ class TransformerClassifier(Strategy):
         #pls fix following issue AI!
         self.model.eval()
         X_test = self.scaler.transform(self.test_factors)
-        y_pred = (self.model(X_test) > 0.5).astype(int)
+        X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+        with torch.no_grad():
+            outputs = self.model(X_test_tensor)
+            probabilities = torch.sigmoid(outputs)
+        y_pred = (probabilities.numpy() > 0.5).astype(int)
         test_acc = accuracy_score(self.y_test, y_pred)
         print(f"Test Accuracy: {test_acc:.4f}")
 
