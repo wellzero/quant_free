@@ -164,7 +164,7 @@ class TransformerClassifier(Strategy):
     parameters = {
         "factor_name": "Alpha101",
         "symbol": "TSM",
-        "model": "DNN",
+        "model": "transformer_classifier",
         "quantity": 10,
         "forward_period": 5,
         "dnn_units": [256, 128, 64],
@@ -350,8 +350,14 @@ class TransformerClassifier(Strategy):
         self.test_factors = self.factor_filter(test_factors)
 
         # Evaluate model on test set
+        #pls fix following issue AI!
         self.model.eval()
-        # Already correct - no changes needed
+        X_test = self.scaler.transform(self.test_factors)
+        X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+        with torch.no_grad():
+            outputs = self.model(X_test_tensor)
+            probabilities = torch.sigmoid(outputs)
+        y_pred = (probabilities.numpy() > 0.5).astype(int)
         test_acc = accuracy_score(self.y_test, y_pred)
         print(f"Test Accuracy: {test_acc:.4f}")
 
@@ -389,7 +395,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 1 or sys.argv[1].lower() in ['-h', '--help']:
         print("""
-        Usage: python dnn_classifier.py [SYMBOL] [DNN_UNITS] [LEARNING_RATE] [DROPOUT_RATE]
+        Usage: python transformer_classifier.py [SYMBOL] [DNN_UNITS] [LEARNING_RATE] [DROPOUT_RATE]
         
         Parameters:
         SYMBOL          Stock ticker symbol (default: TSM)
@@ -398,8 +404,8 @@ if __name__ == "__main__":
         DROPOUT_RATE    Dropout rate (default: 0.3)
         
         Examples:
-        python dnn_classifier.py AAPL 256,128,64
-        python dnn_classifier.py QCOM 512,256,128 0.0005 0.2
+        python transformer_classifier.py AAPL 256,128,64
+        python transformer_classifier.py QCOM 512,256,128 0.0005 0.2
         """)
         sys.exit(0)
 
