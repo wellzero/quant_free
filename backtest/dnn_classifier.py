@@ -188,6 +188,9 @@ class DNNClassifier(Strategy):
         )[symbol]
 
         trnsX = self.factor_filter(factor)
+
+        print("factor name: ", trnsX.columns)
+
         self.scaler.fit(trnsX)
         X_train = self.scaler.transform(trnsX)
         
@@ -272,11 +275,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         DNNClassifier.parameters["symbol"] = sys.argv[1].upper()
     if len(sys.argv) > 2:
-        DNNClassifier.parameters["dnn_units"] = list(map(int, sys.argv[2].split(',')))
+        DNNClassifier.parameters["factor_name"] = sys.argv[2]
     if len(sys.argv) > 3:
-        DNNClassifier.parameters["learning_rate"] = float(sys.argv[3])
+        DNNClassifier.parameters["dnn_units"] = list(map(int, sys.argv[3].split(',')))
     if len(sys.argv) > 4:
-        DNNClassifier.parameters["dropout_rate"] = float(sys.argv[4])
+        DNNClassifier.parameters["learning_rate"] = float(sys.argv[4])
+    if len(sys.argv) > 5:
+        DNNClassifier.parameters["dropout_rate"] = float(sys.argv[5])
 
     # Backtesting setup
     backtesting_start = pd.to_datetime(DNNClassifier.parameters["test_start_date"])
