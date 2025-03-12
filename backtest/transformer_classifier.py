@@ -130,24 +130,24 @@ class Transformer(nn.Module):
 
         encoder_output = x.transpose(0, 1)  # (1, batch, hidden_dim)
 
-        # #encoder
-        # for layer in self.encoder_layers:
-        #     encoder_output = layer(encoder_output)
-        # # Take the first token (only one here)
-        # encoder_output = encoder_output[0, :, :]
-        # #output
-        # output = self.output_layer(encoder_output)
-
         #encoder
         for layer in self.encoder_layers:
             encoder_output = layer(encoder_output)
-        decoder_output = encoder_output
-        #decoder
-        for layer in self.decoder_layers:
-            decoder_output = layer(decoder_output, encoder_output)
-        decoder_output = decoder_output[-1, :, :]
+        # Take the first token (only one here)
+        encoder_output = encoder_output[0, :, :]
         #output
-        output = self.output_layer(decoder_output)
+        output = self.output_layer(encoder_output)
+
+        # #encoder
+        # for layer in self.encoder_layers:
+        #     encoder_output = layer(encoder_output)
+        # decoder_output = encoder_output
+        # #decoder
+        # for layer in self.decoder_layers:
+        #     decoder_output = layer(decoder_output, encoder_output)
+        # decoder_output = decoder_output[-1, :, :]
+        # #output
+        # output = self.output_layer(decoder_output)
 
         return output
 
@@ -350,8 +350,10 @@ class TransformerClassifier(Strategy):
         self.test_factors = self.factor_filter(test_factors)
 
         # Evaluate model on test set
+        #pls fix following issue AI!
+        self.model.eval()
         X_test = self.scaler.transform(self.test_factors)
-        y_pred = (self.model.predict(X_test) > 0.5).astype(int)
+        y_pred = (self.model(X_test) > 0.5).astype(int)
         test_acc = accuracy_score(self.y_test, y_pred)
         print(f"Test Accuracy: {test_acc:.4f}")
 
