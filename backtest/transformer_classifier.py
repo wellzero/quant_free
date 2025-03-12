@@ -350,7 +350,6 @@ class TransformerClassifier(Strategy):
         self.test_factors = self.factor_filter(test_factors)
 
         # Evaluate model on test set
-        #pls fix following issue AI!
         self.model.eval()
         X_test = self.scaler.transform(self.test_factors)
         X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
