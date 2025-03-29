@@ -56,7 +56,7 @@ def equity_tradedate_load_within_range(
   return trade_dates_time
 
 def us_equity_symbol_load(market = 'us'):
-  df = us_dir0_load_csv(market, dir0 = 'symbol', filename='equity_symbol.csv')
+  df = us_dir1_load_csv(market, dir0 = 'symbol',  dir1 = 'xq', filename='equity_symbol.csv')
   return df.loc[:, 'symbol'].values
 
 def convert_to_string_if_number(value):

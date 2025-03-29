@@ -12,9 +12,9 @@ if __name__ == "__main__":
 
     # us_equity_symbol_download()
 
-    symbols = ['.IXIC', '.DJI', '.INX']
-    market = 'us'
-    equity_xq_daily_data_download(market, symbols)
+    # symbols = ['.IXIC', '.DJI', '.INX']
+    market = 'cn'
+    # equity_xq_daily_data_download(market, symbols)
 
     # equity and sector download
     equity_xq_symbol_download(market)
@@ -22,8 +22,8 @@ if __name__ == "__main__":
     equity_xq_sector_download(market)
 
     # daily trade 
-    symbols = us_equity_symbol_load(market = 'us')
-#    equity_xq_daily_data_download(market, symbols)
+    symbols = us_equity_symbol_load(market)
+    equity_xq_daily_data_download(market, symbols)
 
     # finance report
     equity_xq_finance_data_download(market, symbols)

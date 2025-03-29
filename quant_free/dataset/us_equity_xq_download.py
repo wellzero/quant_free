@@ -52,7 +52,7 @@ def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider=
     except:
       print(f"function {__name__} error!!")
 
-def us_equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="xq"):
+def equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="xq"):
   datacenter_xq = ef.stock.us_finance_xq_getter()
   for symbol in symbols:
     try:
@@ -64,8 +64,9 @@ def us_equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider
       equity_file = os.path.join(equity_folder, 'daily.csv')
 
       data.to_csv(equity_file, index=False)
+      print(f"daily trade stored to {equity_file}")
     except:
-      print(f"function {__name__} {us_equity_xq_daily_data_download} error!!")
+      print(f"function {__name__} {equity_xq_daily_data_download} error!!")
 
 def equity_xq_symbol_download(market = 'us'):
   datacenter_xq = ef.stock.us_finance_xq_sector_getter(market)
