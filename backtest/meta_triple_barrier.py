@@ -76,12 +76,14 @@ class Trend(Strategy):
       self.asset_value = None
       self.shares_owned = None
       self.cache_df = None
+      self.market = 'us'
 
       self.load_labeling(self.parameters["symbol"])
 
     def load_labeling(self, symbol):
        
-        data = us_equity_data_load_within_range(
+        data = equity_daily_data_load_within_range(
+          self.market,
             symbols = [symbol],
             start_date = backtesting_start,
             end_date = backtesting_end,
@@ -185,7 +187,8 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = us_equity_data_load_within_range(
+        df = equity_daily_data_load_within_range(
+            market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,
             end_date = backtesting_end,

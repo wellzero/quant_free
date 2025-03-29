@@ -10,7 +10,7 @@ from quant_free.dataset.us_equity_load import *
 
 
 if __name__ == '__main__':
-  symbols = us_equity_symbol_load()
+  symbols = us_equity_symbol_load(market = 'us')
   # symbols = ['AAPL', 'NVDA']
   #symbols = ['TEAM', 'IAU', 'DKILY', 'OLCLY']
   # symbols = ['WFC', 'AXP', 'BX', 'GS']

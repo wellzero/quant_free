@@ -12,9 +12,9 @@ from quant_free.factor.base import FactorBase
 
 class Alpha191(FactorBase):
 
-    def __init__(self, start_date, end_date, ref_index = '.DJI', dir = 'fh'):
+    def __init__(self, start_date, end_date, ref_index = '.DJI', dir = 'fh', market = 'us'):
         self.ref_index = ref_index
-        super().__init__(start_date, end_date, dir)
+        super().__init__(start_date, end_date, dir, market)
 
     def preprocess(self, data):
 
@@ -29,7 +29,9 @@ class Alpha191(FactorBase):
         
         df_ids = data.index.get_level_values(0)
 
-        benchmark = us_equity_data_load_within_range(symbols = [self.ref_index], start_date = self.start_date,
+        benchmark = equity_daily_data_load_within_range(
+                                    self.market,
+                                    symbols = [self.ref_index], start_date = self.start_date,
                                     end_date = self.end_date, column_option = "all", 
                                     dir_option = "xq")[self.ref_index]
         

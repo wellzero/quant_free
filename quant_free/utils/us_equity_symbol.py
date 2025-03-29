@@ -34,6 +34,6 @@ def us_symbol_file():
   subfolder_path = os.path.join(root_dir, 'symbol')
   os.makedirs(subfolder_path, exist_ok=True)
 
-  csv_file_path = os.path.join(subfolder_path, 'us_equity_symbol.csv')
+  csv_file_path = os.path.join(subfolder_path, 'equity_symbol.csv')
   
   return csv_file_path

@@ -68,15 +68,16 @@ def finance_calculate_ratio_changes(df_factor, days_before, days_after):
     return df_factor.round(2)
 
 class PriceRatio:
-  def __init__(self, start_date, end_date, symbol = 'AAPL', column_option = 'close', dir_option = 'xq'):
+  def __init__(self, start_date, end_date, market = 'us',  symbol = 'AAPL', column_option = 'close', dir_option = 'xq'):
 
     self.start_date = start_date
     self.end_date = end_date
     self.symbol = symbol
     self.column_option = column_option
     self.dir_option = dir_option
+    self.market = market
 
-    df_daily_trade = us_equity_data_load(symbol = symbol, dir_option = dir_option)[column_option]
+    df_daily_trade = us_equity_data_load(market, symbol = symbol, dir_option = dir_option)[column_option]
     df_daily_trade.index = pd.to_datetime(pd.to_datetime(df_daily_trade.index).date)
     self.df_daily_trade = df_daily_trade
     return
@@ -88,7 +89,7 @@ class PriceRatio:
     
     df_ratio = self.df_daily_trade.pct_change(periods = periods)
     
-    trade_date_time = us_equity_tradedate_load_within_range(start_date = self.start_date, end_date = self.end_date, dir_option = self.dir_option)
+    trade_date_time = equity_tradedate_load_within_range(self.market, start_date = self.start_date, end_date = self.end_date, dir_option = self.dir_option)
 
 
     

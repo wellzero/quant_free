@@ -27,10 +27,11 @@ from quant_free.utils.us_equity_utils import *
 
 class FactorBase(ABC):
 
-  def __init__(self, start_date, end_date, dir = 'fh'):
+  def __init__(self, start_date, end_date, dir = 'fh', market = 'us'):
     self.start_date = start_date
     self.end_date = end_date
     self.dir = dir
+    self.market = market
 
   @abstractmethod
   def preprocess(self, data):
@@ -428,6 +429,7 @@ class FactorBase(ABC):
 
     df = copy.deepcopy(
         us_quity_multi_index_data_load(
+        self.market,
         sector_name = sector,
         start_date = self.start_date,
         end_date = self.end_date,
@@ -491,7 +493,7 @@ class FactorBase(ABC):
 
       df_stored = self.add_backward_returns(df, df_stored)
       df_stored = self.add_forward_returns(df, df_stored)
-      us_equity_filter_and_store_by_symbol(df_stored, subclass_name)
+      us_equity_filter_and_store_by_symbol(self.market, df_stored, subclass_name)
       return df_stored
 
   def parallel_calc_sectors(self, sectors):
@@ -515,11 +517,13 @@ class FactorBase(ABC):
     
     if sector_price is None and "Trend" != subclass_name:
       sector = us_equity_get_sector(symbol, self.dir)
-      sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
+      sector_price = us_dir1_load_csv(self.market, dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
       sector_price = sector_price.loc[:, sector]
       sector_price.name = "sector_price"
 
-    dict_data = us_equity_data_load_within_range(symbols = [symbol], start_date = self.start_date,
+    dict_data = equity_daily_data_load_within_range(
+                                      self.market,
+                                      symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 
                                       dir_option = "xq")
     
@@ -585,7 +589,11 @@ class FactorBase(ABC):
       df_stored = self.add_forward_returns(df, df_stored)
 
       df_stored.index.name = "date"
-      us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = subclass_name + '.csv', data = df_stored)
+      us_dir1_store_csv(self.market, 
+                        dir0 = 'equity', 
+                        dir1 = symbol, 
+                        filename = subclass_name + '.csv', 
+                        data = df_stored)
 
       return df_stored
 

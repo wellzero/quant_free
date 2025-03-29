@@ -10,14 +10,14 @@ from quant_free.dataset.us_equity_load import *
 _this_dir = Path(__file__).parent.parent
 
 
-def us_equity_get_trade_dates():
-  df = us_equity_data_load()
+def us_equity_get_trade_dates(market = 'us'):
+  df = us_equity_data_load(market)
   return df.index
 
-def us_equity_get_trade_date_within_range(symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
+def us_equity_get_trade_date_within_range(market = 'us', symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):
 
   # Download historical stock data
-  trade_dates_time = us_equity_tradedate_load_within_range(symbol, start_date, end_date, dir_option)
+  trade_dates_time = equity_tradedate_load_within_range(market, symbol, start_date, end_date, dir_option)
 
   return trade_dates_time
 
@@ -32,7 +32,7 @@ def us_equity_get_current_trade_date(symbol = "AAPL"):
 
 def us_equity_get_sector(symbol = "AAPL", dir_option = "xq"):
     
-    sector_file = 'us_equity_sector.csv'
+    sector_file = 'equity_sector.csv'
     df_sector = us_dir1_load_csv(dir0 = 'symbol', dir1 = dir_option, filename = sector_file)
 
     if dir_option == "xq":

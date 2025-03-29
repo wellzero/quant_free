@@ -9,11 +9,11 @@ from quant_free.utils.xq_parse_js import *
 
 GLOBAL_XQ_IGNORE_COLUMNS = 7
 
-def us_equity_xq_daily_data_load(symbol = 'AAPL', options = ['close'], sub_dir = 'xq'):
+def us_equity_xq_daily_data_load(market, symbol = 'AAPL', options = ['close'], sub_dir = 'xq'):
 
   try:
     # print(f"loading {symbol} trade data...")
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = sub_dir)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = sub_dir)
     equity_file = os.path.join(equity_folder, 'daily.csv')
     data = pd.read_csv(equity_file)
     data.set_index('timestamp', inplace=True)
@@ -41,8 +41,8 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-def us_equity_xq_load_csv(symbol, file_name, title, provider="xq"):
-    equity_folder = us_equity_sub_folder(symbol=symbol, sub_dir=provider)
+def us_equity_xq_load_csv(market, symbol, file_name, title, provider="xq"):
+    equity_folder = equity_sub_folder(market, symbol=symbol, sub_dir=provider)
     file = os.path.join(equity_folder, file_name + '.csv')
 
     df_ = pd.read_csv(file)
@@ -86,9 +86,9 @@ def us_equity_xq_load_csv(symbol, file_name, title, provider="xq"):
     return df_first_values
 
 
-# def us_equity_xq_load_csv(symbol, file_name, title, provider = "xq" ):
+# def us_equity_xq_load_csv(market, symbol, file_name, title, provider = "xq" ):
 
-#     equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+#     equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
 #     file = os.path.join(equity_folder, file_name + '.csv')
 
 #     df_ = pd.read_csv(file)
@@ -136,9 +136,9 @@ def us_equity_xq_load_csv(symbol, file_name, title, provider="xq"):
     
 #     return df_first_values
 
-def us_equity_xq_balance_load_csv(symbol, dates, file_name, provider = "xq" ):
+def us_equity_xq_balance_load_csv(market, symbol, dates, file_name, provider = "xq" ):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
     data = pd.read_csv(file)
     data.set_index('REPORT', inplace=True)
@@ -154,16 +154,16 @@ def us_equity_xq_balance_load_csv(symbol, dates, file_name, provider = "xq" ):
     df = data.loc[dates,:]
     return df
 
-def us_equity_xq_store_csv(symbol, file_name, data, provider = "xq" ):
+def us_equity_xq_store_csv(market, symbol, file_name, data, provider = "xq" ):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
 
     data.to_csv(file)
 
-def us_equity_xq_factors_load_csv(symbol, file_name, start_time, end_time, factors = ['roe'], provider = "xq"):
+def us_equity_xq_factors_load_csv(market, symbol, file_name, start_time, end_time, factors = ['roe'], provider = "xq"):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
     df = pd.read_csv(file)
     df.set_index('REPORT_DATE', inplace=True)
@@ -211,27 +211,27 @@ def calculate_quarterly_differences(df, str1, str2):
       result_df.loc[:,str2] = df.loc[:, str2]
     return result_df
 
-def us_equity_xq_finance_data_load(symbol = 'AAPL'):
+def us_equity_xq_finance_data_load(market, symbol = 'AAPL'):
 
   try:
     xq_us_name = xq_js_to_dict('us')
     # xq_symbol = datacenter.get_secucode("MMM")
     print(f"Loading {symbol} xq data...")
-    income = us_equity_xq_load_csv(symbol, 'income', xq_us_name['incomes'])
+    income = us_equity_xq_load_csv(market, symbol, 'income', xq_us_name['incomes'])
     # Apply the function to the DataFrame
     income = calculate_quarterly_differences(income, '基本每股收益', '稀释每股收益')
 
-    cash = us_equity_xq_load_csv(symbol, 'cash', xq_us_name['cashes'])
+    cash = us_equity_xq_load_csv(market, symbol, 'cash', xq_us_name['cashes'])
     cash = calculate_quarterly_differences(cash, '期初现金及现金等价物余额', '期末现金及现金等价物余额')
     
-    balance = us_equity_xq_load_csv(symbol,'balance', xq_us_name['balances'])
+    balance = us_equity_xq_load_csv(market, symbol,'balance', xq_us_name['balances'])
 
-    indicators = us_equity_xq_load_csv(symbol,'metrics', xq_us_name['indicators'])
+    indicators = us_equity_xq_load_csv(market, symbol,'metrics', xq_us_name['indicators'])
 
     data = pd.concat([income, cash, balance, indicators], axis = 1, join='inner')
     
     data = data.loc[:, ~data.columns.duplicated()]
     return data
-    # us_equity_xq_finance_store_csv(equity_folder, data, 'metrics')
+    # equity_xq_finance_store_csv(equity_folder, data, 'metrics')
   except:
     print(f"function {__name__}  error!!", symbol)

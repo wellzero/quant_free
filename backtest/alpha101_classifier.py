@@ -71,6 +71,7 @@ class Alpha101_classifier(Strategy):
       self.asset_value = None
       self.shares_owned = None
       self.cache_df = None
+      self.market = 'us'
 
       self.load_factor_model_train(self.parameters["symbol"])
 
@@ -87,7 +88,8 @@ class Alpha101_classifier(Strategy):
     def load_factor_model_train(self, symbol):
 
 
-      factor = us_equity_data_load_within_range(
+      factor = equity_daily_data_load_within_range(
+          self.market,
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
           end_date = self.parameters["training_end_date"],
@@ -165,7 +167,8 @@ class Alpha101_classifier(Strategy):
       accuracy = accuracy_score(cont['bin'], train_pred)
       print(f"Training accuracy: {accuracy}")
 
-      test_factors = us_equity_data_load_within_range(
+      test_factors = 7(
+          self.market,
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
           end_date = self.parameters["test_end_date"],
@@ -275,7 +278,8 @@ if __name__ == "__main__":
         symbol = Alpha101_classifier.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = us_equity_data_load_within_range(
+        df = equity_daily_data_load_within_range(
+            market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,
             end_date = backtesting_end,

@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     # daily trade 
     symbols = us_equity_symbol_load(market = 'us')
-    us_equity_xq_daily_data_download(market, symbols)
+#    us_equity_xq_daily_data_download(market, symbols)
 
     # finance report
     equity_xq_finance_data_download(market, symbols)

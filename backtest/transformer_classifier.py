@@ -183,6 +183,7 @@ class TransformerClassifier(Strategy):
         self.last_compute = None
         self.prediction = None
         self.scaler = StandardScaler()
+        self.market = 'us'
         self.load_factor_model_train(self.parameters["symbol"])
 
     def transformer_encoder(self, inputs):
@@ -290,7 +291,7 @@ class TransformerClassifier(Strategy):
 
     def load_factor_model_train(self, symbol):
         # Load and preprocess data
-        factor = us_equity_data_load_within_range(
+        factor = equity_daily_data_load_within_range(
             symbols=[symbol],
             start_date=self.parameters["training_start_date"],
             end_date=self.parameters["training_end_date"],
@@ -335,7 +336,8 @@ class TransformerClassifier(Strategy):
         print("Training complete.")
 
         # Load test data
-        test_factors = us_equity_data_load_within_range(
+        test_factors = equity_daily_data_load_within_range(
+          self.market,
             symbols=[symbol],
             start_date=self.parameters["test_start_date"],
             end_date=self.parameters["test_end_date"],
@@ -425,7 +427,8 @@ if __name__ == "__main__":
     backtesting_end = pd.to_datetime(TransformerClassifier.parameters["test_end_date"])
     symbol = TransformerClassifier.parameters["symbol"]
     
-    df = us_equity_data_load_within_range(
+    df = equity_daily_data_load_within_range(
+        market = 'us',
         symbols=[symbol],
         start_date=backtesting_start,
         end_date=backtesting_end,

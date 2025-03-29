@@ -75,13 +75,15 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 class us_equity_efinance_factor:
 
   # def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
-  def __init__(self, symbols, factors = None, start_time = None, end_time = None) -> None:
+  def __init__(self, symbols, market = 'us',  factors = None, start_time = None, end_time = None) -> None:
 
     self.symbols = symbols
     self.factors = factors
 
     self.start_time = start_time
     self.end_time = end_time
+
+    self.market = market
 
     return
 
@@ -141,7 +143,7 @@ class us_equity_efinance_factor:
     df_dates = df.index
     df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
-    daily_data = us_equity_data_load(symbol)['close']
+    daily_data = us_equity_data_load(self.market, symbol)['close']
     daily_trade_dates = daily_data.index
 
     dates = []
@@ -150,7 +152,7 @@ class us_equity_efinance_factor:
       date = self.nearest_date(daily_trade_dates, get_date)
       dates.append(date)
 
-    shares = us_equity_efinance_common_shares_load([symbol])
+    shares = us_equity_efinance_common_shares_load(self.market, [symbol])
 
     # trade_data_quarter = pd.concat([trade_data_quarter, res.loc[date]], axis = 1)
     trade_data_quarter = daily_data.loc[dates]
@@ -168,7 +170,7 @@ class us_equity_efinance_factor:
 
   def finance_factors_one_stock(self, symbol):
 
-    df_finance = us_equity_efinance_finance_data_load(symbol, dates = None)
+    df_finance = us_equity_efinance_finance_data_load(self.market, symbol, dates = None)
 
     # balance
     total_equity = df_finance['股东权益合计']
@@ -321,7 +323,7 @@ class us_equity_efinance_factor:
       # print("calc symbol ", symbol)
       try:
         df = self.finance_factors_one_stock(symbol)
-        us_equity_efinance_store_csv(symbol, "finance_factor", df)
+        us_equity_efinance_store_csv(self.market, symbol, "finance_factor", df)
       except:
         print("no finance data skip stock", symbol)
         continue
@@ -333,7 +335,7 @@ class us_equity_efinance_factor:
     for symbol in self.symbols:
       # print("calc symbol ", symbol)
       try:
-        df = us_equity_efinance_factors_load_csv(symbol, "finance_factor", self.start_time, self.end_time, self.factors)
+        df = us_equity_efinance_factors_load_csv(self.market, symbol, "finance_factor", self.start_time, self.end_time, self.factors)
         
         
         df.index = pd.MultiIndex.from_product([df.index, [symbol]], names=['REPORT', 'symbol'])
@@ -350,7 +352,7 @@ class us_equity_efinance_factor:
 
     df_factors = self.finance_factors_fectch()
     
-    us_equity_research_folder("finance", 'finance_factors.csv', df_factors)
+    us_equity_research_folder(self.market, "finance", 'finance_factors.csv', df_factors)
     
     # scaler = MinMaxScaler()
     df_mean = df_factors.groupby(level='symbol').mean()
@@ -368,7 +370,7 @@ class us_equity_efinance_factor:
     df_mean['scale_sum'] = df_scale_mean * 100
     
     df_rank = df_mean.sort_values(by = ['scale_sum'], ascending=False)
-    us_equity_research_folder("finance", 'rank.csv', df_rank)
+    us_equity_research_folder(self.market, "finance", 'rank.csv', df_rank)
     
     return df_rank
 

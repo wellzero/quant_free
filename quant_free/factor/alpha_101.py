@@ -12,9 +12,9 @@ from quant_free.factor.base import FactorBase
 
 class Alpha101(FactorBase):
 
-  def __init__(self, start_date, end_date, dir = 'fh'):
+  def __init__(self, start_date, end_date, dir = 'fh', market = 'us'):
 
-    super().__init__(start_date, end_date, dir)
+    super().__init__(start_date, end_date, dir, market)
 
   def preprocess(self, data):
       returns = self.get_current_return(data, 1, 'close')
@@ -905,7 +905,7 @@ class Alpha101(FactorBase):
 
       print(f"processing {sector} ...")
 
-      sector_price = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
+      sector_price = us_dir1_load_csv(self.market, dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
 
       sector_price = sector_price.loc[:, sector]
 
@@ -913,7 +913,7 @@ class Alpha101(FactorBase):
       # sector_price.rename(columns={sector:"sector_price"}, inplace=True)
       sector_price.name = "sector_price"
 
-      data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
+      data_symbols = us_dir1_load_csv(self.market, dir0 = 'symbol', dir1 = self.dir, filename= sector +'.csv')
       if (data_symbols.empty == False):
         symbols = data_symbols['symbol'].values
         # symbols = ['OIS', 'FET', 'WTTR']

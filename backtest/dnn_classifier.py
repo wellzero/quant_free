@@ -59,6 +59,7 @@ class DNNClassifier(Strategy):
         self.last_compute = None
         self.prediction = None
         self.scaler = StandardScaler()
+        self.market = 'us'
         self.load_factor_model_train(self.parameters["symbol"])
 
     def transformer_encoder(self, inputs):
@@ -179,7 +180,8 @@ class DNNClassifier(Strategy):
 
     def load_factor_model_train(self, symbol):
         # Load and preprocess data
-        factor = us_equity_data_load_within_range(
+        factor = equity_daily_data_load_within_range(
+          self.market,
             symbols=[symbol],
             start_date=self.parameters["training_start_date"],
             end_date=self.parameters["training_end_date"],
@@ -209,7 +211,8 @@ class DNNClassifier(Strategy):
                       verbose=1)
 
         # Load test data
-        test_factors = us_equity_data_load_within_range(
+        test_factors = equity_daily_data_load_within_range(
+          self.market,
             symbols=[symbol],
             start_date=self.parameters["test_start_date"],
             end_date=self.parameters["test_end_date"],
@@ -288,7 +291,8 @@ if __name__ == "__main__":
     backtesting_end = pd.to_datetime(DNNClassifier.parameters["test_end_date"])
     symbol = DNNClassifier.parameters["symbol"]
     
-    df = us_equity_data_load_within_range(
+    df = equity_daily_data_load_within_range(
+        market = 'us',
         symbols=[symbol],
         start_date=backtesting_start,
         end_date=backtesting_end,

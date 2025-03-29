@@ -4,12 +4,12 @@ from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 
-def us_equity_efinance_common_shares_load(symbols = ['AAPL']):
+def us_equity_efinance_common_shares_load(market = 'us', symbols = ['AAPL']):
   data = {}
   for symbol in symbols:
     try:
       # print(f"loading {symbol} trade data...")
-      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
+      equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = 'efinance')
       equity_file = os.path.join(equity_folder, 'info.csv')
       data = pd.read_csv(equity_file)
       return data.loc[:, 'issued_common_shares'][0]
@@ -26,9 +26,9 @@ def us_equity_efinance_search_sort_date(report_dates):
    dates = [x.replace("QA", "FY") for x in dates]
    return dates
 
-def us_equity_efinance_load_csv(symbol, file_name, dates = None, provider = "efinance" ):
+def us_equity_efinance_load_csv(market, symbol, file_name, dates = None, provider = "efinance" ):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
 
     data = pd.read_csv(file)
@@ -42,9 +42,9 @@ def us_equity_efinance_load_csv(symbol, file_name, dates = None, provider = "efi
 
     return df
 
-def us_equity_efinance_balance_load_csv(symbol, dates, file_name, provider = "efinance" ):
+def us_equity_efinance_balance_load_csv(market, symbol, dates, file_name, provider = "efinance" ):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
     data = pd.read_csv(file)
     data.set_index('REPORT', inplace=True)
@@ -60,16 +60,16 @@ def us_equity_efinance_balance_load_csv(symbol, dates, file_name, provider = "ef
     df = data.loc[dates,:]
     return df
 
-def us_equity_efinance_store_csv(symbol, file_name, data, provider = "efinance" ):
+def us_equity_efinance_store_csv(market, symbol, file_name, data, provider = "efinance" ):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
 
     data.to_csv(file)
 
-def us_equity_efinance_factors_load_csv(symbol, file_name, start_time, end_time, factors = ['roe'], provider = "efinance"):
+def us_equity_efinance_factors_load_csv(market, symbol, file_name, start_time, end_time, factors = ['roe'], provider = "efinance"):
 
-    equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
     file = os.path.join(equity_folder, file_name + '.csv')
     df = pd.read_csv(file)
     df.set_index('REPORT_DATE', inplace=True)
@@ -117,19 +117,19 @@ def calculate_quarterly_differences(df, str1, str2):
       result_df.loc[:,str2] = df.loc[:, str2]
     return result_df
 
-def us_equity_efinance_finance_data_load(symbol = 'AAPL', dates = ["2021/Q1"]):
+def us_equity_efinance_finance_data_load(market = 'us', symbol = 'AAPL', dates = ["2021/Q1"]):
 
   try:
     # efinance_symbol = datacenter.get_secucode("MMM")
     print(f"Loading {symbol} finance data...")
-    income = us_equity_efinance_load_csv(symbol, 'income', dates)
+    income = us_equity_efinance_load_csv(market, symbol, 'income', dates)
     # Apply the function to the DataFrame
     income = calculate_quarterly_differences(income, '基本加权平均股数-普通股', '摊薄加权平均股数-普通股')
 
-    cash = us_equity_efinance_load_csv(symbol, 'cash', dates)
+    cash = us_equity_efinance_load_csv(market, symbol, 'cash', dates)
     cash = calculate_quarterly_differences(cash, '现金及现金等价物期初余额', '现金及现金等价物期末余额')
     
-    balance = us_equity_efinance_balance_load_csv(symbol, dates, 'balance')
+    balance = us_equity_efinance_balance_load_csv(market, symbol, dates, 'balance')
 
     data = pd.concat([income, cash, balance], axis = 1, join='inner')
     

@@ -71,13 +71,14 @@ class Trend(Strategy):
       self.asset_value = None
       self.shares_owned = None
       self.cache_df = None
+      self.market = 'us'
 
       self.load_factor_model_train(self.parameters["symbol"])
 
     def load_factor_model_train(self, symbol):
       like = 'trend'
 
-      test_factors = us_equity_data_load_within_range(
+      test_factors = equity_daily_data_load_within_range(
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
           end_date = self.parameters["test_end_date"],
@@ -150,7 +151,8 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = us_equity_data_load_within_range(
+        df = equity_daily_data_load_within_range(
+          self.market,
             symbols = [symbol],
             start_date = backtesting_start,
             end_date = backtesting_end,

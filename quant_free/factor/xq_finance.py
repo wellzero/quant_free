@@ -74,13 +74,15 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 class xq_finance:
 
   # def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
-  def __init__(self, symbols, factors = None, start_time = None, end_time = None) -> None:
+  def __init__(self, symbols, market = 'us', factors = None, start_time = None, end_time = None) -> None:
 
     self.symbols = symbols
     self.factors = factors
 
     self.start_time = start_time
     self.end_time = end_time
+
+    self.market = market
 
     return
 
@@ -139,7 +141,7 @@ class xq_finance:
     
     df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
-    daily_data = us_equity_xq_daily_data_load(symbol, ['pe', 'market_capital', 'ps', 'pcf'])
+    daily_data = us_equity_xq_daily_data_load(self.market, symbol, ['pe', 'market_capital', 'ps', 'pcf'])
     daily_data.index = [it[:10] for it in daily_data.index]
     daily_trade_dates = daily_data.index
 
@@ -174,7 +176,7 @@ class xq_finance:
 
   def finance_factors_one_stock(self, symbol):
 
-    df_finance = us_equity_xq_finance_data_load(symbol)
+    df_finance = us_equity_xq_finance_data_load(self.market, symbol)
 
     # balance
     total_equity = self.fectch_value(df_finance, '股东权益合计')
@@ -338,7 +340,7 @@ class xq_finance:
       # print("calc symbol ", symbol)
       try:
         df = self.finance_factors_one_stock(symbol)
-        us_equity_xq_store_csv(symbol, "finance_factor", df)
+        us_equity_xq_store_csv(self.market, symbol, "finance_factor", df)
       except:
         print("no finance data skip stock", symbol)
         continue
@@ -350,7 +352,7 @@ class xq_finance:
     for symbol in self.symbols:
       # print("calc symbol ", symbol)
       try:
-        df = us_equity_xq_factors_load_csv(symbol, "finance_factor", self.start_time, self.end_time, self.factors)
+        df = us_equity_xq_factors_load_csv(self.market, symbol, "finance_factor", self.start_time, self.end_time, self.factors)
         
         
         df.index = pd.MultiIndex.from_product([df.index, [symbol]], names=['REPORT', 'symbol'])
@@ -407,7 +409,7 @@ class xq_finance:
     df_mean['mean_scale'] = df_scale_mean
     
     df_mean = df_mean.sort_values(by = ['mean_scale'], ascending=False)
-    # us_equity_research_folder("finance", 'rank.csv', df_mean)
+    # us_equity_research_folder(self.market, "finance", 'rank.csv', df_mean)
 
 
     df_scale['mean_scale'] = df_scale_mean

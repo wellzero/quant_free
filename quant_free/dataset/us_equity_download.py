@@ -9,7 +9,7 @@ import financedatabase as fd
 
 # Read directory from JSON file
 
-def us_equity_symbol_download(provider="sec"):
+def us_equity_symbol_download(market = 'us', provider="sec"):
   # Get all companies from SEC
   # us_all_companies = obb.equity.search("", provider=provider)
   # csv_us_all_companies = us_all_companies.to_dataframe()
@@ -22,15 +22,15 @@ def us_equity_symbol_download(provider="sec"):
   # # Save the DataFrame to a CSV file in the output directory
   # csv_us_all_companies.to_csv(us_symbol_f, index=False)
 
-  us_dir0_store_csv(dir0 = 'symbol', filename='us_equity_symbol.csv', data = csv_us_all_companies)
-  print(us_equity_symbol_download.__name__, "download successfully!", f"and stored to us_equity_symbol.csv")
+  us_dir0_store_csv(market, dir0 = 'symbol', filename='equity_symbol.csv', data = csv_us_all_companies)
+  print(us_equity_symbol_download.__name__, "download successfully!", f"and stored to equity_symbol.csv")
 
-def us_equity_daily_data_download(symbols = ['AAPL'], provider="yfinance"):
+def us_equity_daily_data_download(market, symbols = ['AAPL'], provider="yfinance"):
   for symbol in symbols:
     try:
       print(f"Downloading {symbol} trade data...")
       df_daily = obb.equity.price.historical(symbol = symbol, start_date = "1990-01-01", provider=provider).to_df()
-      equity_folder = us_equity_folder(symbol = symbol)
+      equity_folder = us_equity_folder(market, symbol = symbol)
       equity_file = os.path.join(equity_folder, 'daily.csv')
       # data = obb.equity.download(symbol, provider=provider, interval="daily", start_date="2010-01-01").to_df()
       data = obb.equity.price.historical(symbol = symbol, start_date = "1990-01-01", provider=provider).to_df()
@@ -57,11 +57,11 @@ def us_equity_yfinance_finance_store_csv(equity_folder, data, file_name):
       data = merged_data
     data.to_csv(file, index=False)
 
-def us_equity_yfinance_finance_data_download(symbols = ['AAPL'], provider="yfinance"):
+def us_equity_yfinance_finance_data_download(market = 'us', symbols = ['AAPL'], provider="yfinance"):
   for symbol in symbols:
     try:
       print(f"Downloading {symbol} finance data...")
-      equity_folder = us_equity_folder(symbol = symbol)
+      equity_folder = us_equity_folder(market, symbol = symbol)
 
       data = obb.equity.fundamental.income(symbol, provider="yfinance", limit=3, period="quarter").to_df()
       us_equity_yfinance_finance_store_csv(equity_folder, data, 'income')
@@ -100,7 +100,7 @@ def us_equity_efinance_finance_store_csv(equity_folder, data, file_name):
     print("store file: ", file)
 
 
-def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efinance"):
+def us_equity_efinance_finance_data_download(market = 'us', symbols = ['AAPL'], provider="efinance"):
 
   import efinance as ef
   datacenter = ef.stock.us_finance_getter()
@@ -110,7 +110,7 @@ def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efina
       # efinance_symbol = datacenter.get_secucode("MMM")
       print(f"Downloading {symbol} finance data...")
       efinance_symbol = datacenter.get_secucode(symbol)
-      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = provider)
+      equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
 
       data = datacenter.get_us_finance_income(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'income')
@@ -126,12 +126,12 @@ def us_equity_efinance_finance_data_download(symbols = ['AAPL'], provider="efina
     except:
       print(f"function {__name__} error!!")
 
-def us_equity_option_data_download(symbols = ['AAPL']):
+def us_equity_option_data_download(market = 'us', symbols = ['AAPL']):
   trade_date = us_equity_get_current_trade_date()
   for ticker_symbol in symbols:
     try:
       # Define the ticker symbol
-      equity_folder_date = us_equity_sub_folder(symbol = ticker_symbol, sub_dir = trade_date)
+      equity_folder_date = equity_sub_folder(market, symbol = ticker_symbol, sub_dir = trade_date)
 
       print("option folder: ", equity_folder_date)
 
@@ -175,7 +175,7 @@ def us_equity_option_data_download(symbols = ['AAPL']):
 
 
 
-def us_equity_info_data_download(symbols = ['AAPL'], provider="efinance"):
+def us_equity_info_data_download(market = 'us', symbols = ['AAPL'], provider="efinance"):
 
   import efinance as ef
   datacenter = ef.stock.us_equity_getter()
@@ -185,7 +185,7 @@ def us_equity_info_data_download(symbols = ['AAPL'], provider="efinance"):
       # efinance_symbol = datacenter.get_secucode("MMM")
       print(f"Downloading {symbol} finance data...")
       efinance_symbol = datacenter.get_secucode(symbol)
-      equity_folder = us_equity_sub_folder(symbol = symbol, sub_dir = 'efinance')
+      equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = 'efinance')
 
       data = datacenter.get_us_equity_info(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'info')

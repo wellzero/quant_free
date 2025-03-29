@@ -5,12 +5,13 @@ from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 
 def us_equity_data_load(
+    market = 'us', 
     symbol = 'AAPL',
     dir_option = '',
     flie_name = 'daily.csv',
     interval = 'day'):
   
-  equity_folder = us_equity_folder(symbol = symbol)
+  equity_folder = us_equity_folder(market, symbol = symbol)
   if dir_option == '':
     equity_file = os.path.join(equity_folder, flie_name)
   else:
@@ -34,14 +35,15 @@ def us_equity_data_load(
   return data
 
 
-def us_equity_tradedate_load_within_range(
+def equity_tradedate_load_within_range(
+    market = 'us', 
     symbol = "AAPL",
     start_date = '2023-05-29',
     end_date = '2024-05-29',
     dir_option = ''):
 
     # Download historical stock data
-  stock_data = us_equity_data_load(symbol = symbol, dir_option = dir_option)
+  stock_data = us_equity_data_load(market, symbol = symbol, dir_option = dir_option)
 
   if isinstance(start_date, str):
     start_date = pd.to_datetime(start_date)
@@ -53,8 +55,8 @@ def us_equity_tradedate_load_within_range(
 
   return trade_dates_time
 
-def us_equity_symbol_load():
-  df = us_dir0_load_csv(dir0 = 'symbol', filename='us_equity_symbol.csv')
+def us_equity_symbol_load(market = 'us'):
+  df = us_dir0_load_csv(market, dir0 = 'symbol', filename='equity_symbol.csv')
   return df.loc[:, 'symbol'].values
 
 def convert_to_string_if_number(value):
@@ -62,7 +64,8 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def us_equity_data_load_within_range(
+def equity_daily_data_load_within_range(
+    market = 'us', 
     symbols = ['AAPL'],
     start_date = '2023-05-29',
     end_date = '2024-05-29',
@@ -71,7 +74,8 @@ def us_equity_data_load_within_range(
     file_name = 'daily.csv'):
   
   data = {}
-  trade_date_time = us_equity_tradedate_load_within_range(
+  trade_date_time = equity_tradedate_load_within_range(
+    market,
     start_date = start_date,
     end_date = end_date,
     dir_option = 'xq')
@@ -81,7 +85,7 @@ def us_equity_data_load_within_range(
   lack_list = []
   for symbol in symbols:
     # print(symbol)
-    equity_folder = us_equity_folder(symbol = convert_to_string_if_number(symbol))
+    equity_folder = us_equity_folder(market, symbol = convert_to_string_if_number(symbol))
     if dir_option == '':
       equity_file = os.path.join(equity_folder, file_name)
     else:
@@ -92,7 +96,7 @@ def us_equity_data_load_within_range(
       # try:
         # print(f"loading {symbol} trade data...")
 
-        data_tmp = us_equity_data_load(symbol, dir_option, file_name)
+        data_tmp = us_equity_data_load(market, symbol, dir_option, file_name)
         # data_tmp = data_tmp.loc[start_date:end_date]
         # data_tmp = data_tmp[(data_tmp['date'] >= start_date) & (data_tmp['date'] <= end_date)]
         rows, columns = data_tmp.shape
@@ -132,6 +136,7 @@ def us_equity_data_load_within_range(
 
 # load data fro a sector
 def us_equity_sector_daily_data_load(
+    market = 'us',
     sector_name = 'Semiconductor Products and Equipment',
     start_date = '2023-05-29',
     end_date = '2024-05-29',
@@ -142,7 +147,8 @@ def us_equity_sector_daily_data_load(
     dir0 = 'symbol', dir1 = 'xq',
     filename= sector_name +'.csv')['symbol'].values
 
-  return us_equity_data_load_within_range(
+  return equity_daily_data_load_within_range(
+    market,
     symbols = symbols,
     start_date = start_date,
     end_date = end_date,
@@ -151,6 +157,7 @@ def us_equity_sector_daily_data_load(
 
 # multi index load [date ticker]
 def us_quity_multi_index_data_load(
+    market = 'us',
     sector_name = '半导体产品与设备', 
     start_date = '2023-05-29',
     end_date = '2024-05-29', 
@@ -178,7 +185,8 @@ def us_quity_multi_index_data_load(
   else:
     symbols = df_symbol['symbol'].values
   
-  dict_df = us_equity_data_load_within_range(
+  dict_df = equity_daily_data_load_within_range(
+    market,
     symbols = symbols,
     start_date = start_date,
     end_date = end_date,

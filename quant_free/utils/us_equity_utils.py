@@ -30,47 +30,47 @@ def create_common_directory(*subdirs):
     root_dir = get_json_config_value("data_dir")
     return create_directory(root_dir, *subdirs)
 
-def us_symbol_file(filename='us_equity_symbol.csv'):
+def us_symbol_file(filename='equity_symbol.csv'):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory('symbol')
     return os.path.join(symbol_dir, filename)
 
-def us_equity_folder(symbol='AAPL'):
+def us_equity_folder(market, symbol='AAPL'):
     """Get the folder path for a specific equity."""
-    return create_common_directory('equity', symbol)
+    return create_common_directory(market, 'equity', symbol)
 
-def us_equity_sub_folder(symbol='AAPL', sub_dir='2024-06-06'):
+def equity_sub_folder(market = 'us', symbol='AAPL', sub_dir='2024-06-06'):
     """Get the subfolder path for a specific equity and date."""
-    return create_common_directory('equity', symbol, sub_dir)
+    return create_common_directory(market, 'equity', symbol, sub_dir)
 
-def us_equity_research_folder(sub_folder='price', file_name='default.csv', data=None):
+def us_equity_research_folder(market = 'us', sub_folder='price', file_name='default.csv', data=None):
     """Save equity research data to a CSV file if data is provided."""
-    research_dir = create_common_directory('research', sub_folder)
+    research_dir = create_common_directory(market, 'research', sub_folder)
     file_path = os.path.join(research_dir, file_name)
     
     if data is not None:
         data.to_csv(file_path)
     return file_path
 
-def us_dir1_store_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', encoding='utf-8', data = None):
+def us_dir1_store_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', encoding='utf-8', data = None):
     """Get the file path for the symbol file."""
-    symbol_dir = create_common_directory(dir0, dir1)
+    symbol_dir = create_common_directory(market, dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path, encoding = encoding)
         print(f"stored to folder {file_path}")
 
-def us_dir0_store_csv(dir0 = 'symbol', filename='industry.csv', data = None):
+def us_dir0_store_csv(market = 'us', dir0 = 'symbol', filename='industry.csv', data = None):
     """Get the file path for the symbol file."""
-    symbol_dir = create_common_directory(dir0)
+    symbol_dir = create_common_directory(market, dir0)
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path)
         print(f"stored to folder {file_path}")
 
-def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
+def us_dir1_load_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
     """Get the file path for the symbol file."""
-    symbol_dir = create_common_directory(dir0, dir1)
+    symbol_dir = create_common_directory(market, dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
         df = pd.read_csv(file_path, index_col=0)
@@ -89,9 +89,9 @@ def us_dir1_load_csv(dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
         print(f"File {filename} does not exist in the {symbol_dir} directory.")
         return None
 
-def us_dir0_load_csv(dir0 = 'symbol', filename='industry.csv'):
+def us_dir0_load_csv(market = 'us', dir0 = 'symbol', filename='industry.csv'):
     """Get the file path for the symbol file."""
-    symbol_dir = create_common_directory(dir0)
+    symbol_dir = create_common_directory(market, dir0)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
         return pd.read_csv(file_path)

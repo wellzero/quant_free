@@ -6,9 +6,9 @@ from quant_free.factor.base import FactorBase
 
 class Trend(FactorBase):
 
-  def __init__(self, start_date, end_date, dir = 'fh'):
+  def __init__(self, start_date, end_date, dir = 'fh', market = 'us'):
 
-    super().__init__(start_date, end_date, dir)
+    super().__init__(start_date, end_date, dir, market)
 
   def preprocess(self, data, window_size = 30):
     return TrendLib(data, window_size = window_size, vwap='vwap', log='log')

@@ -1,7 +1,7 @@
 import pandas as pd
 from quant_free.utils.us_equity_utils import us_dir1_store_csv  # Assuming this handles file storage
 
-def us_equity_filter_and_store_by_symbol(df, file_name="trend"):
+def us_equity_filter_and_store_by_symbol(market, df, file_name="trend"):
     """Filters a MultiIndex DataFrame by the second level index (symbol) 
     and stores each filtered DataFrame as a CSV file.
 
@@ -29,7 +29,7 @@ def us_equity_filter_and_store_by_symbol(df, file_name="trend"):
         # filtered_df = filtered_df.reset_index(level=0, drop=False) #Keep datetime as index
         # filtered_df.index.name = "datetime" #rename index to date
 
-        us_dir1_store_csv(dir0 = 'equity', dir1 = symbol, filename = file_name + '.csv', data = filtered_df)
+        us_dir1_store_csv(market, dir0 = 'equity', dir1 = symbol, filename = file_name + '.csv', data = filtered_df)
 
 
 # Example usage (assuming your DataFrame is called 'my_multiindex_df'):
