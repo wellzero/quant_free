@@ -1,8 +1,8 @@
 # quant_free
 
-This project mainly focus on US equity. **do following things**
+This project mainly focus on US HK CN equity. **do following things**
 
- 1. spider US stock daily trade data and financial data freely
+ 1. spider US HK CN stock daily trade data and financial data freely
  2. do some statistcal research for history trade and financial data with machin learning
  3. Backtest
  4. Live trade
