@@ -138,7 +138,7 @@ class Transformer(nn.Module):
         #output
         output = self.output_layer(encoder_output)
 
-        # #encoder
+        #encoder
         # for layer in self.encoder_layers:
         #     encoder_output = layer(encoder_output)
         # decoder_output = encoder_output
