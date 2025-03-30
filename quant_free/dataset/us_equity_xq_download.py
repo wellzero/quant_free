@@ -7,7 +7,9 @@ import efinance as ef
 
 # Read directory from JSON file
 
-def equity_xq_finance_store_csv(equity_folder, data, file_name):
+def equity_xq_finance_store_csv(market, symbol, sub_dir, data, file_name):
+                                
+    equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = sub_dir)
     file = os.path.join(equity_folder, file_name + '.csv')
     # if os.path.exists(file):
       # data_local = pd.read_csv(file)
@@ -27,7 +29,6 @@ def equity_xq_finance_store_csv(equity_folder, data, file_name):
     data.to_csv(file, index=False)
     print("store file: ", file)
 
-
 def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider="xq"):
 
   datacenter = ef.stock.us_finance_xq_getter(market)
@@ -36,19 +37,18 @@ def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider=
     try:
       # xq_symbol = datacenter.get_secucode("MMM")
       print(f"Downloading {symbol} finance data...")
-      equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
 
       data = datacenter.get_us_finance_income(symbol = symbol)
-      equity_xq_finance_store_csv(equity_folder, data, 'income')
+      equity_xq_finance_store_csv(market, symbol, provider, data, 'income')
 
       data = datacenter.get_us_finance_cash(symbol = symbol)
-      equity_xq_finance_store_csv(equity_folder, data, 'cash')
+      equity_xq_finance_store_csv(market, symbol, provider, data, 'cash')
 
       data = datacenter.get_us_finance_balance(symbol = symbol)
-      equity_xq_finance_store_csv(equity_folder, data, 'balance')
+      equity_xq_finance_store_csv(market, symbol, provider, data, 'balance')
 
       data = datacenter.get_us_finance_main_factor(symbol = symbol)
-      equity_xq_finance_store_csv(equity_folder, data, 'metrics')
+      equity_xq_finance_store_csv(market, symbol, provider, data, 'metrics')
     except:
       print(f"function {__name__} error!!")
 
@@ -60,11 +60,7 @@ def equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="x
       print(f"Downloading {symbol} trade data...")
       data = datacenter_xq.get_us_finance_daily_trade(symbol = symbol)
 
-      equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
-      equity_file = os.path.join(equity_folder, 'daily.csv')
-
-      data.to_csv(equity_file, index=False)
-      print(f"daily trade stored to {equity_file}")
+      equity_xq_finance_store_csv(market, symbol, provider, data, 'daily')
     except:
       print(f"function {__name__} {equity_xq_daily_data_download} error!!")
 
