@@ -68,12 +68,15 @@ def us_dir0_store_csv(market = 'us', dir0 = 'symbol', filename='industry.csv', d
         data.to_csv(file_path)
         print(f"stored to folder {file_path}")
 
-def us_dir1_load_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv'):
+def us_dir1_load_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', dtype = None):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(market, dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
-        df = pd.read_csv(file_path, index_col=0)
+        if dtype == None:
+          df = pd.read_csv(file_path, index_col=0)
+        else:
+          df = pd.read_csv(file_path, index_col=0, dtype=str)
 
         df.index = pd.to_datetime(df.index)
         # Drop the 'Unnamed: 0.1' column if it exists
