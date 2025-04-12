@@ -33,7 +33,24 @@ def download_all_index_symbols(market='cn'):
         else:
             print(f"Unsupported market: {market}")
             return pd.DataFrame()
-            
+
+        if not index_df.empty:
+            column_mapping = {
+                # '序号': 'index',
+                # '内部编号': 'internal_code',
+                '代码': 'symbol',
+                '名称': 'name',
+                '最新价': 'latest_price',
+                '涨跌额': 'price_change',
+                '涨跌幅': 'pct_change',
+                '今开': 'open',
+                '最高': 'high',
+                '最低': 'low',
+                '昨收': 'prev_close',
+                '成交量': 'volume',
+                '成交额': 'turnover'
+            }
+            index_df = index_df.rename(columns=column_mapping)
         return index_df
     except Exception as e:
         print(f"Error downloading {market} index symbols: {e}")
@@ -54,7 +71,7 @@ def download_index_daily_data(symbol, market='cn'):
             return pd.DataFrame()
             
         # Rename Chinese columns to English
-        if market == 'cn' and not df.empty:
+        if not df.empty:
             column_mapping = {
                 '序号': 'index',
                 '内部编号': 'internal_code',
@@ -86,26 +103,19 @@ def download_all_index_data(market='cn'):
         
     # Create directory structure
     create_directory(market, 'index')
-    
-    # Determine symbol column based on market
-    symbol_col = {
-        'cn': 'symbol',
-        'hk': '代码',
-        'us': 'symbol'
-    }.get(market, 'symbol')
-    
+
     # Save index symbols
     us_dir1_store_csv(
         market=market,
         dir0='index',
-        dir1='ak',
-        filename='index_symbols.csv',
+        dir1='symbols',
+        filename='symbols.csv',
         data=index_df
     )
     
     # Download daily data for each index
     for _, row in index_df.iterrows():
-        symbol = row[symbol_col]
+        symbol = row['symbol']
         print(f"Downloading data for {market} index: {symbol}")
         
         # Get daily data
@@ -116,8 +126,8 @@ def download_all_index_data(market='cn'):
             us_dir1_store_csv(
                 market=market,
                 dir0='index',
-                dir1='ak',
-                filename=f'{symbol}_daily.csv',
+                dir1='daily',
+                filename=f'{symbol}.csv',
                 data=daily_df
             )
     
