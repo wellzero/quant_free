@@ -1,0 +1,1 @@
+# pls call askshare to download all index daily trade data AI!
