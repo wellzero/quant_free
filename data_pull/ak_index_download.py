@@ -1,3 +1,5 @@
+#need to support US HK and CN market AI!
+
 import akshare as ak
 import pandas as pd
 from pathlib import Path
