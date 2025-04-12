@@ -9,17 +9,17 @@ from quant_free.utils.us_equity_utils import create_directory, us_dir1_store_csv
 
 
 ###
-index_global_spot_em_df = ak.index_global_spot_em() 
-index_global_hist_sina_df = ak.index_global_hist_sina(symbol="瑞士股票指数")
+# index_global_spot_em_df = ak.index_global_spot_em() 
+# index_global_hist_sina_df = ak.index_global_hist_sina(symbol="瑞士股票指数")
 
 
-stock_hk_index_spot_em_df = ak.stock_hk_index_spot_em()
-stock_zh_index_daily_em_df = ak.stock_hk_index_daily_em(symbol="HSTECF2L")
+# stock_hk_index_spot_em_df = ak.stock_hk_index_spot_em()
+# stock_zh_index_daily_em_df = ak.stock_hk_index_daily_em(symbol="HSTECF2L")
 
-stock_zh_index_spot_sina_df = ak.stock_zh_index_spot_sina()
-stock_zh_index_daily_em_df = ak.stock_zh_index_daily_em(symbol="sz399812") 
+# stock_zh_index_spot_sina_df = ak.stock_zh_index_spot_sina()
+# stock_zh_index_daily_em_df = ak.stock_zh_index_daily_em(symbol="sz399812") 
 
-### pls use these method to download data AI!
+# pls use upper method to download data AI!
 
 
 
