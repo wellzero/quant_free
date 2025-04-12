@@ -1,1 +1,3 @@
-# pls call askshare to download all index daily trade data AI!
+import askshare
+
+askshare.download_index_daily_trade_data()
