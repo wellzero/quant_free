@@ -53,6 +53,7 @@ def download_index_daily_data(symbol, market='cn'):
             print(f"Unsupported market: {market}")
             return pd.DataFrame()
             
+        #df have column name 序号  内部编号        代码          名称      最新价     涨跌额   涨跌幅       今开       最高       最低       昨收  成交量           成交额   pls change to english AI!
         return df
     except Exception as e:
         print(f"Error downloading data for {market} index {symbol}: {e}")
