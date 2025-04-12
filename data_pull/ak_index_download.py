@@ -28,11 +28,11 @@ def download_all_index_symbols(market='cn'):
     """Download all index symbols using akshare for specified market"""
     try:
         if market == 'cn':
-            # Get all Chinese A-share index symbols
-            index_df = ak.index_zh_a_spot_em()
+            # Get all Chinese index symbols from Sina
+            index_df = ak.stock_zh_index_spot_sina()
         elif market == 'hk':
             # Get all Hong Kong index symbols
-            index_df = ak.index_hk_spot_em()
+            index_df = ak.stock_hk_index_spot_em()
         elif market == 'us':
             # Get US index symbols from a predefined list since akshare doesn't support US indexes
             us_indexes = [
@@ -56,9 +56,9 @@ def download_index_daily_data(symbol, market='cn'):
     """Download daily trade data for a specific index symbol in specified market"""
     try:
         if market == 'cn':
-            df = ak.index_zh_a_hist(symbol=symbol, period="daily")
+            df = ak.stock_zh_index_daily_em(symbol=symbol)
         elif market == 'hk':
-            df = ak.index_hk_hist(symbol=symbol, period="daily")
+            df = ak.stock_hk_index_daily_em(symbol=symbol)
         elif market == 'us':
             # For US indexes, use stock_zh_a_hist instead
             df = ak.stock_us_daily(symbol=symbol)
@@ -84,10 +84,10 @@ def download_all_index_data(market='cn'):
     
     # Determine symbol column based on market
     symbol_col = {
-        'cn': '代码',
+        'cn': 'symbol',
         'hk': '代码',
         'us': 'symbol'
-    }.get(market, '代码')
+    }.get(market, 'symbol')
     
     # Save index symbols
     us_dir1_store_csv(
