@@ -17,8 +17,15 @@ def download_all_index_symbols(market='cn'):
             # Get all Hong Kong index symbols
             index_df = ak.index_hk_spot_em()
         elif market == 'us':
-            # Get all US index symbols
-            index_df = ak.index_us_spot_em()
+            # Get US index symbols from a predefined list since akshare doesn't support US indexes
+            us_indexes = [
+                {'symbol': '^GSPC', 'name': 'S&P 500'},
+                {'symbol': '^DJI', 'name': 'Dow Jones Industrial Average'},
+                {'symbol': '^IXIC', 'name': 'NASDAQ Composite'},
+                {'symbol': '^RUT', 'name': 'Russell 2000'},
+                {'symbol': '^VIX', 'name': 'CBOE Volatility Index'},
+            ]
+            index_df = pd.DataFrame(us_indexes)
         else:
             print(f"Unsupported market: {market}")
             return pd.DataFrame()
@@ -36,7 +43,8 @@ def download_index_daily_data(symbol, market='cn'):
         elif market == 'hk':
             df = ak.index_hk_hist(symbol=symbol, period="daily")
         elif market == 'us':
-            df = ak.index_us_hist(symbol=symbol, period="daily")
+            # For US indexes, use stock_zh_a_hist instead
+            df = ak.stock_us_daily(symbol=symbol)
         else:
             print(f"Unsupported market: {market}")
             return pd.DataFrame()
