@@ -1,6 +1,10 @@
 import akshare as ak
 import pandas as pd
 from pathlib import Path
+import os
+import sys
+_this_dir = Path(__file__).parent.parent
+sys.path.append(str(_this_dir))
 from quant_free.utils.us_equity_utils import create_directory, us_dir1_store_csv
 
 def download_all_index_symbols(market='cn'):
