@@ -70,7 +70,7 @@ def equity_daily_data_load_within_range(
     start_date = '2023-05-29',
     end_date = '2024-05-29',
     column_option = "all",
-    dir_option = '',
+    dir_option = 'xq',
     file_name = 'daily.csv'):
   
   data = {}
@@ -143,7 +143,7 @@ def us_equity_sector_daily_data_load(
     column_option = 'all',
     dir_option = 'xq'):
 
-  symbols = us_dir1_load_csv(
+  symbols = us_dir1_load_csv(market,
     dir0 = 'symbol', dir1 = 'xq',
     filename= sector_name +'.csv')['symbol'].values
 

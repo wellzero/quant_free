@@ -15,10 +15,14 @@ git+https://github.com/wellzero/efinance.git
 ## factor repo
 git+https://github.com:wellzero/factorlab.git
 
+## akshare install
+# git+git@github.com:akfamily/akshare.git
+
 ## misc module
 cufflinks
 
 yfinance
+akshare
 
 openbb
 
