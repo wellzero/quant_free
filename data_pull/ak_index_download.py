@@ -73,19 +73,7 @@ def download_index_daily_data(symbol, market='cn'):
         # Rename Chinese columns to English
         if not df.empty:
             column_mapping = {
-                '序号': 'index',
-                '内部编号': 'internal_code',
-                '代码': 'symbol',
-                '名称': 'name',
-                '最新价': 'latest_price',
-                '涨跌额': 'price_change',
-                '涨跌幅': 'pct_change',
-                '今开': 'open',
-                '最高': 'high',
-                '最低': 'low',
-                '昨收': 'prev_close',
-                '成交量': 'volume',
-                '成交额': 'turnover'
+                'date': 'timestamp',
             }
             df = df.rename(columns=column_mapping)
         return df
@@ -101,16 +89,14 @@ def download_all_index_data(market='cn'):
     if index_df.empty:
         return False
         
-    # Create directory structure
-    create_directory(market, 'index')
-
     # Save index symbols
     us_dir1_store_csv(
         market=market,
         dir0='index',
         dir1='symbols',
         filename='symbols.csv',
-        data=index_df
+        data=index_df,
+        index=False
     )
     
     # Download daily data for each index
@@ -126,9 +112,10 @@ def download_all_index_data(market='cn'):
             us_dir1_store_csv(
                 market=market,
                 dir0='index',
-                dir1='daily',
-                filename=f'{symbol}.csv',
-                data=daily_df
+                dir1=symbol,
+                filename='daily.csv',
+                data=daily_df,
+                index=False
             )
     
     return True

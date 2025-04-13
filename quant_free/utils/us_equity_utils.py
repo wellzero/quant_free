@@ -35,9 +35,9 @@ def us_symbol_file(filename='equity_symbol.csv'):
     symbol_dir = create_common_directory('symbol')
     return os.path.join(symbol_dir, filename)
 
-def us_equity_folder(market, symbol='AAPL'):
+def us_equity_folder(market, equity='equity', symbol='AAPL'):
     """Get the folder path for a specific equity."""
-    return create_common_directory(market, 'equity', symbol)
+    return create_common_directory(market, equity, symbol)
 
 def equity_sub_folder(market = 'us', symbol='AAPL', sub_dir='2024-06-06'):
     """Get the subfolder path for a specific equity and date."""
@@ -52,14 +52,19 @@ def us_equity_research_folder(market = 'us', sub_folder='price', file_name='defa
         data.to_csv(file_path)
     return file_path
 
-def us_dir1_store_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', encoding='utf-8', data = None):
+def us_dir1_store_csv(market = 'us',
+                      dir0 = 'symbol',
+                      dir1 = 'xq',
+                      filename='industry.csv',
+                      encoding='utf-8',
+                      data = None,
+                      index=True):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(market, dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
-        data.to_csv(file_path, encoding = encoding)
+        data.to_csv(file_path, encoding=encoding, index=index)
         print(f"stored to folder {file_path}")
-
 def us_dir0_store_csv(market = 'us', dir0 = 'symbol', filename='industry.csv', data = None):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(market, dir0)
@@ -68,15 +73,15 @@ def us_dir0_store_csv(market = 'us', dir0 = 'symbol', filename='industry.csv', d
         data.to_csv(file_path)
         print(f"stored to folder {file_path}")
 
-def us_dir1_load_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', dtype = None):
+def us_dir1_load_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', dtype = None, index_col=0):
     """Get the file path for the symbol file."""
     symbol_dir = create_common_directory(market, dir0, dir1)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
         if dtype == None:
-          df = pd.read_csv(file_path, index_col=0)
+          df = pd.read_csv(file_path, index_col = index_col)
         else:
-          df = pd.read_csv(file_path, index_col=0, dtype=str)
+          df = pd.read_csv(file_path, index_col = index_col, dtype=str)
 
         df.index = pd.to_datetime(df.index)
         # Drop the 'Unnamed: 0.1' column if it exists
