@@ -89,9 +89,12 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
     # Find cointegrated pairs
     print(f"check the stock {merged_data.columns}")
     coint_pairs = find_cointegrated_pairs_multi_process(column_pairs, merged_data)
-    # store the coint_pairs into csv AI!
+    
+    # Save results to CSV
+    output_file = f"cointegrated_pairs_{start_date}_to_{end_date}.csv"
+    pd.DataFrame(coint_pairs, columns=['Symbol1', 'Symbol2', 'P-Value']).to_csv(output_file, index=False)
+    print(f"Saved cointegrated pairs to {output_file}")
     print("Cointegrated pairs:", coint_pairs)
-    # print("P-values:", p_vals)
 
 def main():
     import argparse
