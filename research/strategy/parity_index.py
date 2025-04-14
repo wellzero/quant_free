@@ -92,4 +92,15 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
     print("Cointegrated pairs:", coint_pairs)
     # print("P-values:", p_vals)
 
-#pls help write main function to call find_index_parity, input arg from main to find_index_parity AI!
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Find cointegrated index pairs')
+    parser.add_argument('--market', type=str, default='cn', help='Market to analyze (default: cn)')
+    parser.add_argument('--start_date', type=str, required=True, help='Start date in YYYY-MM-DD format')
+    parser.add_argument('--end_date', type=str, required=True, help='End date in YYYY-MM-DD format')
+    
+    args = parser.parse_args()
+    find_index_parity(market=args.market, start_date=args.start_date, end_date=args.end_date)
+
+if __name__ == '__main__':
+    main()
