@@ -89,6 +89,7 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
     # Find cointegrated pairs
     print(f"check the stock {merged_data.columns}")
     coint_pairs = find_cointegrated_pairs_multi_process(column_pairs, merged_data)
+    # store the coint_pairs into csv AI!
     print("Cointegrated pairs:", coint_pairs)
     # print("P-values:", p_vals)
 
