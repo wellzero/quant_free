@@ -88,7 +88,7 @@ class Alpha101(Strategy):
     def load_factor_model_train(self, symbol):
 
 
-      factor = equity_daily_data_load_within_range(
+      factor = equity_tradedata_load_bt_dates(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
@@ -121,7 +121,7 @@ class Alpha101(Strategy):
 
       print(f"oob score {self.fit.oob_score_}")
 
-      test_factors = equity_daily_data_load_within_range(
+      test_factors = equity_tradedata_load_bt_dates(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         symbol = Alpha101.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_daily_data_load_within_range(
+        df = equity_tradedata_load_bt_dates(
             market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,

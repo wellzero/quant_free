@@ -29,7 +29,7 @@ class Alpha191(FactorBase):
         
         df_ids = data.index.get_level_values(0)
 
-        benchmark = equity_daily_data_load_within_range(
+        benchmark = equity_tradedata_load_bt_dates(
                                     self.market,
                                     symbols = [self.ref_index], start_date = self.start_date,
                                     end_date = self.end_date, column_option = "all", 

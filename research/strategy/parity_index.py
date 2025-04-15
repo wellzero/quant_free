@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+_this_dir = Path(__file__).parent.parent.parent
+sys.path.append(str(_this_dir))
+
 import pandas as pd
 # import pandas_ta as ta
 from quant_free.dataset.us_equity_load import *
@@ -64,7 +69,7 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
     symbols = data_index['symbol'].values
     name = data_index['name'].values
 
-    data_trade = equity_daily_data_load_within_range(market=market,
+    data_trade = equity_tradedata_load_bt_dates(market=market,
                                                     equity=equity,
                                                     dir_option = '',
                                                     symbols = symbols,
@@ -101,14 +106,13 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
         data=result_df
     )
     print(f"Saved cointegrated pairs to {market}/strategy/parity/{output_file}")
-    print("Cointegrated pairs:", coint_pairs)
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Find cointegrated index pairs')
     parser.add_argument('--market', type=str, default='cn', help='Market to analyze (default: cn)')
-    parser.add_argument('--start_date', type=str, required=True, help='Start date in YYYY-MM-DD format')
-    parser.add_argument('--end_date', type=str, required=True, help='End date in YYYY-MM-DD format')
+    parser.add_argument('--start_date', type=str, required=True, help='Start date in 2014-01-29 format')
+    parser.add_argument('--end_date', type=str, required=True, help='End date in 2024-01-29 format')
     
     args = parser.parse_args()
     find_index_parity(market=args.market, start_date=args.start_date, end_date=args.end_date)
