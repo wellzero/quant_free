@@ -78,7 +78,7 @@ class Trend(Strategy):
     def load_factor_model_train(self, symbol):
       like = 'trend'
 
-      test_factors = equity_tradedata_load_bt_dates(
+      test_factors = equity_tradedata_load(
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
           end_date = self.parameters["test_end_date"],
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_tradedata_load_bt_dates(
+        df = equity_tradedata_load(
           self.market,
             symbols = [symbol],
             start_date = backtesting_start,

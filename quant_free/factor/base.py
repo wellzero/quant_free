@@ -521,7 +521,7 @@ class FactorBase(ABC):
       sector_price = sector_price.loc[:, sector]
       sector_price.name = "sector_price"
 
-    dict_data = equity_tradedata_load_bt_dates(
+    dict_data = equity_tradedata_load(
                                       self.market,
                                       symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 

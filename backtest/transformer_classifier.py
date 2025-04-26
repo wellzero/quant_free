@@ -291,7 +291,7 @@ class TransformerClassifier(Strategy):
 
     def load_factor_model_train(self, symbol):
         # Load and preprocess data
-        factor = equity_tradedata_load_bt_dates(
+        factor = equity_tradedata_load(
             symbols=[symbol],
             start_date=self.parameters["training_start_date"],
             end_date=self.parameters["training_end_date"],
@@ -336,7 +336,7 @@ class TransformerClassifier(Strategy):
         print("Training complete.")
 
         # Load test data
-        test_factors = equity_tradedata_load_bt_dates(
+        test_factors = equity_tradedata_load(
           self.market,
             symbols=[symbol],
             start_date=self.parameters["test_start_date"],
@@ -427,7 +427,7 @@ if __name__ == "__main__":
     backtesting_end = pd.to_datetime(TransformerClassifier.parameters["test_end_date"])
     symbol = TransformerClassifier.parameters["symbol"]
     
-    df = equity_tradedata_load_bt_dates(
+    df = equity_tradedata_load(
         market = 'us',
         symbols=[symbol],
         start_date=backtesting_start,

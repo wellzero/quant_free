@@ -88,7 +88,7 @@ class Alpha101_classifier(Strategy):
     def load_factor_model_train(self, symbol):
 
 
-      factor = equity_tradedata_load_bt_dates(
+      factor = equity_tradedata_load(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
@@ -278,7 +278,7 @@ if __name__ == "__main__":
         symbol = Alpha101_classifier.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_tradedata_load_bt_dates(
+        df = equity_tradedata_load(
             market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,

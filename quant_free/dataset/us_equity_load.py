@@ -75,7 +75,7 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def equity_tradedata_load_bt_dates(
+def equity_tradedata_load(
     market = 'us', 
     symbols = ['AAPL'],
     start_date = '2023-05-29',
@@ -163,7 +163,7 @@ def us_equity_sector_daily_data_load(
     dir0 = 'symbol', dir1 = 'xq',
     filename= sector_name +'.csv')['symbol'].values
 
-  return equity_tradedata_load_bt_dates(
+  return equity_tradedata_load(
     market,
     symbols = symbols,
     start_date = start_date,
@@ -201,7 +201,7 @@ def us_quity_multi_index_data_load(
   else:
     symbols = df_symbol['symbol'].values
   
-  dict_df = equity_tradedata_load_bt_dates(
+  dict_df = equity_tradedata_load(
     market,
     symbols = symbols,
     start_date = start_date,

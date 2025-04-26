@@ -79,7 +79,7 @@ class Trend(Strategy):
 
     def load_factor_model_train(self, symbol):
 
-      factor = equity_tradedata_load_bt_dates(
+      factor = equity_tradedata_load(
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
           end_date = self.parameters["training_end_date"],
@@ -109,7 +109,7 @@ class Trend(Strategy):
           n_jobs = 1)
       self.fit = forest.fit(X = trnsX, y = cont['bin'])
 
-      test_factors = equity_tradedata_load_bt_dates(
+      test_factors = equity_tradedata_load(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
@@ -188,7 +188,7 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_tradedata_load_bt_dates(
+        df = equity_tradedata_load(
             market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,
