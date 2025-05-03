@@ -544,7 +544,7 @@ def _process_signals_and_positions(strategy_df, window_size, long_ma_period, atr
         raw_signal_today = _generate_signal(
             h, 
             current_price, 
-            short_ma, 
+            short_ma,   
             long_ma, 
             current_position_direction,
             mean_reversion_threshold,
@@ -650,59 +650,59 @@ def _calculate_strategy_returns(strategy_df):
     strategy_df['cum_strategy_returns'] = (1 + strategy_df['strategy_returns']).cumprod() - 1
     strategy_df['cum_returns'] = (1 + strategy_df['returns']).cumprod() - 1
 
-def evaluate_strategy(strategy_df):
-    """
-    Evaluate strategy performance metrics
+# def evaluate_strategy(strategy_df):
+#     """
+#     Evaluate strategy performance metrics
     
-    Parameters:
-    strategy_df (DataFrame): DataFrame containing strategy results
+#     Parameters:
+#     strategy_df (DataFrame): DataFrame containing strategy results
     
-    Returns:
-    dict: Dictionary of performance metrics
-    """
-    # Check if DataFrame is empty or missing required columns
-    if strategy_df.empty or 'strategy_returns' not in strategy_df.columns:
-        return {
-            'total_return': 0.0,
-            'annualized_return': 0.0,
-            'max_drawdown': 0.0,
-            'sharpe_ratio': 0.0
-        }
+#     Returns:
+#     dict: Dictionary of performance metrics
+#     """
+#     # Check if DataFrame is empty or missing required columns
+#     if strategy_df.empty or 'strategy_returns' not in strategy_df.columns:
+#         return {
+#             'total_return': 0.0,
+#             'annualized_return': 0.0,
+#             'max_drawdown': 0.0,
+#             'sharpe_ratio': 0.0
+#         }
     
-    # Calculate cumulative returns
-    strategy_df['cum_strategy_returns'] = (1 + strategy_df['strategy_returns']).cumprod() - 1
+#     # Calculate cumulative returns
+#     strategy_df['cum_strategy_returns'] = (1 + strategy_df['strategy_returns']).cumprod() - 1
     
-    # Check if cum_strategy_returns is empty
-    if len(strategy_df['cum_strategy_returns'].dropna()) == 0:
-        return {
-            'total_return': 0.0,
-            'annualized_return': 0.0,
-            'max_drawdown': 0.0,
-            'sharpe_ratio': 0.0
-        }
+#     # Check if cum_strategy_returns is empty
+#     if len(strategy_df['cum_strategy_returns'].dropna()) == 0:
+#         return {
+#             'total_return': 0.0,
+#             'annualized_return': 0.0,
+#             'max_drawdown': 0.0,
+#             'sharpe_ratio': 0.0
+#         }
     
-    # Calculate total return
-    total_return = strategy_df['cum_strategy_returns'].iloc[-1] if len(strategy_df['cum_strategy_returns']) > 0 else 0.0
+#     # Calculate total return
+#     total_return = strategy_df['cum_strategy_returns'].iloc[-1] if len(strategy_df['cum_strategy_returns']) > 0 else 0.0
     
-    # Calculate annualized return
-    days = len(strategy_df)
-    annualized_return = (1 + total_return) ** (252 / days) - 1 if days > 0 else 0.0
+#     # Calculate annualized return
+#     days = len(strategy_df)
+#     annualized_return = (1 + total_return) ** (252 / days) - 1 if days > 0 else 0.0
     
-    # Calculate maximum drawdown
-    cum_returns = (1 + strategy_df['strategy_returns']).cumprod()
-    running_max = cum_returns.cummax()
-    drawdown = (cum_returns / running_max) - 1
-    max_drawdown = drawdown.min() if len(drawdown) > 0 else 0.0
+#     # Calculate maximum drawdown
+#     cum_returns = (1 + strategy_df['strategy_returns']).cumprod()
+#     running_max = cum_returns.cummax()
+#     drawdown = (cum_returns / running_max) - 1
+#     max_drawdown = drawdown.min() if len(drawdown) > 0 else 0.0
     
-    # Calculate Sharpe ratio
-    sharpe_ratio = (strategy_df['strategy_returns'].mean() / strategy_df['strategy_returns'].std() * np.sqrt(252)) if strategy_df['strategy_returns'].std() > 0 else 0.0
+#     # Calculate Sharpe ratio
+#     sharpe_ratio = (strategy_df['strategy_returns'].mean() / strategy_df['strategy_returns'].std() * np.sqrt(252)) if strategy_df['strategy_returns'].std() > 0 else 0.0
     
-    return {
-        'total_return': total_return,
-        'annualized_return': annualized_return,
-        'max_drawdown': max_drawdown,
-        'sharpe_ratio': sharpe_ratio
-    }
+#     return {
+#         'total_return': total_return,
+#         'annualized_return': annualized_return,
+#         'max_drawdown': max_drawdown,
+#         'sharpe_ratio': sharpe_ratio
+#     }
 
 
 # --- evaluate_strategy function remains the same ---
