@@ -377,13 +377,90 @@ def plot_rolling_hurst(time_series, dates=None, window_size=100, step=10, method
     
     return plt.gcf()
 
+def save_strategy_results_to_csv(strategy_df, file_path='strategy_results.csv'):
+    """
+    Save strategy results to a CSV file
+    
+    Parameters:
+    strategy_df (DataFrame): DataFrame with strategy results
+    file_path (str): Path to save the CSV file
+    """
+    try:
+        # Save the full strategy DataFrame
+        strategy_df.to_csv(file_path)
+        print(f"Strategy results saved to {file_path}")
+        
+        # Calculate and save performance metrics
+        performance = calculate_performance_metrics(strategy_df)
+        metrics_path = file_path.replace('.csv', '_metrics.csv')
+        pd.DataFrame([performance]).to_csv(metrics_path, index=False)
+        print(f"Performance metrics saved to {metrics_path}")
+        
+        return True
+    except Exception as e:
+        logging.error(f"Error saving strategy results: {str(e)}")
+        return False
+
+def calculate_performance_metrics(strategy_df):
+    """
+    Calculate performance metrics for the strategy
+    
+    Parameters:
+    strategy_df (DataFrame): DataFrame with strategy results
+    
+    Returns:
+    dict: Dictionary with performance metrics
+    """
+    # Filter out rows with no position
+    trading_days = strategy_df[strategy_df['position'] != 0]
+    
+    # Calculate returns
+    strategy_returns = strategy_df['strategy_returns'].dropna()
+    
+    # Calculate performance metrics
+    total_return = (1 + strategy_returns).prod() - 1
+    
+    # Calculate annualized return
+    days = len(strategy_returns)
+    annual_return = (1 + total_return) ** (252 / days) - 1
+    
+    # Calculate Sharpe ratio
+    sharpe_ratio = strategy_returns.mean() / strategy_returns.std() * np.sqrt(252)
+    
+    # Calculate max drawdown
+    cum_returns = (1 + strategy_returns).cumprod()
+    running_max = cum_returns.cummax()
+    drawdown = (cum_returns / running_max - 1)
+    max_drawdown = drawdown.min() if len(drawdown) > 0 else 0
+    
+    # Calculate win rate
+    trades = strategy_df[strategy_df['position'] != strategy_df['position'].shift(1)]
+    wins = trades[trades['strategy_returns'] > 0]
+    win_rate = len(wins) / len(trades) if len(trades) > 0 else 0
+    
+    # Return metrics as dictionary
+    return {
+        'total_return': total_return * 100,
+        'annual_return': annual_return * 100,
+        'sharpe_ratio': sharpe_ratio,
+        'max_drawdown': max_drawdown * 100,
+        'win_rate': win_rate * 100,
+        'num_trades': len(trades)
+    }
+
 def hurst_trading_strategy(prices_input,
-                          window_size=100, method='rs', max_lag=20,
-                          mean_reversion_threshold=0.45, trend_threshold=0.55,
-                          short_ma_period=20, long_ma_period=50,
+                          window_size=120,      # Increased from 100
+                          method='rs',          # R/S method is most stable
+                          max_lag=20,
+                          mean_reversion_threshold=0.35,  # More extreme for stronger signals
+                          trend_threshold=0.60,          # Higher threshold for stronger trends
+                          short_ma_period=15,           # Reduced for faster response
+                          long_ma_period=50,
                           atr_period=14,
-                          stop_loss_atr_multiplier=2.0,
-                          take_profit_atr_multiplier=3.0):
+                          stop_loss_atr_multiplier=1.5,  # Tighter stops
+                          take_profit_atr_multiplier=4.0,  # Increased profit target
+                          save_results=True,
+                          csv_path='hurst_strategy_results.csv'):
     """
     Implement a trading strategy based on the Hurst exponent
     
@@ -427,6 +504,10 @@ def hurst_trading_strategy(prices_input,
     
     # --- 5. Calculate returns ---
     _calculate_strategy_returns(strategy_df)
+    
+    # --- 6. Save results to CSV if requested ---
+    if save_results:
+        save_strategy_results_to_csv(strategy_df, csv_path)
     
     return strategy_df
 
@@ -491,6 +572,22 @@ def _add_hurst_to_dataframe(strategy_df, hurst_values, window_size):
             strategy_df['hurst'] = hurst_series
         else:
             print(f"Warning: Hurst series length mismatch. Index length: {len(hurst_series_index)}, Values length: {len(hurst_values)}")
+
+def _calculate_position_size(h, atr, price, account_value=100000, risk_per_trade=0.01):
+    """Calculate dynamic position size based on volatility and signal strength"""
+    # Base position size on ATR volatility
+    volatility_factor = 1.0 / (atr / price)
+    
+    # Adjust based on Hurst signal strength
+    hurst_factor = abs(h - 0.5) * 2  # Stronger positions for stronger signals
+    
+    # Calculate position size with risk management
+    risk_amount = account_value * risk_per_trade
+    position_size = (risk_amount * volatility_factor * hurst_factor) / atr
+    
+    # Apply position limits
+    max_position = account_value * 0.15  # Maximum 15% of account per trade
+    return min(position_size, max_position)
 
 def _process_signals_and_positions(strategy_df, window_size, long_ma_period, atr_period, 
                                   mean_reversion_threshold, trend_threshold,
@@ -585,23 +682,31 @@ def _check_exit_conditions(strategy_df, current_index, current_price, current_po
 
 def _generate_signal(h, current_price, short_ma, long_ma, current_position_direction,
                     mean_reversion_threshold, trend_threshold):
-    """Generate trading signal based on Hurst exponent and indicators"""
+    """Generate trading signals with enhanced filters"""
+    # No signal if already in a position
     if current_position_direction != 0:
         return 0
         
-    if np.isnan(h) or np.isnan(short_ma) or np.isnan(long_ma):
-        return 0
-        
+    # Calculate price deviation from moving averages
+    price_deviation = (current_price / short_ma - 1) * 100
+    
+    # Mean reversion signals with stricter conditions
     if h < mean_reversion_threshold:
-        if current_price > short_ma:
-            return -1
-        elif current_price < short_ma:
-            return 1
+        # Only take mean reversion trades when price deviates significantly
+        if price_deviation > 2.0:  # Price is 2% above short MA
+            return -1  # Short signal for mean reversion
+        elif price_deviation < -2.0:  # Price is 2% below short MA
+            return 1   # Long signal for mean reversion
+            
+    # Trend following signals with momentum confirmation   
     elif h > trend_threshold:
-        if short_ma > long_ma * 1.001:
-            return 1
-        elif short_ma < long_ma * 0.999:
-            return -1
+        ma_trend = short_ma / long_ma - 1
+        
+        # Only take trend trades with strong MA confirmation
+        if ma_trend > 0.01 and price_deviation > 0.5:  # Uptrend
+            return 1   # Long signal for trend following
+        elif ma_trend < -0.01 and price_deviation < -0.5:  # Downtrend
+            return -1  # Short signal for trend following
             
     return 0
 
@@ -814,7 +919,9 @@ if __name__ == "__main__":
                 mean_reversion_threshold=mr_threshold,
                 trend_threshold=tr_threshold,
                 stop_loss_atr_multiplier=stop_mult,
-                take_profit_atr_multiplier=profit_mult
+                take_profit_atr_multiplier=profit_mult,
+                save_results=True,
+                csv_path='optimized_hurst_strategy_results.csv'
             )
             logging.debug(f"hurst_trading_strategy call successful for params: {current_params_str}")
 
