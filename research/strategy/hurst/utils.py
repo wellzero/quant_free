@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging  # Add this import for ATR error handling
 from .core import hurst_rs, hurst_dfa, hurst_aggvar, hurst_higuchi
 
 def _validate_inputs(prices_input):
@@ -16,11 +17,14 @@ def _prepare_strategy_dataframe(prices_input, short_ma_period, long_ma_period, a
     strategy_df['price'] = prices_input['Close'].loc[returns.index]
     strategy_df['hurst'] = np.nan
     strategy_df['raw_signal'] = 0
-    strategy_df['position'] = 0
+    strategy_df['position'] = 0.0  # Initialize as float instead of int
     strategy_df['entry_price'] = np.nan
     strategy_df['stop_loss'] = np.nan
     strategy_df['take_profit'] = np.nan
     strategy_df['strategy_returns'] = 0.0
+    strategy_df['strategy_type'] = None
+    strategy_df['exit_reason'] = None  # Add column to track exit reasons
+    strategy_df['rsi'] = np.nan  # Add RSI column
     
     # Add indicators
     strategy_df['short_ma'] = prices_input['Close'].rolling(window=short_ma_period).mean()
@@ -28,6 +32,41 @@ def _prepare_strategy_dataframe(prices_input, short_ma_period, long_ma_period, a
     strategy_df['atr'] = calculate_atr(prices_input, period=atr_period)
     
     return strategy_df
+
+def calculate_rsi(price_series, period=14):
+    """
+    Calculate the Relative Strength Index (RSI)
+    
+    Parameters:
+    price_series (Series): Price series to calculate RSI on
+    period (int): Period for RSI calculation (default: 14)
+    
+    Returns:
+    Series: RSI values aligned with the input price series index
+    """
+    try:
+        # Calculate price changes
+        delta = price_series.diff()
+        
+        # Separate gains and losses
+        gains = delta.where(delta > 0, 0)
+        losses = -delta.where(delta < 0, 0)
+        
+        # Calculate average gains and losses
+        avg_gain = gains.rolling(window=period).mean()
+        avg_loss = losses.rolling(window=period).mean()
+        
+        # Calculate RS (Relative Strength)
+        rs = avg_gain / avg_loss
+        
+        # Calculate RSI
+        rsi = 100 - (100 / (1 + rs))
+        
+        return rsi
+        
+    except Exception as e:
+        logging.error(f"Error calculating RSI: {str(e)}")
+        return pd.Series(index=price_series.index)
 
 def calculate_atr(prices_df, period=14):
     """
