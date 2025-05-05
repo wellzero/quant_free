@@ -9,6 +9,7 @@ from .utils import (
     _calculate_hurst_values, 
     _add_hurst_to_dataframe,
     _check_correlation_filter,
+    detect_market_regime,
     calculate_atr,
     calculate_rsi
 )
@@ -105,20 +106,37 @@ class HurstStrategy:
         if len(recent_hurst) < 10:  # Need at least 10 values for meaningful statistics
             return self.mean_reversion_threshold, self.trend_threshold
         
+        # Calculate market regime indicators
+        price_series = strategy_df['price'].tail(lookback)
+        returns = price_series.pct_change().dropna()
+        
+        # Detect market regime (bull/bear/sideways)
+        bull_market = price_series.iloc[-1] > price_series.iloc[0] * 1.05  # 5% up
+        bear_market = price_series.iloc[-1] < price_series.iloc[0] * 0.95  # 5% down
+        
         # Calculate percentiles of recent Hurst values
-        hurst_15th = recent_hurst.quantile(0.15)  # More extreme for mean reversion
-        hurst_85th = recent_hurst.quantile(0.85)  # More extreme for trend following
+        hurst_15th = recent_hurst.quantile(0.15)
+        hurst_85th = recent_hurst.quantile(0.85)
         
         # Calculate volatility of Hurst values
         hurst_std = recent_hurst.std()
         
-        # Adjust thresholds based on Hurst volatility
-        # If Hurst is more volatile, widen the gap between thresholds
+        # Calculate volatility factor based on Hurst standard deviation
         volatility_factor = min(2.0, max(1.0, 1.0 + hurst_std * 3))
         
-        # Ensure thresholds are within reasonable bounds
-        mean_rev_threshold = max(0.2, min(0.38, hurst_15th))
-        trend_threshold = max(0.6, min(0.9, hurst_85th))
+        # Adjust thresholds based on market regime
+        if bull_market:
+            # In bull markets, favor trend following by lowering the trend threshold
+            mean_rev_threshold = max(0.25, min(0.40, hurst_15th))
+            trend_threshold = max(0.52, min(0.85, hurst_85th - 0.03))
+        elif bear_market:
+            # In bear markets, be more selective with both strategies
+            mean_rev_threshold = max(0.20, min(0.35, hurst_15th - 0.02))
+            trend_threshold = max(0.58, min(0.90, hurst_85th + 0.02))
+        else:
+            # In sideways markets, favor mean reversion
+            mean_rev_threshold = max(0.25, min(0.42, hurst_15th + 0.02))
+            trend_threshold = max(0.55, min(0.88, hurst_85th))
         
         # Widen the gap in high volatility environments
         gap = trend_threshold - mean_rev_threshold
@@ -323,6 +341,33 @@ class HurstStrategy:
                 entry_price = None
                 exit_reason = 'take_profit'
         
+        # Add dynamic trailing stop logic for trend following positions
+        if current_position != 0 and entry_price is not None:
+            current_idx = strategy_df.index[i]
+            current_price = strategy_df.loc[current_idx, 'price']
+            current_atr = strategy_df.loc[current_idx, 'atr']
+            strategy_type = strategy_df.loc[current_idx, 'strategy_type']
+            
+            # Calculate profit in ATR units
+            if current_position > 0:
+                profit_atr_units = (current_price - entry_price) / current_atr
+            else:
+                profit_atr_units = (entry_price - current_price) / current_atr
+            
+            # Implement trailing stops for trend following positions
+            if strategy_type == 'trend_following' and profit_atr_units > 2.0:
+                # Tighten stop loss as profit increases
+                trailing_stop_multiplier = max(1.0, self.stop_loss_atr_multiplier - (profit_atr_units * 0.1))
+                
+                if current_position > 0:
+                    new_stop = current_price - (current_atr * trailing_stop_multiplier)
+                    if new_stop > strategy_df.loc[current_idx, 'stop_loss']:
+                        strategy_df.loc[current_idx, 'stop_loss'] = new_stop
+                else:
+                    new_stop = current_price + (current_atr * trailing_stop_multiplier)
+                    if new_stop < strategy_df.loc[current_idx, 'stop_loss']:
+                        strategy_df.loc[current_idx, 'stop_loss'] = new_stop
+    
         return current_position, entry_price, exit_reason
     
     def process_signals_and_positions(self, strategy_df: pd.DataFrame) -> pd.DataFrame:
@@ -350,6 +395,13 @@ class HurstStrategy:
         for i in range(start_idx, len(strategy_df)):
             current_idx = strategy_df.index[i]
             
+            # Detect market regime for the last 60 days
+            if i >= 60 + self.window_size:
+                market_regime = detect_market_regime(strategy_df['price'].iloc[i-60:i])
+                strategy_df.loc[current_idx, 'market_regime'] = market_regime
+            else:
+                market_regime = 'unknown'
+
             # Skip if we don't have a valid Hurst value
             if np.isnan(strategy_df.loc[current_idx, 'hurst']):
                 continue
@@ -366,7 +418,19 @@ class HurstStrategy:
                 strategy_df.loc[current_idx, 'adaptive_tr_threshold'] = tr_threshold
             else:
                 mr_threshold, tr_threshold = self.mean_reversion_threshold, self.trend_threshold
-            
+
+            # Adjust thresholds based on market regime
+            if market_regime == 'trending_up' or market_regime == 'trending_down':
+                # In trending markets, lower the trend threshold
+                tr_threshold = max(0.51, tr_threshold - 0.03)
+            elif market_regime == 'mean_reverting':
+                # In mean-reverting markets, raise the mean reversion threshold
+                mr_threshold = min(0.42, mr_threshold + 0.03)
+            elif market_regime == 'volatile':
+                # In volatile markets, be more conservative with both strategies
+                mr_threshold = max(0.25, mr_threshold - 0.05)
+                tr_threshold = min(0.65, tr_threshold + 0.05)
+
             # Check if we have an existing position
             if current_position != 0:
                 # Manage existing position

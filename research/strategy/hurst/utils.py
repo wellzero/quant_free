@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy import stats  # Add this import
 import logging  # Add this import for ATR error handling
 from .core import hurst_rs, hurst_dfa, hurst_aggvar, hurst_higuchi
 
@@ -163,3 +164,42 @@ def _check_correlation_filter(strategy_df, i, lookback=30):
             return False
     
     return True
+
+
+def detect_market_regime(price_series, lookback=60):
+    """
+    Detect market regime (trending, mean-reverting, or volatile)
+    
+    Parameters:
+    price_series (Series): Price series
+    lookback (int): Lookback period
+    
+    Returns:
+    str: Market regime ('trending_up', 'trending_down', 'mean_reverting', 'volatile')
+    """
+    if len(price_series) < lookback:
+        return 'unknown'
+    
+    # Get recent prices
+    recent_prices = price_series.tail(lookback)
+    
+    # Calculate returns and volatility
+    returns = recent_prices.pct_change().dropna()
+    volatility = returns.std() * np.sqrt(252)  # Annualized
+    
+    # Calculate linear regression to detect trend
+    x = np.arange(len(recent_prices))
+    slope, _, r_value, _, _ = stats.linregress(x, recent_prices.values)
+    
+    # Calculate autocorrelation to detect mean reversion
+    autocorr = returns.autocorr(1)
+    
+    # Determine regime
+    if volatility > 0.4:  # High volatility threshold
+        return 'volatile'
+    elif r_value**2 > 0.6:  # Strong trend
+        return 'trending_up' if slope > 0 else 'trending_down'
+    elif autocorr < -0.2:  # Negative autocorrelation indicates mean reversion
+        return 'mean_reverting'
+    else:
+        return 'neutral'
