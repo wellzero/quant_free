@@ -114,14 +114,20 @@ class HurstStrategy:
             
             # Calculate market regime indicators
             price_series = strategy_df['price'].tail(lookback)
+            returns_series = strategy_df['returns'].tail(lookback) if 'returns' in strategy_df.columns else pd.Series([0])
+            
+            # Calculate volatility
+            volatility = returns_series.std() * np.sqrt(252) if len(returns_series) > 1 else 0.2
             
             # Detect market regime (bull/bear/sideways)
             bull_market = price_series.iloc[-1] > price_series.iloc[0] * 1.05  # 5% up
             bear_market = price_series.iloc[-1] < price_series.iloc[0] * 0.95  # 5% down
             
             # Calculate percentiles of recent Hurst values
-            hurst_15th = recent_hurst.quantile(0.15)
-            hurst_85th = recent_hurst.quantile(0.85)
+            hurst_10th = recent_hurst.quantile(0.10)
+            hurst_25th = recent_hurst.quantile(0.25)
+            hurst_75th = recent_hurst.quantile(0.75)
+            hurst_90th = recent_hurst.quantile(0.90)
             
             # Calculate volatility of Hurst values
             hurst_std = recent_hurst.std()
@@ -129,25 +135,51 @@ class HurstStrategy:
             # Calculate volatility factor based on Hurst standard deviation
             volatility_factor = min(2.0, max(1.0, 1.0 + hurst_std * 3))
             
-            # Adjust thresholds based on market regime
+            # Calculate performance of recent trades
+            recent_returns = []
+            if 'strategy_returns' in strategy_df.columns:
+                recent_returns = strategy_df['strategy_returns'].tail(lookback).dropna()
+            
+            # Calculate win rate if we have enough trades
+            win_rate = 0.5  # Default
+            if len(recent_returns) > 5:
+                win_rate = (recent_returns > 0).mean()
+            
+            # Adjust thresholds based on market regime and recent performance
             if bull_market:
                 # In bull markets, favor trend following by lowering the trend threshold
-                mean_rev_threshold = max(0.25, min(0.40, hurst_15th))
-                trend_threshold = max(0.52, min(0.85, hurst_85th - 0.03))
+                # but be more selective with mean reversion
+                mean_rev_threshold = max(0.28, min(0.42, hurst_10th + 0.02))
+                trend_threshold = max(0.50, min(0.80, hurst_75th - 0.03))
+                
+                # If trend following has been working well, be even more aggressive
+                if win_rate > 0.6:
+                    trend_threshold = max(0.48, min(0.75, hurst_75th - 0.05))
             elif bear_market:
                 # In bear markets, be more selective with both strategies
-                mean_rev_threshold = max(0.20, min(0.35, hurst_15th - 0.02))
-                trend_threshold = max(0.58, min(0.90, hurst_85th + 0.02))
+                mean_rev_threshold = max(0.22, min(0.38, hurst_10th))
+                trend_threshold = max(0.55, min(0.85, hurst_90th))
+                
+                # If mean reversion has been working well in bear markets, favor it
+                if win_rate > 0.6:
+                    mean_rev_threshold = max(0.25, min(0.40, hurst_25th + 0.02))
             else:
                 # In sideways markets, favor mean reversion
-                mean_rev_threshold = max(0.25, min(0.42, hurst_15th + 0.02))
-                trend_threshold = max(0.55, min(0.88, hurst_85th))
+                mean_rev_threshold = max(0.25, min(0.45, hurst_25th + 0.03))
+                trend_threshold = max(0.52, min(0.82, hurst_90th - 0.02))
             
-            # Widen the gap in high volatility environments
-            gap = trend_threshold - mean_rev_threshold
-            if gap < 0.2 * volatility_factor:
-                mean_rev_threshold = max(0.2, mean_rev_threshold - 0.03)
-                trend_threshold = min(0.9, trend_threshold + 0.03)
+            # Adjust for volatility - in high volatility, widen the gap
+            if volatility > 0.25:  # High volatility environment
+                gap = trend_threshold - mean_rev_threshold
+                if gap < 0.25:
+                    mean_rev_threshold = max(0.2, mean_rev_threshold - 0.03)
+                    trend_threshold = min(0.9, trend_threshold + 0.03)
+            
+            # Ensure minimum gap between thresholds
+            min_gap = 0.15 * volatility_factor
+            if (trend_threshold - mean_rev_threshold) < min_gap:
+                mean_rev_threshold = max(0.2, (mean_rev_threshold + trend_threshold - min_gap) / 2)
+                trend_threshold = min(0.9, mean_rev_threshold + min_gap)
             
             return mean_rev_threshold, trend_threshold
         except Exception as e:
@@ -155,25 +187,9 @@ class HurstStrategy:
             return self.mean_reversion_threshold, self.trend_threshold
     
     def generate_signals(self, strategy_df: pd.DataFrame, i: int, 
-                         mr_threshold: float, tr_threshold: float) -> Tuple[int, float, str]:
+                     mr_threshold: float, tr_threshold: float) -> Tuple[int, float, str]:
         """
         Generate trading signals based on Hurst exponent and other indicators.
-        
-        Parameters:
-        -----------
-        strategy_df : DataFrame
-            Strategy DataFrame with price and indicator data
-        i : int
-            Current index in the DataFrame
-        mr_threshold : float
-            Mean reversion threshold
-        tr_threshold : float
-            Trend threshold
-            
-        Returns:
-        --------
-        Tuple[int, float, str]
-            Position, position size factor, and strategy type
         """
         try:
             current_idx = strategy_df.index[i]
@@ -186,30 +202,53 @@ class HurstStrategy:
             else:
                 current_rsi = 50  # Default neutral value
             
-            # Calculate volatility-based position sizing
-            recent_volatility = strategy_df['returns'].iloc[max(0, i-30):i].std() * np.sqrt(252)
-            if recent_volatility > 0:
-                position_size_factor = min(1.0, 0.2 / recent_volatility)  # Target 20% annualized volatility
+            # Add Hurst consistency check
+            hurst_trend = []
+            if i >= 5:  # Check last 5 Hurst values for consistency
+                for j in range(1, 6):
+                    if i-j >= 0 and not pd.isna(strategy_df['hurst'].iloc[i-j]):
+                        hurst_trend.append(strategy_df['hurst'].iloc[i-j])
+            
+            hurst_consistent = False
+            if len(hurst_trend) >= 3:  # Need at least 3 values to check consistency
+                if current_hurst < mr_threshold:
+                    # For mean reversion, check if Hurst has been consistently low
+                    hurst_consistent = all(h < mr_threshold + 0.05 for h in hurst_trend)
+                elif current_hurst > tr_threshold:
+                    # For trend following, check if Hurst has been consistently high
+                    hurst_consistent = all(h > tr_threshold - 0.05 for h in hurst_trend)
             else:
-                position_size_factor = 0.5  # Default if volatility calculation fails
+                hurst_consistent = True  # Default to true if we don't have enough data
+            
+            # Calculate volatility-based position sizing with Hurst confidence
+            recent_volatility = strategy_df['returns'].iloc[max(0, i-30):i].std() * np.sqrt(252) if i > 0 and 'returns' in strategy_df.columns else 0.2
+            
+            # Calculate Hurst confidence - how far from neutral (0.5)
+            hurst_confidence = min(1.0, 2.0 * abs(current_hurst - 0.5))
+            
+            # Calculate position size based on volatility and Hurst confidence
+            if recent_volatility > 0:
+                position_size_factor = min(1.0, (0.2 / recent_volatility) * hurst_confidence)
+            else:
+                position_size_factor = 0.5 * hurst_confidence
             
             position = 0
             strategy_type = None
             
-            # Mean reversion signal (Hurst < threshold)
-            if current_hurst < mr_threshold:
+            # Mean reversion signal (Hurst < threshold) with stronger confirmation
+            if current_hurst < mr_threshold and hurst_consistent:
                 # Enhanced mean reversion logic with RSI filter
-                if current_price > strategy_df.loc[current_idx, 'short_ma'] and current_rsi > 75:
-                    # Price above MA and overbought -> go short for mean reversion
+                if current_price > strategy_df.loc[current_idx, 'short_ma'] * 1.01 and current_rsi > 70:
+                    # Price significantly above MA and overbought -> go short for mean reversion
                     position = -1
                     strategy_type = 'mean_reversion'
-                elif current_price < strategy_df.loc[current_idx, 'short_ma'] and current_rsi < 25:
-                    # Price below MA and oversold -> go long for mean reversion
+                elif current_price < strategy_df.loc[current_idx, 'short_ma'] * 0.99 and current_rsi < 30:
+                    # Price significantly below MA and oversold -> go long for mean reversion
                     position = 1
                     strategy_type = 'mean_reversion'
             
-            # Trend following signal (Hurst > threshold)
-            elif current_hurst > tr_threshold:
+            # Trend following signal (Hurst > threshold) with stronger confirmation
+            elif current_hurst > tr_threshold and hurst_consistent:
                 # Enhanced trend following with momentum confirmation
                 short_ma = strategy_df.loc[current_idx, 'short_ma']
                 long_ma = strategy_df.loc[current_idx, 'long_ma']
@@ -228,11 +267,12 @@ class HurstStrategy:
                     if not np.isnan(recent_volume) and not np.isnan(prev_volume) and prev_volume > 0:
                         volume_trend = recent_volume / prev_volume
                 
-                if short_ma > long_ma and momentum > 1.0:
+                # Stronger trend confirmation requirements
+                if short_ma > long_ma * 1.005 and momentum > 1.0:
                     # Strong uptrend with positive momentum -> go long
                     position = 1
                     strategy_type = 'trend_following'
-                elif short_ma < long_ma and momentum < -1.0:
+                elif short_ma < long_ma * 0.995 and momentum < -1.0:
                     # Strong downtrend with negative momentum -> go short
                     position = -1
                     strategy_type = 'trend_following'
@@ -247,22 +287,6 @@ class HurstStrategy:
                         current_position: float, entry_price: Optional[float]) -> Tuple[float, Optional[float], str]:
         """
         Manage existing positions with stop loss, take profit, and time-based exits.
-        
-        Parameters:
-        -----------
-        strategy_df : DataFrame
-            Strategy DataFrame with price and indicator data
-        i : int
-            Current index in the DataFrame
-        current_position : float
-            Current position size
-        entry_price : float or None
-            Entry price for the current position
-            
-        Returns:
-        --------
-        Tuple[float, float or None, str]
-            Updated position, entry price, and exit reason
         """
         try:
             current_idx = strategy_df.index[i]
@@ -270,23 +294,19 @@ class HurstStrategy:
             current_atr = strategy_df.loc[current_idx, 'atr']
             exit_reason = None
             
+            # Early return if no position or no entry price
             if current_position == 0 or entry_price is None:
                 return current_position, entry_price, exit_reason
+                
+            # Check for None values in critical variables
+            if current_price is None or current_atr is None:
+                logger.warning(f"Missing critical values at index {i}: price={current_price}, atr={current_atr}")
+                return current_position, entry_price, exit_reason
             
-            # Get position duration
-            try:
-                # Find when the current position started
-                position_mask = strategy_df['position'].iloc[:i].eq(current_position)
-                if position_mask.any():
-                    position_start_idx = position_mask.iloc[::-1].idxmax()
-                    position_duration = (current_idx - position_start_idx).days
-                    if pd.isna(position_duration):  # Handle case where days calculation fails
-                        position_duration = i - strategy_df.index.get_loc(position_start_idx)
-                else:
-                    position_duration = 0
-            except Exception as e:
-                logger.warning(f"Error calculating position duration: {e}")
-                position_duration = 0
+            # Get strategy type - handle case where it might be None
+            strategy_type = None
+            if 'strategy_type' in strategy_df.columns:
+                strategy_type = strategy_df.loc[current_idx, 'strategy_type']
             
             # For long positions
             if current_position > 0:
@@ -305,10 +325,28 @@ class HurstStrategy:
                     # Normal stop loss
                     stop_price = entry_price - (self.stop_loss_atr_multiplier * current_atr)
                     
-                take_profit_price = entry_price + (self.take_profit_atr_multiplier * current_atr)
+                # Tighter take profit for mean reversion
+                if strategy_type == 'mean_reversion':
+                    take_profit_price = entry_price + (2.0 * current_atr)  # Smaller target for mean reversion
+                else:
+                    take_profit_price = entry_price + (self.take_profit_atr_multiplier * current_atr)
                 
-                # Time-based exit for stale positions
-                if position_duration > 20 and unrealized_profit_pct < 0.005:
+                # Time-based exit for stale positions - more aggressive for mean reversion
+                max_duration = 10 if strategy_type == 'mean_reversion' else 20
+                
+                # Safely calculate position duration
+                try:
+                    position_mask = strategy_df['position'].iloc[:i].eq(current_position)
+                    if position_mask.any():
+                        position_start_idx = position_mask.iloc[::-1].idxmax()
+                        position_duration = i - strategy_df.index.get_loc(position_start_idx)
+                    else:
+                        position_duration = 0
+                except Exception as e:
+                    logger.warning(f"Error calculating position duration: {e}")
+                    position_duration = 0
+                
+                if position_duration > max_duration and unrealized_profit_pct < 0.01:
                     # Exit stale positions that aren't making progress
                     current_position = 0
                     entry_price = None
@@ -324,7 +362,7 @@ class HurstStrategy:
                     entry_price = None
                     exit_reason = 'take_profit'
             
-            # For short positions
+            # For short positions (similar logic with inverted price comparisons)
             elif current_position < 0:
                 # Calculate unrealized profit
                 unrealized_profit_pct = (entry_price - current_price) / entry_price
@@ -341,29 +379,42 @@ class HurstStrategy:
                     # Normal stop loss
                     stop_price = entry_price + (self.stop_loss_atr_multiplier * current_atr)
                     
-                take_profit_price = entry_price - (self.take_profit_atr_multiplier * current_atr)
+                # Tighter take profit for mean reversion
+                if strategy_type == 'mean_reversion':
+                    take_profit_price = entry_price - (2.0 * current_atr)
+                else:
+                    take_profit_price = entry_price - (self.take_profit_atr_multiplier * current_atr)
                 
-                # Time-based exit for stale positions
-                if position_duration > 20 and unrealized_profit_pct < 0.005:
-                    # Exit stale positions that aren't making progress
+                # Time-based exit
+                max_duration = 10 if strategy_type == 'mean_reversion' else 20
+                
+                # Safely calculate position duration
+                try:
+                    position_mask = strategy_df['position'].iloc[:i].eq(current_position)
+                    if position_mask.any():
+                        position_start_idx = position_mask.iloc[::-1].idxmax()
+                        position_duration = i - strategy_df.index.get_loc(position_start_idx)
+                    else:
+                        position_duration = 0
+                except Exception as e:
+                    logger.warning(f"Error calculating position duration: {e}")
+                    position_duration = 0
+                
+                if position_duration > max_duration and unrealized_profit_pct < 0.01:
                     current_position = 0
                     entry_price = None
                     exit_reason = 'time_exit'
                 elif current_price >= stop_price:
-                    # Stop loss hit
                     current_position = 0
                     entry_price = None
                     exit_reason = 'stop_loss'
                 elif current_price <= take_profit_price:
-                    # Take profit hit
                     current_position = 0
                     entry_price = None
                     exit_reason = 'take_profit'
             
             # Add dynamic trailing stop logic for trend following positions
-            if current_position != 0 and entry_price is not None:
-                strategy_type = strategy_df.loc[current_idx, 'strategy_type']
-                
+            if current_position != 0 and entry_price is not None and strategy_type == 'trend_following':
                 # Calculate profit in ATR units
                 if current_position > 0:
                     profit_atr_units = (current_price - entry_price) / current_atr
@@ -371,37 +422,18 @@ class HurstStrategy:
                     profit_atr_units = (entry_price - current_price) / current_atr
                 
                 # Implement trailing stops for trend following positions
-                if strategy_type == 'trend_following' and profit_atr_units > 2.0:
+                if profit_atr_units > 1.0:  # Lower threshold for trailing stop
                     # Tighten stop loss as profit increases
-                    trailing_stop_multiplier = max(1.0, self.stop_loss_atr_multiplier - (profit_atr_units * 0.1))
+                    trailing_stop_multiplier = max(0.8, self.stop_loss_atr_multiplier - (profit_atr_units * 0.15))
                     
                     if current_position > 0:
                         new_stop = current_price - (current_atr * trailing_stop_multiplier)
-                        if new_stop > strategy_df.loc[current_idx, 'stop_loss']:
+                        if 'stop_loss' in strategy_df.columns and new_stop > strategy_df.loc[current_idx, 'stop_loss']:
                             strategy_df.loc[current_idx, 'stop_loss'] = new_stop
                     else:
                         new_stop = current_price + (current_atr * trailing_stop_multiplier)
-                        if new_stop < strategy_df.loc[current_idx, 'stop_loss']:
+                        if 'stop_loss' in strategy_df.columns and new_stop < strategy_df.loc[current_idx, 'stop_loss']:
                             strategy_df.loc[current_idx, 'stop_loss'] = new_stop
-                
-                # Implement faster profit taking for mean reversion positions
-                elif strategy_type == 'mean_reversion' and profit_atr_units > 1.0:
-                    # Mean reversion trades should take profits faster
-                    # Calculate target based on distance to moving average
-                    short_ma = strategy_df.loc[current_idx, 'short_ma']
-                    
-                    if current_position > 0:
-                        # For long positions, take profit when price approaches short MA from below
-                        if current_price > entry_price * 1.01 and current_price > short_ma * 0.98:
-                            current_position = 0
-                            entry_price = None
-                            exit_reason = 'mean_reversion_target'
-                    else:
-                        # For short positions, take profit when price approaches short MA from above
-                        if current_price < entry_price * 0.99 and current_price < short_ma * 1.02:
-                            current_position = 0
-                            entry_price = None
-                            exit_reason = 'mean_reversion_target'
         
             return current_position, entry_price, exit_reason
             
