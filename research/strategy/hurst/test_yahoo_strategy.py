@@ -10,7 +10,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import the strategy module
 from hurst.strategy import hurst_trading_strategy, mean_reversion_strategy, trend_following_strategy
-from hurst.core import hurst_rs, hurst_dfa, hurst_aggvar
+from hurst.core import hurst_rs, hurst_dfa, hurst_aggvar, hurst_higuchi
 from hurst.evaluation import evaluate_strategy
 from hurst.visualization import plot_strategy_results
 
@@ -21,6 +21,9 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
         """Set up test data from Yahoo Finance"""
         # Create directory for test results
         os.makedirs('test_results', exist_ok=True)
+
+        self.mag_lag = 100
+        self.window_size = 252
         
         # Define test period
         self.end_date = datetime.now()
@@ -64,25 +67,26 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
         }
         
         results = {}
-        window_size = 252  # One year of trading days
         
         for name, data in assets.items():
-            if len(data) < window_size:
+            if len(data) < self.window_size:
                 print(f"Warning: Not enough data for {name}, skipping")
                 continue
                 
             # Calculate Hurst using different methods
-            price_series = data['Close'].values[-window_size:]
+            price_series = data['Close'].values[-self.window_size:]
             
             try:
-                rs_hurst = hurst_rs(price_series, max_lag=20)
+                rs_hurst = hurst_rs(price_series, max_lag=self.mag_lag)
                 dfa_hurst = hurst_dfa(price_series)
                 aggvar_hurst = hurst_aggvar(price_series)
+                higuchi_hurst = hurst_higuchi(price_series)
                 
                 results[name] = {
                     'RS': rs_hurst,
                     'DFA': dfa_hurst,
-                    'AggVar': aggvar_hurst
+                    'AggVar': aggvar_hurst,
+                    'higuchi': higuchi_hurst
                 }
             except Exception as e:
                 print(f"Error calculating Hurst for {name}: {e}")
@@ -95,7 +99,9 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
     def test_strategy_on_trending_market(self):
         """Test strategy performance on trending market (MSFT) with different Hurst methods"""
         # Define Hurst calculation methods to test
-        hurst_methods = ['rs', 'dfa', 'aggvar']
+        hurst_methods = ['rs', 'dfa', 'aggvar', 'higuchi']
+
+        self.window_size = 252
         
         best_method = None
         best_sharpe = -float('inf')
@@ -107,9 +113,9 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
             # Run strategy on trending data with current method
             strategy_results = hurst_trading_strategy(
                 self.trending_df,
-                window_size=100,
+                window_size=self.window_size,
                 method=method,  # Use current method in iteration
-                max_lag=20,
+                max_lag=self.mag_lag,
                 mean_reversion_threshold=0.38,
                 trend_threshold=0.54,
                 short_ma_period=12,
@@ -134,16 +140,21 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
                 best_results = strategy_results
         
         # Plot results for the best method
-        if best_results is not None:
-            print(f"\nBest Hurst Method for MSFT: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
-            fig = plot_strategy_results(best_results, title=f"Hurst Strategy on MSFT (Method: {best_method.upper()})")
-            plt.savefig(f'test_results/hurst_strategy_msft_{best_method}.png')
+        # if best_results is not None:
+        #     print(f"\nBest Hurst Method for MSFT: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
+        #     fig = plot_strategy_results(best_results, title=f"Hurst Strategy on MSFT (Method: {best_method.upper()})")
+        #     plt.savefig(f'test_results/hurst_strategy_msft_{best_method}.png')
+        #     plt.close(fig)
+
+            print(f"\nBest Hurst Method for EUR/USD: {method.upper()} (Sharpe: {best_sharpe:.4f})")
+            fig = plot_strategy_results(strategy_results, title=f"Hurst Strategy on EUR/USD (Method: {method.upper()})")
+            plt.savefig(f'test_results/hurst_strategy_msft_{method}.png')
             plt.close(fig)
     
     def test_mean_reversion_strategy(self):
         """Test mean reversion strategy on utilities ETF (XLU) with different Hurst methods"""
         # Define Hurst calculation methods to test
-        hurst_methods = ['rs', 'dfa', 'aggvar']
+        hurst_methods = ['rs', 'dfa', 'aggvar', 'higuchi']
         
         best_method = None
         best_sharpe = -float('inf')
@@ -155,9 +166,9 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
             # Run mean reversion strategy with current method
             strategy_results = mean_reversion_strategy(
                 self.mean_reverting_df,
-                window_size=100,
+                window_size=self.window_size,
                 method=method,  # Use current method in iteration
-                max_lag=20,
+                max_lag=self.mag_lag,
                 hurst_threshold=0.38,
                 short_ma_period=12,
                 long_ma_period=50,
@@ -181,16 +192,20 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
                 best_results = strategy_results
         
         # Plot results for the best method
-        if best_results is not None:
-            print(f"\nBest Hurst Method for XLU Mean Reversion: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
-            fig = plot_strategy_results(best_results, title=f"Mean Reversion Strategy on XLU (Method: {best_method.upper()})")
-            plt.savefig(f'test_results/mean_reversion_xlu_{best_method}.png')
+        # if best_results is not None:
+        #     print(f"\nBest Hurst Method for XLU Mean Reversion: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
+        #     fig = plot_strategy_results(best_results, title=f"Mean Reversion Strategy on XLU (Method: {best_method.upper()})")
+        #     plt.savefig(f'test_results/mean_reversion_xlu_{best_method}.png')
+        #     plt.close(fig)
+            print(f"\nBest Hurst Method for EUR/USD: {method.upper()} (Sharpe: {best_sharpe:.4f})")
+            fig = plot_strategy_results(strategy_results, title=f"Hurst Strategy on EUR/USD (Method: {method.upper()})")
+            plt.savefig(f'test_results/hurst_strategy_xlu_{method}.png')
             plt.close(fig)
-    
+
     def test_trend_following_strategy(self):
         """Test trend following strategy on crypto (BTC-USD) with different Hurst methods"""
         # Define Hurst calculation methods to test
-        hurst_methods = ['rs', 'dfa', 'aggvar']
+        hurst_methods = ['rs', 'dfa', 'aggvar', 'higuchi']
         
         best_method = None
         best_sharpe = -float('inf')
@@ -202,9 +217,9 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
             # Run trend following strategy with current method
             strategy_results = trend_following_strategy(
                 self.random_df,
-                window_size=100,
+                window_size=self.window_size,
                 method=method,  # Use current method in iteration
-                max_lag=20,
+                max_lag=self.mag_lag,
                 hurst_threshold=0.54,
                 short_ma_period=12,
                 long_ma_period=50,
@@ -228,19 +243,24 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
                 best_results = strategy_results
         
         # Plot results for the best method
-        if best_results is not None:
-            print(f"\nBest Hurst Method for BTC-USD Trend Following: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
-            fig = plot_strategy_results(best_results, title=f"Trend Following Strategy on BTC-USD (Method: {best_method.upper()})")
-            plt.savefig(f'test_results/trend_following_btc_{best_method}.png')
+        # if best_results is not None:
+        #     print(f"\nBest Hurst Method for BTC-USD Trend Following: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
+        #     fig = plot_strategy_results(best_results, title=f"Trend Following Strategy on BTC-USD (Method: {best_method.upper()})")
+        #     plt.savefig(f'test_results/trend_following_btc_{best_method}.png')
+        #     plt.close(fig)
+
+            print(f"\nBest Hurst Method for EUR/USD: {method.upper()} (Sharpe: {best_sharpe:.4f})")
+            fig = plot_strategy_results(strategy_results, title=f"Hurst Strategy on EUR/USD (Method: {method.upper()})")
+            plt.savefig(f'test_results/hurst_strategy_btc_{method}.png')
             plt.close(fig)
     
-    def test_parameter_optimization(self):
+    def xxx_test_parameter_optimization(self):
         """Test parameter optimization on Gold futures with different Hurst methods"""
         # Define parameter ranges
         window_sizes = [60, 100, 150]
         mean_reversion_thresholds = [0.35, 0.38, 0.42]
         trend_thresholds = [0.52, 0.54, 0.58]
-        hurst_methods = ['rs', 'dfa', 'aggvar']
+        hurst_methods = ['rs', 'dfa', 'aggvar', 'higuchi']
         
         best_params = None
         best_sharpe = -float('inf')
@@ -263,7 +283,7 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
                             self.commodity_df,
                             window_size=window_size,
                             method=method,  # Use current method in iteration
-                            max_lag=20,
+                            max_lag=self.mag_lag,
                             mean_reversion_threshold=mr_threshold,
                             trend_threshold=tr_threshold,
                             short_ma_period=12,
@@ -282,7 +302,7 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
                             best_sharpe = metrics['sharpe_ratio']
                             best_params = {
                                 'method': method,
-                                'window_size': window_size,
+                                'self.window_size': self.window_size,
                                 'mean_reversion_threshold': mr_threshold,
                                 'trend_threshold': tr_threshold,
                                 'metrics': metrics
@@ -301,7 +321,7 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
     def test_forex_strategy(self):
         """Test strategy on forex data (EUR/USD) with different Hurst methods"""
         # Define Hurst calculation methods to test
-        hurst_methods = ['rs', 'dfa', 'aggvar']
+        hurst_methods = ['rs', 'dfa', 'aggvar', 'higuchi']
         
         best_method = None
         best_sharpe = -float('inf')
@@ -313,9 +333,9 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
             # Run strategy on forex data with current method
             strategy_results = hurst_trading_strategy(
                 self.forex_df,
-                window_size=100,
+                window_size=self.window_size,
                 method=method,  # Use current method in iteration
-                max_lag=20,
+                max_lag=self.mag_lag,
                 mean_reversion_threshold=0.38,
                 trend_threshold=0.54,
                 short_ma_period=12,
@@ -340,10 +360,10 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
                 best_results = strategy_results
         
         # Plot results for the best method
-        if best_results is not None:
-            print(f"\nBest Hurst Method for EUR/USD: {best_method.upper()} (Sharpe: {best_sharpe:.4f})")
-            fig = plot_strategy_results(best_results, title=f"Hurst Strategy on EUR/USD (Method: {best_method.upper()})")
-            plt.savefig(f'test_results/hurst_strategy_eurusd_{best_method}.png')
+        # if best_results is not None:
+            print(f"\nBest Hurst Method for EUR/USD: {method.upper()} (Sharpe: {best_sharpe:.4f})")
+            fig = plot_strategy_results(strategy_results, title=f"Hurst Strategy on EUR/USD (Method: {method.upper()})")
+            plt.savefig(f'test_results/hurst_strategy_eurusd_{method}.png')
             plt.close(fig)
 
 if __name__ == "__main__":

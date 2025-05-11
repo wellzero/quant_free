@@ -115,10 +115,11 @@ def _get_hurst_function(method, max_lag):
     if method == 'rs':
         return lambda x: hurst_rs(x, max_lag)
     elif method == 'dfa':
+        # return lambda x: hurst_dfa(x, max_boxes = max_lag)
         return lambda x: hurst_dfa(x)
     elif method == 'aggvar':
         # Fix: Remove max_lag parameter for aggvar method
-        return lambda x: hurst_aggvar(x)
+        return lambda x: hurst_aggvar(x, max_lag)
     elif method == 'higuchi':
         return lambda x: hurst_higuchi(x, max_lag)
     else:

@@ -431,7 +431,11 @@ def calculate_performance_metrics(strategy_df):
     cum_returns = (1 + strategy_returns).cumprod()
     running_max = cum_returns.cummax()
     drawdown = (cum_returns / running_max - 1)
-    max_drawdown = drawdown.min() if len(drawdown) > 0 else 0
+    
+    # Filter out inf and nan values
+    drawdown = drawdown.replace([np.inf, -np.inf], np.nan).dropna()
+    
+    max_drawdown = abs(drawdown.min()) if len(drawdown) > 0 else 0  # Convert to positive percentage
     
     # Calculate win rate
     trades = strategy_df[strategy_df['position'] != strategy_df['position'].shift(1)]
@@ -447,69 +451,6 @@ def calculate_performance_metrics(strategy_df):
         'win_rate': win_rate * 100,
         'num_trades': len(trades)
     }
-
-def hurst_trading_strategy(prices_input,
-                          window_size=120,      # Increased from 100
-                          method='rs',          # R/S method is most stable
-                          max_lag=20,
-                          mean_reversion_threshold=0.35,  # More extreme for stronger signals
-                          trend_threshold=0.60,          # Higher threshold for stronger trends
-                          short_ma_period=15,           # Reduced for faster response
-                          long_ma_period=50,
-                          atr_period=14,
-                          stop_loss_atr_multiplier=1.5,  # Tighter stops
-                          take_profit_atr_multiplier=4.0,  # Increased profit target
-                          save_results=True,
-                          csv_path='hurst_strategy_results.csv'):
-    """
-    Implement a trading strategy based on the Hurst exponent
-    
-    Parameters:
-    prices_input (DataFrame): DataFrame with 'High', 'Low', 'Close' columns
-    window_size (int): Size of the rolling window for Hurst calculation
-    method (str): Method to use ('rs', 'dfa', 'aggvar', 'higuchi')
-    max_lag (int): Maximum lag to consider
-    mean_reversion_threshold (float): Hurst threshold below which mean reversion is considered
-    trend_threshold (float): Hurst threshold above which trending is considered
-    short_ma_period (int): Short-term moving average period for trend filter
-    long_ma_period (int): Long-term moving average period for trend filter
-    atr_period (int): Period for ATR calculation
-    stop_loss_atr_multiplier (float): ATR multiplier for stop loss
-    take_profit_atr_multiplier (float): ATR multiplier for take profit
-
-    Returns:
-    DataFrame: DataFrame with strategy results
-    """
-    # --- 1. Validate inputs ---
-    _validate_inputs(prices_input)
-    
-    # --- 2. Prepare data ---
-    strategy_df = _prepare_strategy_dataframe(prices_input, short_ma_period, long_ma_period, atr_period)
-    
-    # --- 3. Calculate Hurst exponents ---
-    hurst_values = _calculate_hurst_values(prices_input['Close'], window_size, method, max_lag)
-    _add_hurst_to_dataframe(strategy_df, hurst_values, window_size)
-    
-    # --- 4. Generate signals and manage positions ---
-    _process_signals_and_positions(
-        strategy_df, 
-        window_size, 
-        long_ma_period, 
-        atr_period, 
-        mean_reversion_threshold, 
-        trend_threshold,
-        stop_loss_atr_multiplier,
-        take_profit_atr_multiplier
-    )
-    
-    # --- 5. Calculate returns ---
-    _calculate_strategy_returns(strategy_df)
-    
-    # --- 6. Save results to CSV if requested ---
-    if save_results:
-        save_strategy_results_to_csv(strategy_df, csv_path)
-    
-    return strategy_df
 
 def _validate_inputs(prices_input):
     """Validate input data for the strategy"""
@@ -573,21 +514,51 @@ def _add_hurst_to_dataframe(strategy_df, hurst_values, window_size):
         else:
             print(f"Warning: Hurst series length mismatch. Index length: {len(hurst_series_index)}, Values length: {len(hurst_values)}")
 
-def _calculate_position_size(h, atr, price, account_value=100000, risk_per_trade=0.01):
-    """Calculate dynamic position size based on volatility and signal strength"""
+def _calculate_position_size(h, atr, price, account_value=100000, risk_per_trade=0.005):  # Reduced from 0.01
+    """Calculate dynamic position size based on volatility and signal strength with stricter limits"""
+    # Handle invalid inputs
+    if pd.isna(h) or np.isinf(h) or pd.isna(atr) or np.isinf(atr) or atr == 0:
+        return 0
+        
     # Base position size on ATR volatility
     volatility_factor = 1.0 / (atr / price)
     
-    # Adjust based on Hurst signal strength
-    hurst_factor = abs(h - 0.5) * 2  # Stronger positions for stronger signals
+    # Adjust based on Hurst signal strength - stronger signals get larger positions
+    hurst_factor = abs(h - 0.5) * 1.5  # Reduced multiplier from 2.0
     
     # Calculate position size with risk management
     risk_amount = account_value * risk_per_trade
     position_size = (risk_amount * volatility_factor * hurst_factor) / atr
     
-    # Apply position limits
-    max_position = account_value * 0.15  # Maximum 15% of account per trade
+    # Apply stricter position limits
+    max_position = account_value * 0.10  # Reduced from 0.15
     return min(position_size, max_position)
+
+def _detect_market_regime(strategy_df, current_index, lookback=50):
+    """Detect market regime based on recent price action"""
+    if current_index < lookback:
+        return "unknown"
+        
+    # Get recent price data
+    recent_prices = strategy_df['price'].iloc[current_index-lookback:current_index]
+    
+    # Calculate trend strength
+    trend = (recent_prices.iloc[-1] / recent_prices.iloc[0]) - 1
+    
+    # Calculate volatility
+    volatility = recent_prices.pct_change().std() * np.sqrt(252)
+    
+    # Determine regime
+    if abs(trend) < 0.05:  # Less than 5% move
+        if volatility > 0.25:  # High volatility
+            return "choppy"
+        else:
+            return "ranging"
+    else:
+        if trend > 0:
+            return "uptrend"
+        else:
+            return "downtrend"
 
 def _process_signals_and_positions(strategy_df, window_size, long_ma_period, atr_period, 
                                   mean_reversion_threshold, trend_threshold,
@@ -595,6 +566,14 @@ def _process_signals_and_positions(strategy_df, window_size, long_ma_period, atr
     """Process signals and manage positions based on Hurst values and indicators"""
     start_index = max(window_size, long_ma_period, atr_period)
     current_position_direction = 0
+    
+    # Add time-based exit tracking if it doesn't exist
+    if 'days_in_position' not in strategy_df.columns:
+        strategy_df['days_in_position'] = 0
+    
+    # Add market regime column if it doesn't exist
+    if 'market_regime' not in strategy_df.columns:
+        strategy_df['market_regime'] = "unknown"
     
     for i in range(start_index, len(strategy_df)):
         current_index = strategy_df.index[i]
@@ -605,6 +584,9 @@ def _process_signals_and_positions(strategy_df, window_size, long_ma_period, atr
         short_ma = strategy_df.loc[current_index, 'short_ma']
         long_ma = strategy_df.loc[current_index, 'long_ma']
         current_atr = strategy_df.loc[current_index, 'atr']
+        
+        # Detect market regime
+        strategy_df.loc[current_index, 'market_regime'] = _detect_market_regime(strategy_df, i)
 
         # Skip if any indicator is missing
         if any(pd.isna(x) for x in [h, current_price, short_ma, long_ma, current_atr]):
@@ -665,47 +647,153 @@ def _process_signals_and_positions(strategy_df, window_size, long_ma_period, atr
                 take_profit_atr_multiplier
             )
 
+def _update_trailing_stops(strategy_df, current_index, current_price, current_position_direction, atr):
+    """Update trailing stops based on price movement"""
+    # Initialize trailing stop column if it doesn't exist
+    if 'trailing_stop' not in strategy_df.columns:
+        strategy_df['trailing_stop'] = np.nan
+        
+    # Get entry price
+    entry_price = strategy_df.loc[current_index, 'entry_price']
+    
+    # Get previous trailing stop if available
+    prev_index = strategy_df.index[strategy_df.index.get_loc(current_index) - 1]
+    prev_trailing_stop = strategy_df.loc[prev_index, 'trailing_stop'] if 'trailing_stop' in strategy_df.columns else np.nan
+    
+    # Set initial trailing stop if not already set
+    if pd.isna(prev_trailing_stop):
+        if current_position_direction > 0:  # Long position
+            strategy_df.loc[current_index, 'trailing_stop'] = entry_price - 3 * atr
+        else:  # Short position
+            strategy_df.loc[current_index, 'trailing_stop'] = entry_price + 3 * atr
+    else:
+        # Update trailing stop if price moves favorably
+        if current_position_direction > 0:  # Long position
+            new_stop = current_price - 2.5 * atr
+            if new_stop > prev_trailing_stop:
+                strategy_df.loc[current_index, 'trailing_stop'] = new_stop
+            else:
+                strategy_df.loc[current_index, 'trailing_stop'] = prev_trailing_stop
+        else:  # Short position
+            new_stop = current_price + 2.5 * atr
+            if new_stop < prev_trailing_stop or pd.isna(prev_trailing_stop):
+                strategy_df.loc[current_index, 'trailing_stop'] = new_stop
+            else:
+                strategy_df.loc[current_index, 'trailing_stop'] = prev_trailing_stop
+                
+    # Check if trailing stop is hit
+    trailing_stop = strategy_df.loc[current_index, 'trailing_stop']
+    if not pd.isna(trailing_stop):
+        if current_position_direction > 0 and current_price <= trailing_stop:  # Long position
+            return True
+        elif current_position_direction < 0 and current_price >= trailing_stop:  # Short position
+            return True
+            
+    return False
+
 def _check_exit_conditions(strategy_df, current_index, current_price, current_position_direction):
-    """Check if stop loss or take profit conditions are met"""
+    """Check if stop loss, take profit, or time-based exit conditions are met"""
     entry_price = strategy_df.loc[current_index, 'entry_price']
     stop_loss_level = strategy_df.loc[current_index, 'stop_loss']
     take_profit_level = strategy_df.loc[current_index, 'take_profit']
+    atr = strategy_df.loc[current_index, 'atr']
     
+    # Update days in position
+    if 'days_in_position' in strategy_df.columns:
+        prev_index = strategy_df.index[strategy_df.index.get_loc(current_index) - 1]
+        if not pd.isna(strategy_df.loc[prev_index, 'days_in_position']):
+            strategy_df.loc[current_index, 'days_in_position'] = strategy_df.loc[prev_index, 'days_in_position'] + 1
+        else:
+            strategy_df.loc[current_index, 'days_in_position'] = 1
+            
+        # Force exit after holding for too long (15 days)
+        if strategy_df.loc[current_index, 'days_in_position'] > 15:
+            return True
+    
+    # Update and check trailing stops
+    trailing_stop_hit = _update_trailing_stops(strategy_df, current_index, current_price, current_position_direction, atr)
+    if trailing_stop_hit:
+        return True
+    
+    # Check if stop loss or take profit is hit
     if current_position_direction > 0:  # Long position
         if current_price <= stop_loss_level or current_price >= take_profit_level:
             return True
-    elif current_position_direction < 0:  # Short position
+    else:  # Short position
         if current_price >= stop_loss_level or current_price <= take_profit_level:
             return True
             
     return False
 
+def _check_volatility_conditions(strategy_df, current_index, atr, price):
+    """Check if volatility conditions are suitable for trading"""
+    # Calculate normalized ATR (ATR as percentage of price)
+    normalized_atr = atr / price * 100
+    
+    # Calculate historical volatility using rolling standard deviation
+    if 'volatility' not in strategy_df.columns:
+        strategy_df['volatility'] = strategy_df['returns'].rolling(window=20).std() * np.sqrt(252) * 100
+    
+    current_volatility = strategy_df.loc[current_index, 'volatility']
+    
+    # Skip trades during extreme volatility
+    if pd.notna(current_volatility):
+        if current_volatility > 50:  # Extremely high volatility
+            return False
+        if normalized_atr > 5:  # ATR is more than 5% of price
+            return False
+    
+    return True
+
+def _check_correlation_filter(strategy_df, current_index, lookback=30):
+    """Check if strategy returns are correlated with market returns"""
+    if 'market_returns' not in strategy_df.columns or current_index < lookback:
+        return True
+        
+    # Get recent strategy and market returns
+    recent_strategy = strategy_df['strategy_returns'].iloc[current_index-lookback:current_index]
+    recent_market = strategy_df['market_returns'].iloc[current_index-lookback:current_index]
+    
+    # Calculate correlation
+    if len(recent_strategy) > 5 and len(recent_market) > 5:
+        correlation = recent_strategy.corr(recent_market)
+        
+        # Skip trades when highly correlated with market
+        if not pd.isna(correlation) and abs(correlation) > 0.7:
+            return False
+    
+    return True
+
 def _generate_signal(h, current_price, short_ma, long_ma, current_position_direction,
                     mean_reversion_threshold, trend_threshold):
     """Generate trading signals with enhanced filters"""
-    # No signal if already in a position
-    if current_position_direction != 0:
+    # No signal if already in a position or if h is inf/nan
+    if current_position_direction != 0 or pd.isna(h) or np.isinf(h):
         return 0
         
     # Calculate price deviation from moving averages
     price_deviation = (current_price / short_ma - 1) * 100
+    ma_trend = short_ma / long_ma - 1
+    
+    # Handle inf/nan in price deviation
+    if pd.isna(price_deviation) or np.isinf(price_deviation):
+        return 0
     
     # Mean reversion signals with stricter conditions
     if h < mean_reversion_threshold:
         # Only take mean reversion trades when price deviates significantly
-        if price_deviation > 2.0:  # Price is 2% above short MA
+        # Increased deviation threshold and trend confirmation requirements
+        if price_deviation > 3.5 and ma_trend < -0.01:  # Price is above short MA but trend is down - stricter criteria
             return -1  # Short signal for mean reversion
-        elif price_deviation < -2.0:  # Price is 2% below short MA
+        elif price_deviation < -3.5 and ma_trend > 0.01:  # Price is below short MA but trend is up - stricter criteria
             return 1   # Long signal for mean reversion
             
     # Trend following signals with momentum confirmation   
     elif h > trend_threshold:
-        ma_trend = short_ma / long_ma - 1
-        
-        # Only take trend trades with strong MA confirmation
-        if ma_trend > 0.01 and price_deviation > 0.5:  # Uptrend
+        # Only take trend trades with stronger MA confirmation
+        if ma_trend > 0.02 and price_deviation > 1.0:  # Uptrend with stronger confirmation - increased thresholds
             return 1   # Long signal for trend following
-        elif ma_trend < -0.01 and price_deviation < -0.5:  # Downtrend
+        elif ma_trend < -0.02 and price_deviation < -1.0:  # Downtrend with stronger confirmation - increased thresholds
             return -1  # Short signal for trend following
             
     return 0
@@ -841,6 +929,8 @@ def evaluate_strategy(strategy_df):
     cum_returns = strategy_df['cum_strategy_returns']
     running_max = cum_returns.cummax()
     drawdown = (cum_returns / running_max - 1)
+    # Filter out inf and nan values
+    drawdown = drawdown.replace([np.inf, -np.inf], np.nan).dropna()
     max_drawdown = drawdown.min()
     
     # Calculate win rate
@@ -860,6 +950,69 @@ def evaluate_strategy(strategy_df):
         'Win Rate': win_rate # Use corrected win_rate
     }
 
+
+def hurst_trading_strategy(prices_input,
+                          window_size=120,      # Keep as is
+                          method='rs',          # Keep as is
+                          max_lag=20,
+                          mean_reversion_threshold=0.38,  # Slightly more extreme
+                          trend_threshold=0.54,          # Slightly more extreme
+                          short_ma_period=12,           # Faster response
+                          long_ma_period=50,
+                          atr_period=14,
+                          stop_loss_atr_multiplier=1.8,  # Tighter stops
+                          take_profit_atr_multiplier=3.0,  # Better risk-reward
+                          save_results=True,
+                          csv_path='hurst_strategy_results.csv'):
+    """
+    Implement a trading strategy based on the Hurst exponent
+    
+    Parameters:
+    prices_input (DataFrame): DataFrame with 'High', 'Low', 'Close' columns
+    window_size (int): Size of the rolling window for Hurst calculation
+    method (str): Method to use ('rs', 'dfa', 'aggvar', 'higuchi')
+    max_lag (int): Maximum lag to consider
+    mean_reversion_threshold (float): Hurst threshold below which mean reversion is considered
+    trend_threshold (float): Hurst threshold above which trending is considered
+    short_ma_period (int): Short-term moving average period for trend filter
+    long_ma_period (int): Long-term moving average period for trend filter
+    atr_period (int): Period for ATR calculation
+    stop_loss_atr_multiplier (float): ATR multiplier for stop loss
+    take_profit_atr_multiplier (float): ATR multiplier for take profit
+
+    Returns:
+    DataFrame: DataFrame with strategy results
+    """
+    # --- 1. Validate inputs ---
+    _validate_inputs(prices_input)
+    
+    # --- 2. Prepare data ---
+    strategy_df = _prepare_strategy_dataframe(prices_input, short_ma_period, long_ma_period, atr_period)
+    
+    # --- 3. Calculate Hurst exponents ---
+    hurst_values = _calculate_hurst_values(prices_input['Close'], window_size, method, max_lag)
+    _add_hurst_to_dataframe(strategy_df, hurst_values, window_size)
+    
+    # --- 4. Generate signals and manage positions ---
+    _process_signals_and_positions(
+        strategy_df, 
+        window_size, 
+        long_ma_period, 
+        atr_period, 
+        mean_reversion_threshold, 
+        trend_threshold,
+        stop_loss_atr_multiplier,
+        take_profit_atr_multiplier
+    )
+    
+    # --- 5. Calculate returns ---
+    _calculate_strategy_returns(strategy_df)
+    
+    # --- 6. Save results to CSV if requested ---
+    if save_results:
+        save_strategy_results_to_csv(strategy_df, csv_path)
+    
+    return strategy_df
 
 # --- Keep the parameter testing block as is ---
 if __name__ == "__main__":

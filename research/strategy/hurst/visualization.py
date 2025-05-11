@@ -45,7 +45,10 @@ def plot_hurst_methods_comparison(time_series, max_lag=20):
                  ha='center')
     
     plt.ylim(0, 1.1)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    # Increase grid line visibility
+    plt.grid(axis='both', linestyle='-', alpha=0.9, which='major', linewidth=0.8, color='gray')
+    plt.grid(axis='both', linestyle='--', alpha=0.5, which='minor', linewidth=0.5, color='darkgray')
+    plt.minorticks_on()
     plt.legend()
     plt.tight_layout()
     
@@ -83,7 +86,10 @@ def plot_rolling_hurst(time_series, dates=None, window_size=100, step=10, method
     
     plt.ylabel('Hurst Exponent')
     plt.title(f'Rolling Hurst Exponent ({method.upper()} method, window={window_size})')
-    plt.grid(True)
+    # Increase grid line visibility
+    plt.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    plt.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    plt.minorticks_on()
     plt.legend()
     plt.tight_layout()
     
@@ -113,7 +119,10 @@ def plot_strategy_results(strategy_df, title="Hurst Trading Strategy Results"):
     ax1.set_ylabel('Price')
     ax1.set_title(title)
     ax1.legend()
-    ax1.grid(True)
+    # Increase grid line visibility
+    ax1.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    ax1.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    ax1.minorticks_on()
     
     # Plot Hurst exponent
     ax2 = axes[1]
@@ -123,7 +132,10 @@ def plot_strategy_results(strategy_df, title="Hurst Trading Strategy Results"):
     ax2.axhline(y=0.55, color='b', linestyle='--', label='Trending Threshold')
     ax2.set_ylabel('Hurst Exponent')
     ax2.legend()
-    ax2.grid(True)
+    # Increase grid line visibility
+    ax2.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    ax2.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    ax2.minorticks_on()
     
     # Plot cumulative returns
     ax3 = axes[2]
@@ -140,7 +152,10 @@ def plot_strategy_results(strategy_df, title="Hurst Trading Strategy Results"):
     ax3.set_ylabel('Cumulative Returns')
     ax3.set_xlabel('Date')
     ax3.legend()
-    ax3.grid(True)
+    # Increase grid line visibility
+    ax3.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    ax3.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    ax3.minorticks_on()
     
     plt.tight_layout()
     return fig
@@ -191,6 +206,10 @@ def plot_strategy_types_performance(strategy_df, title="Strategy Performance by 
     ax1.set_title(title)
     ax1.set_ylabel('Price')
     ax1.legend()
+    # Increase grid line visibility
+    ax1.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    ax1.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    ax1.minorticks_on()
     
     # Plot Hurst exponent and thresholds
     ax2.plot(strategy_df.index, strategy_df['hurst'], color='blue', label='Hurst Exponent')
@@ -209,6 +228,10 @@ def plot_strategy_types_performance(strategy_df, title="Strategy Performance by 
     
     ax2.set_ylabel('Hurst Exponent')
     ax2.legend()
+    # Increase grid line visibility
+    ax2.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    ax2.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    ax2.minorticks_on()
     
     # Plot cumulative returns
     ax3.plot(strategy_df.index, strategy_df['cum_market_returns'], color='gray', label='Market')
@@ -233,6 +256,10 @@ def plot_strategy_types_performance(strategy_df, title="Strategy Performance by 
     
     ax3.set_ylabel('Cumulative Returns')
     ax3.legend()
+    # Increase grid line visibility
+    ax3.grid(True, which='major', linestyle='-', alpha=0.9, linewidth=0.8, color='gray')
+    ax3.grid(True, which='minor', linestyle='--', alpha=0.5, linewidth=0.5, color='darkgray')
+    ax3.minorticks_on()
     
     # Format x-axis
     ax3.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
