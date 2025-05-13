@@ -88,18 +88,6 @@ class HurstStrategy:
     def calculate_adaptive_thresholds(self, strategy_df: pd.DataFrame, lookback: int = 100) -> Tuple[float, float]:
         """
         Calculate adaptive thresholds based on recent Hurst values.
-        
-        Parameters:
-        -----------
-        strategy_df : DataFrame
-            Strategy DataFrame with Hurst values
-        lookback : int
-            Lookback period for threshold calculation
-            
-        Returns:
-        --------
-        Tuple[float, float]
-            Mean reversion threshold and trend threshold
         """
         try:
             # Skip if we don't have enough data
@@ -145,38 +133,20 @@ class HurstStrategy:
             if len(recent_returns) > 5:
                 win_rate = (recent_returns > 0).mean()
             
-            # Adjust thresholds based on market regime and recent performance
-            if bull_market:
-                # In bull markets, favor trend following by lowering the trend threshold
-                # but be more selective with mean reversion
-                mean_rev_threshold = max(0.28, min(0.42, hurst_10th + 0.02))
-                trend_threshold = max(0.50, min(0.80, hurst_75th - 0.03))
-                
-                # If trend following has been working well, be even more aggressive
-                if win_rate > 0.6:
-                    trend_threshold = max(0.48, min(0.75, hurst_75th - 0.05))
-            elif bear_market:
-                # In bear markets, be more selective with both strategies
-                mean_rev_threshold = max(0.22, min(0.38, hurst_10th))
-                trend_threshold = max(0.55, min(0.85, hurst_90th))
-                
-                # If mean reversion has been working well in bear markets, favor it
-                if win_rate > 0.6:
-                    mean_rev_threshold = max(0.25, min(0.40, hurst_25th + 0.02))
-            else:
-                # In sideways markets, favor mean reversion
-                mean_rev_threshold = max(0.25, min(0.45, hurst_25th + 0.03))
-                trend_threshold = max(0.52, min(0.82, hurst_90th - 0.02))
+            # Make thresholds more conservative to improve win rate
+            # For mean reversion, use a lower threshold (more extreme values)
+            mean_rev_threshold = max(0.25, min(0.35, hurst_10th))
             
-            # Adjust for volatility - in high volatility, widen the gap
-            if volatility > 0.25:  # High volatility environment
-                gap = trend_threshold - mean_rev_threshold
-                if gap < 0.25:
-                    mean_rev_threshold = max(0.2, mean_rev_threshold - 0.03)
-                    trend_threshold = min(0.9, trend_threshold + 0.03)
+            # For trend following, use a higher threshold (more extreme values)
+            trend_threshold = max(0.65, min(0.85, hurst_90th))
+            
+            # If win rate is low, make thresholds even more conservative
+            if win_rate < 0.3:
+                mean_rev_threshold = max(0.20, mean_rev_threshold - 0.05)
+                trend_threshold = min(0.90, trend_threshold + 0.05)
             
             # Ensure minimum gap between thresholds
-            min_gap = 0.15 * volatility_factor
+            min_gap = 0.25 * volatility_factor
             if (trend_threshold - mean_rev_threshold) < min_gap:
                 mean_rev_threshold = max(0.2, (mean_rev_threshold + trend_threshold - min_gap) / 2)
                 trend_threshold = min(0.9, mean_rev_threshold + min_gap)
@@ -187,7 +157,7 @@ class HurstStrategy:
             return self.mean_reversion_threshold, self.trend_threshold
     
     def generate_signals(self, strategy_df: pd.DataFrame, i: int, 
-                     mr_threshold: float, tr_threshold: float) -> Tuple[int, float, str]:
+                 mr_threshold: float, tr_threshold: float) -> Tuple[int, float, str]:
         """
         Generate trading signals based on Hurst exponent and other indicators.
         """
@@ -202,21 +172,21 @@ class HurstStrategy:
             else:
                 current_rsi = 50  # Default neutral value
             
-            # Add Hurst consistency check
+            # Add Hurst consistency check - more stringent requirements
             hurst_trend = []
-            if i >= 5:  # Check last 5 Hurst values for consistency
-                for j in range(1, 6):
+            if i >= 7:  # Check last 7 Hurst values for stronger consistency
+                for j in range(1, 8):
                     if i-j >= 0 and not pd.isna(strategy_df['hurst'].iloc[i-j]):
                         hurst_trend.append(strategy_df['hurst'].iloc[i-j])
             
             hurst_consistent = False
-            if len(hurst_trend) >= 3:  # Need at least 3 values to check consistency
+            if len(hurst_trend) >= 4:  # Need at least 4 values to check consistency
                 if current_hurst < mr_threshold:
                     # For mean reversion, check if Hurst has been consistently low
-                    hurst_consistent = all(h < mr_threshold + 0.05 for h in hurst_trend)
+                    hurst_consistent = all(h < mr_threshold + 0.03 for h in hurst_trend)
                 elif current_hurst > tr_threshold:
                     # For trend following, check if Hurst has been consistently high
-                    hurst_consistent = all(h > tr_threshold - 0.05 for h in hurst_trend)
+                    hurst_consistent = all(h > tr_threshold - 0.03 for h in hurst_trend)
             else:
                 hurst_consistent = True  # Default to true if we don't have enough data
             
@@ -235,15 +205,27 @@ class HurstStrategy:
             position = 0
             strategy_type = None
             
+            # Add market regime detection
+            market_regime = 'neutral'
+            if i >= 50:
+                # Simple trend detection based on price vs moving average
+                price_50d_ago = strategy_df['price'].iloc[i-50]
+                price_change_pct = (current_price / price_50d_ago - 1) * 100
+                
+                if price_change_pct > 5:
+                    market_regime = 'bullish'
+                elif price_change_pct < -5:
+                    market_regime = 'bearish'
+            
             # Mean reversion signal (Hurst < threshold) with stronger confirmation
             if current_hurst < mr_threshold and hurst_consistent:
-                # Enhanced mean reversion logic with RSI filter
-                if current_price > strategy_df.loc[current_idx, 'short_ma'] * 1.01 and current_rsi > 70:
-                    # Price significantly above MA and overbought -> go short for mean reversion
+                # Enhanced mean reversion logic with RSI filter and stronger deviation
+                if current_price > strategy_df.loc[current_idx, 'short_ma'] * 1.015 and current_rsi > 75:
+                    # Price significantly above MA and strongly overbought -> go short for mean reversion
                     position = -1
                     strategy_type = 'mean_reversion'
-                elif current_price < strategy_df.loc[current_idx, 'short_ma'] * 0.99 and current_rsi < 30:
-                    # Price significantly below MA and oversold -> go long for mean reversion
+                elif current_price < strategy_df.loc[current_idx, 'short_ma'] * 0.985 and current_rsi < 25:
+                    # Price significantly below MA and strongly oversold -> go long for mean reversion
                     position = 1
                     strategy_type = 'mean_reversion'
             
@@ -268,14 +250,22 @@ class HurstStrategy:
                         volume_trend = recent_volume / prev_volume
                 
                 # Stronger trend confirmation requirements
-                if short_ma > long_ma * 1.005 and momentum > 1.0:
+                if short_ma > long_ma * 1.01 and momentum > 1.5 and (market_regime != 'bearish' or momentum > 3.0):
                     # Strong uptrend with positive momentum -> go long
                     position = 1
                     strategy_type = 'trend_following'
-                elif short_ma < long_ma * 0.995 and momentum < -1.0:
+                elif short_ma < long_ma * 0.99 and momentum < -1.5 and (market_regime != 'bullish' or momentum < -3.0):
                     # Strong downtrend with negative momentum -> go short
                     position = -1
                     strategy_type = 'trend_following'
+            
+            # Reduce position size in high volatility environments
+            if recent_volatility > 0.25:  # High volatility
+                position_size_factor *= 0.7
+            
+            # Reduce position size when trading against the market regime
+            if (market_regime == 'bullish' and position < 0) or (market_regime == 'bearish' and position > 0):
+                position_size_factor *= 0.8
             
             return position, position_size_factor, strategy_type
             
@@ -284,7 +274,7 @@ class HurstStrategy:
             return 0, 0.0, None
     
     def manage_position(self, strategy_df: pd.DataFrame, i: int, 
-                        current_position: float, entry_price: Optional[float]) -> Tuple[float, Optional[float], str]:
+                    current_position: float, entry_price: Optional[float]) -> Tuple[float, Optional[float], str]:
         """
         Manage existing positions with stop loss, take profit, and time-based exits.
         """
@@ -292,6 +282,7 @@ class HurstStrategy:
             current_idx = strategy_df.index[i]
             current_price = strategy_df.loc[current_idx, 'price']
             current_atr = strategy_df.loc[current_idx, 'atr']
+            current_hurst = strategy_df.loc[current_idx, 'hurst'] if 'hurst' in strategy_df.columns else 0.5
             exit_reason = None
             
             # Early return if no position or no entry price
@@ -313,12 +304,31 @@ class HurstStrategy:
                 # Calculate unrealized profit
                 unrealized_profit_pct = (current_price - entry_price) / entry_price
                 
-                # Adjust stop loss based on profit
-                if unrealized_profit_pct > 0.02:  # If we have more than 2% profit
-                    # Use trailing stop that's tighter than initial stop
+                # Check for Hurst reversal - exit if Hurst moves significantly against our position
+                if strategy_type == 'trend_following' and current_hurst < self.trend_threshold - 0.15:
+                    current_position = 0
+                    entry_price = None
+                    exit_reason = 'hurst_reversal'
+                    return current_position, entry_price, exit_reason
+                elif strategy_type == 'mean_reversion' and current_hurst > self.mean_reversion_threshold + 0.15:
+                    current_position = 0
+                    entry_price = None
+                    exit_reason = 'hurst_reversal'
+                    return current_position, entry_price, exit_reason
+                
+                # Adjust stop loss based on profit - more aggressive trailing stops
+                if unrealized_profit_pct > 0.03:  # If we have more than 3% profit
+                    # Use tighter trailing stop
                     trailing_stop = max(
                         entry_price,  # Don't go below entry price
-                        current_price * (1 - 0.5 * self.stop_loss_atr_multiplier * current_atr / current_price)
+                        current_price * (1 - 0.4 * self.stop_loss_atr_multiplier * current_atr / current_price)
+                    )
+                    stop_price = trailing_stop
+                elif unrealized_profit_pct > 0.015:  # If we have more than 1.5% profit
+                    # Use medium trailing stop
+                    trailing_stop = max(
+                        entry_price * 0.998,  # Allow tiny loss to secure most profit
+                        current_price * (1 - 0.6 * self.stop_loss_atr_multiplier * current_atr / current_price)
                     )
                     stop_price = trailing_stop
                 else:
@@ -327,12 +337,12 @@ class HurstStrategy:
                     
                 # Tighter take profit for mean reversion
                 if strategy_type == 'mean_reversion':
-                    take_profit_price = entry_price + (2.0 * current_atr)  # Smaller target for mean reversion
+                    take_profit_price = entry_price + (1.8 * current_atr)  # Smaller target for mean reversion
                 else:
                     take_profit_price = entry_price + (self.take_profit_atr_multiplier * current_atr)
                 
                 # Time-based exit for stale positions - more aggressive for mean reversion
-                max_duration = 10 if strategy_type == 'mean_reversion' else 20
+                max_duration = 8 if strategy_type == 'mean_reversion' else 15
                 
                 # Safely calculate position duration
                 try:
@@ -346,8 +356,14 @@ class HurstStrategy:
                     logger.warning(f"Error calculating position duration: {e}")
                     position_duration = 0
                 
+                # Exit stale positions more aggressively
                 if position_duration > max_duration and unrealized_profit_pct < 0.01:
                     # Exit stale positions that aren't making progress
+                    current_position = 0
+                    entry_price = None
+                    exit_reason = 'time_exit'
+                elif position_duration > max_duration * 1.5:
+                    # Force exit very old positions regardless of profit
                     current_position = 0
                     entry_price = None
                     exit_reason = 'time_exit'
@@ -367,12 +383,31 @@ class HurstStrategy:
                 # Calculate unrealized profit
                 unrealized_profit_pct = (entry_price - current_price) / entry_price
                 
+                # Check for Hurst reversal
+                if strategy_type == 'trend_following' and current_hurst < self.trend_threshold - 0.15:
+                    current_position = 0
+                    entry_price = None
+                    exit_reason = 'hurst_reversal'
+                    return current_position, entry_price, exit_reason
+                elif strategy_type == 'mean_reversion' and current_hurst > self.mean_reversion_threshold + 0.15:
+                    current_position = 0
+                    entry_price = None
+                    exit_reason = 'hurst_reversal'
+                    return current_position, entry_price, exit_reason
+                
                 # Adjust stop loss based on profit
-                if unrealized_profit_pct > 0.02:  # If we have more than 2% profit
-                    # Use trailing stop that's tighter than initial stop
+                if unrealized_profit_pct > 0.03:  # If we have more than 3% profit
+                    # Use tighter trailing stop
                     trailing_stop = min(
                         entry_price,  # Don't go above entry price
-                        current_price * (1 + 0.5 * self.stop_loss_atr_multiplier * current_atr / current_price)
+                        current_price * (1 + 0.4 * self.stop_loss_atr_multiplier * current_atr / current_price)
+                    )
+                    stop_price = trailing_stop
+                elif unrealized_profit_pct > 0.015:  # If we have more than 1.5% profit
+                    # Use medium trailing stop
+                    trailing_stop = min(
+                        entry_price * 1.002,  # Allow tiny loss to secure most profit
+                        current_price * (1 + 0.6 * self.stop_loss_atr_multiplier * current_atr / current_price)
                     )
                     stop_price = trailing_stop
                 else:
@@ -381,12 +416,12 @@ class HurstStrategy:
                     
                 # Tighter take profit for mean reversion
                 if strategy_type == 'mean_reversion':
-                    take_profit_price = entry_price - (2.0 * current_atr)
+                    take_profit_price = entry_price - (1.8 * current_atr)
                 else:
                     take_profit_price = entry_price - (self.take_profit_atr_multiplier * current_atr)
                 
                 # Time-based exit
-                max_duration = 10 if strategy_type == 'mean_reversion' else 20
+                max_duration = 8 if strategy_type == 'mean_reversion' else 15
                 
                 # Safely calculate position duration
                 try:
@@ -400,7 +435,13 @@ class HurstStrategy:
                     logger.warning(f"Error calculating position duration: {e}")
                     position_duration = 0
                 
+                # Exit stale positions more aggressively
                 if position_duration > max_duration and unrealized_profit_pct < 0.01:
+                    current_position = 0
+                    entry_price = None
+                    exit_reason = 'time_exit'
+                elif position_duration > max_duration * 1.5:
+                    # Force exit very old positions regardless of profit
                     current_position = 0
                     entry_price = None
                     exit_reason = 'time_exit'
@@ -413,28 +454,6 @@ class HurstStrategy:
                     entry_price = None
                     exit_reason = 'take_profit'
             
-            # Add dynamic trailing stop logic for trend following positions
-            if current_position != 0 and entry_price is not None and strategy_type == 'trend_following':
-                # Calculate profit in ATR units
-                if current_position > 0:
-                    profit_atr_units = (current_price - entry_price) / current_atr
-                else:
-                    profit_atr_units = (entry_price - current_price) / current_atr
-                
-                # Implement trailing stops for trend following positions
-                if profit_atr_units > 1.0:  # Lower threshold for trailing stop
-                    # Tighten stop loss as profit increases
-                    trailing_stop_multiplier = max(0.8, self.stop_loss_atr_multiplier - (profit_atr_units * 0.15))
-                    
-                    if current_position > 0:
-                        new_stop = current_price - (current_atr * trailing_stop_multiplier)
-                        if 'stop_loss' in strategy_df.columns and new_stop > strategy_df.loc[current_idx, 'stop_loss']:
-                            strategy_df.loc[current_idx, 'stop_loss'] = new_stop
-                    else:
-                        new_stop = current_price + (current_atr * trailing_stop_multiplier)
-                        if 'stop_loss' in strategy_df.columns and new_stop < strategy_df.loc[current_idx, 'stop_loss']:
-                            strategy_df.loc[current_idx, 'stop_loss'] = new_stop
-        
             return current_position, entry_price, exit_reason
             
         except Exception as e:
