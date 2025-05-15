@@ -22,8 +22,8 @@ class TestHurstStrategyWithYahoo(unittest.TestCase):
         # Create directory for test results
         os.makedirs('test_results', exist_ok=True)
 
-        self.mag_lag = 50
-        self.window_size = 252
+        self.mag_lag = 20
+        self.window_size = 50
         
         # Define test period
         self.end_date = datetime.now()

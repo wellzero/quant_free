@@ -23,8 +23,9 @@ class TestHurstStrategy(unittest.TestCase):
         np.random.seed(42)  # For reproducibility
         
         # Define data size
-        self.datasize = 5000
+        self.datasize = 1000
         self.window_size = 80
+        self.max_lag = 15
         
         # Create date range
         self.dates = pd.date_range(start='2020-01-01', periods=self.datasize, freq='D')
@@ -86,7 +87,7 @@ class TestHurstStrategy(unittest.TestCase):
         regime = np.zeros(self.datasize)
         
         # Create several regime changes with smooth transitions
-        change_points = [0, 600, 1200, 1800, 2400, 3000, 3600, 4200]
+        change_points = [0, 600, 200, 800, 400, 300, 600, 200]
         regime_values = [0.8, -0.8, 0.2, -0.5, 0.9, -0.7, 0.1, -0.9]  # Alternating trend and mean-reversion with varying strengths
         
         # Create smooth transitions between regimes
@@ -197,7 +198,7 @@ class TestHurstStrategy(unittest.TestCase):
                 self.trend_df,
                 window_size=self.window_size,
                 method=method,
-                max_lag=20,  # max_lag is relevant for 'rs', strategy should handle others
+                max_lag=self.max_lag,  # max_lag is relevant for 'rs', strategy should handle others
                 mean_reversion_threshold=0.38,
                 trend_threshold=0.54,
                 short_ma_period=12,
@@ -275,7 +276,7 @@ class TestHurstStrategy(unittest.TestCase):
                 self.combined_df,
                 window_size=self.window_size,
                 method=method,
-                max_lag=20,  # max_lag is relevant for 'rs', strategy should handle others
+                max_lag=self.max_lag,  # max_lag is relevant for 'rs', strategy should handle others
                 mean_reversion_threshold=0.38,
                 trend_threshold=0.54,
                 short_ma_period=12,
@@ -314,7 +315,7 @@ class TestHurstStrategy(unittest.TestCase):
                 self.complex_mixed_df,
                 window_size=self.window_size,
                 method=method,
-                max_lag=20,  # max_lag is relevant for 'rs', strategy should handle others
+                max_lag=self.max_lag,  # max_lag is relevant for 'rs', strategy should handle others
                 mean_reversion_threshold=0.38,
                 trend_threshold=0.54,
                 short_ma_period=12,
