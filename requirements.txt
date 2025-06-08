@@ -9,6 +9,10 @@ selenium
 webdriver_manager
 undetected_chromedriver
 
+## data pull
+yfinance
+akshare
+
 ## AI module
 git+https://github.com/wellzero/efinance.git
 
@@ -20,9 +24,6 @@ git+https://github.com:wellzero/factorlab.git
 
 ## misc module
 cufflinks
-
-yfinance
-akshare
 
 openbb
 

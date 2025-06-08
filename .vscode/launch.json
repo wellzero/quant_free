@@ -12,9 +12,14 @@
       "request": "launch",
       // "program": "dataset/test/test_us_equity.py",
       // "program": "test/test_us_equity_xq_finance_calc.py",
+      // "program": "data_pull/ak_index_download.py",
+      // "program": "research/strategy/hurst_exponent.py",
+      // "program": "research/strategy/hurst/test_yahoo_strategy.py",
+      // "program": "research/strategy/hurst/test_simulate_data_strategy.py",
       // "program": "backtest/trend_ml_rand_forest.py",
       // "program": "backtest/meta_triple_barrier.py",
-      "program": "test/factors/alpha101.py",
+      // "program": "test/factors/alpha101.py",
+      "program": "backtest/alpha101_rand_forest.py",
       "console": "integratedTerminal",
       "justMyCode": true
     }

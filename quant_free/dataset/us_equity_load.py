@@ -144,6 +144,7 @@ def equity_tradedata_load(
       # except:
       #   print(f"lack of some trade date skip {symbol}, data row {data_tmp.shape[0]}, date_start {df_filled.index[0]}, end_start {df_filled.index[-1]}")
     else:
+      print(f"lack of some trade date skip {symbol}, file not exist {equity_file}")
       lack_list.append(symbol)
 
   if len(lack_list) > 0:
