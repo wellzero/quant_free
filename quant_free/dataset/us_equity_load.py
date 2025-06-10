@@ -81,7 +81,7 @@ def equity_tradedata_load(
     start_date = '2023-05-29',
     end_date = '2024-05-29',
     column_option = "all",
-    dir_option = 'xq',
+    dir_option = '',
     equity='equity',
     file_name = 'daily.csv'):
   
