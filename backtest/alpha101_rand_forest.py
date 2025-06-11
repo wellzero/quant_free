@@ -42,7 +42,7 @@ class Alpha101(Strategy):
         """Initialize strategy variables and load initial model."""
         self.sleeptime = "1D"
         self.iteration_count = 0
-        self.training_threshold = 50
+        self.training_threshold = 100
         self.market = 'us'
         self.load_factor_model_train(self.parameters["symbol"])
 
