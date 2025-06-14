@@ -92,3 +92,50 @@ def equity_xq_sector_download(market = 'us'):
     print(f"downloading {row['name']}")
     data = datacenter_xq.get_all_us_equity(row['encode'])
     us_dir1_store_csv(market, dir0 = 'symbol', dir1 = 'xq', filename=row['name'] + '.csv', data = data)
+    
+def equity_xq_fund_download(market='us'):
+    """Download data for each fund type."""
+    datacenter_xq = ef.stock.us_finance_xq_getter(market)
+    
+    # Define fund types and their corresponding codes
+    fund_types = {
+        "分级基金": 11,
+        "货币型": 12,
+        "股票型": 13,
+        "债券型": 14,
+        "混合型": 15,
+        "QDII基金": 16,
+        "指数型基金": 17,
+        "ETF": 18,
+        "LOF": 19,
+        "FOF": 20,
+        "场外基金": 21,
+    }
+
+    # Download data for each fund type
+    for fund_name, fund_code in fund_types.items():
+        print(f"Downloading {fund_name} fund data...")
+        try:
+            data = datacenter_xq.get_cn_fund_list(fund_code)
+            us_dir1_store_csv(
+                market,
+                dir0='symbol',
+                dir1='xq',
+                filename=f"fund_{fund_name}.csv",
+                data=data
+            )
+            # Download daily trade data for each fund in the list
+            for index, row in data.iterrows():
+                fund_symbol = row['symbol']
+                print(f"Downloading daily trade data for {fund_name} fund: {fund_symbol}")
+                daily_data = datacenter_xq.get_us_finance_daily_trade(symbol=fund_symbol)
+                us_dir1_store_csv(
+                    market,
+                    dir0='fund',
+                    dir1='xq',
+                    filename=f"{fund_symbol}.csv",
+                    data=daily_data
+                )
+
+        except Exception as e:
+            print(f"Error downloading {fund_name} fund data: {e}")
