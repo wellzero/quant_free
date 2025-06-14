@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 from quant_free.dataset.us_equity_load import *
-from quant_free.dataset.us_equity_xq_load import *
+from quant_free.dataset.finance_data_load_xq import *
 
 import pandas as pd
 
@@ -176,7 +176,7 @@ class xq_finance:
 
   def finance_factors_one_stock(self, symbol):
 
-    df_finance = us_equity_xq_finance_data_load(self.market, symbol)
+    df_finance = finance_data_load_xq(self.market, symbol)
 
     # balance
     total_equity = self.fectch_value(df_finance, '股东权益合计')

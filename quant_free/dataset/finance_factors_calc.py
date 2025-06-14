@@ -72,7 +72,7 @@ def generate_Q_dates(start_quarter = '2001/Q2', end_quarter = '2023/Q1'):
 
 
 
-class us_equity_efinance_factor:
+class finance_factors_calc:
 
   # def __init__(self, symbols, factors = ['ROE'], start_quarter = '2001/Q2', end_quarter = '2023/Q1') -> None:
   def __init__(self, symbols, market = 'us',  factors = None, start_time = None, end_time = None) -> None:

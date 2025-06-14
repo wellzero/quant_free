@@ -7,7 +7,21 @@ from quant_free.common.us_equity_common import *
 from quant_free.utils.xq_parse_js import *
 
 
-GLOBAL_XQ_IGNORE_COLUMNS = 7
+US_GLOBAL_XQ_IGNORE_COLUMNS = 7
+HK_GLOBAL_XQ_IGNORE_COLUMNS = 6
+CN_GLOBAL_XQ_IGNORE_COLUMNS = 3
+market_global_xq_ignore_columns = {
+    'us': US_GLOBAL_XQ_IGNORE_COLUMNS,
+    'hk': HK_GLOBAL_XQ_IGNORE_COLUMNS,
+    'cn': CN_GLOBAL_XQ_IGNORE_COLUMNS
+}
+
+def finance_load_csv(market, symbol, file_name, provider="xq"):
+    equity_folder = equity_sub_folder(market, symbol=symbol, sub_dir=provider)
+    file = os.path.join(equity_folder, file_name)
+    df_ = pd.read_csv(file)
+    df_ = df_.loc[:, ~df_.columns.str.startswith('subtitle')]
+    return df_
 
 def us_equity_xq_daily_data_load(market, symbol = 'AAPL', options = ['close'], sub_dir = 'xq'):
 
@@ -41,14 +55,12 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-def us_equity_xq_load_csv(market, symbol, file_name, title, provider="xq"):
-    equity_folder = equity_sub_folder(market, symbol=symbol, sub_dir=provider)
-    file = os.path.join(equity_folder, file_name + '.csv')
+def finance_data_adapter(market, df, title):
+    df_ = df
 
-    df_ = pd.read_csv(file)
-
-    title_cn = [title[key] if key in title else key for key in df_.columns[GLOBAL_XQ_IGNORE_COLUMNS:]]
-    df_.columns = list(df_.columns[:GLOBAL_XQ_IGNORE_COLUMNS]) + title_cn  # Rename columns
+    index_ignore = market_global_xq_ignore_columns[market]
+    title_cn = [title[key] if key in title else key for key in df_.columns[index_ignore:]]
+    df_.columns = list(df_.columns[:index_ignore]) + title_cn  # Rename columns
 
     df_['report_name'] = df_['report_name'].str.replace('年', '/')  # Replace '年' with '/'
     df_.set_index('report_name', inplace=True)  # Set 'report_name' as index
@@ -84,57 +96,6 @@ def us_equity_xq_load_csv(market, symbol, file_name, title, provider="xq"):
     df_first_values = df_first_values.infer_objects()
 
     return df_first_values
-
-
-# def us_equity_xq_load_csv(market, symbol, file_name, title, provider = "xq" ):
-
-#     equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
-#     file = os.path.join(equity_folder, file_name + '.csv')
-
-#     df_ = pd.read_csv(file)
-#     # Perform the operations
-#     title_cn = [title[key] if key in title else key for key in df_.columns[GLOBAL_XQ_IGNORE_COLUMNS:]]
-#     df_.columns = list(df_.columns[:GLOBAL_XQ_IGNORE_COLUMNS]) + title_cn  # Rename columns
-    
-#     df_['report_name'] = df_['report_name'].str.replace('年', '/')  # Replace '年' with '/'
-#     df_.set_index('report_name', inplace=True)  # Set 'report_date' as index
-    
-#     # # Function to extract the first value from lists with more than one element
-#     # def get_first_value(cell):
-#     #     if isinstance(cell, list) and len(cell) > 1:
-#     #         return cell[0]
-#     #     return cell
-
-#     # # Apply the function to each cell in the DataFrame
-#     # df_first_values = df_.applymap(get_first_value)
-    
-#     # Function to convert string representation of lists to actual lists
-#     def str_to_list(cell):
-#         try:
-#             return ast.literal_eval(cell)
-#         except (ValueError, SyntaxError):
-#             return cell
-
-#     # Apply the conversion function to each cell in the DataFrame
-#     df_ = df_.applymap(str_to_list)
-
-#     # Function to extract the first value from lists with more than one element
-#     def get_first_value(cell):
-#         if isinstance(cell, list) and len(cell) > 1:
-#             return cell[0]
-#         return cell
-
-#     # Apply the function to get the first value in each cell
-#     df_first_values = df_.applymap(get_first_value)
-    
-#     df_first_values = df_first_values.sort_values(by='report_date', ascending=True)
-
-#     df_first_values = df_first_values.replace('--', 0)
-#     df_first_values = df_first_values.replace('_', 0)
-#     df_first_values = df_first_values.replace('None', 0)
-#     df_first_values = df_first_values.fillna(0)
-    
-#     return df_first_values
 
 def us_equity_xq_balance_load_csv(market, symbol, dates, file_name, provider = "xq" ):
 
@@ -183,7 +144,7 @@ def us_equity_xq_factors_load_csv(market, symbol, file_name, start_time, end_tim
     return data_in_range.loc[:, factors]
 
 # Function to perform the operations
-def calculate_quarterly_differences(df, str1, str2):
+def calculate_quarterly_differences(market, df, str1, str2):
     # Define the variables
     Q1 = 'Q1'
     Q6 = 'Q6'
@@ -195,7 +156,8 @@ def calculate_quarterly_differences(df, str1, str2):
     # Get the unique years from the index
     years = sorted(set(idx.split('/')[0] for idx in df.index.get_level_values('report_name')))
 
-    columns = df.columns[GLOBAL_XQ_IGNORE_COLUMNS:]
+    ignore_column = market_global_xq_ignore_columns[market]
+    columns = df.columns[ignore_column:]
     
     for year in years:
         if f'{year}/{Q9}' in df.index and f'{year}/{FY}' in df.index:
@@ -211,22 +173,32 @@ def calculate_quarterly_differences(df, str1, str2):
       result_df.loc[:,str2] = df.loc[:, str2]
     return result_df
 
-def us_equity_xq_finance_data_load(market, symbol = 'AAPL'):
+def finance_data_load_xq(market = 'us', symbol = 'AAPL'):
 
   try:
-    xq_us_name = xq_js_to_dict('us')
+    xq_us_name = xq_js_to_dict(market)
+
+    # Load income data
+    income = finance_load_csv(market, symbol, 'income.csv', provider="xq")
+    # Load cash data
+    cash = finance_load_csv(market, symbol, 'cash.csv', provider="xq")
+    # Load balance data
+    balance = finance_load_csv(market, symbol, 'balance.csv', provider="xq")
+    # Load metrics data
+    metrics = finance_load_csv(market, symbol, 'metrics.csv', provider="xq")
+
     # xq_symbol = datacenter.get_secucode("MMM")
     print(f"Loading {symbol} xq data...")
-    income = us_equity_xq_load_csv(market, symbol, 'income', xq_us_name['incomes'])
+    income = finance_data_adapter(market, income, xq_us_name['incomes'])
     # Apply the function to the DataFrame
-    income = calculate_quarterly_differences(income, '基本每股收益', '稀释每股收益')
+    income = calculate_quarterly_differences(market, income, '基本每股收益', '稀释每股收益')
 
-    cash = us_equity_xq_load_csv(market, symbol, 'cash', xq_us_name['cashes'])
-    cash = calculate_quarterly_differences(cash, '期初现金及现金等价物余额', '期末现金及现金等价物余额')
-    
-    balance = us_equity_xq_load_csv(market, symbol,'balance', xq_us_name['balances'])
+    cash = finance_data_adapter(market, cash, xq_us_name['cashes'])
+    cash = calculate_quarterly_differences(market, cash, '期初现金及现金等价物余额', '期末现金及现金等价物余额')
 
-    indicators = us_equity_xq_load_csv(market, symbol,'metrics', xq_us_name['indicators'])
+    balance = finance_data_adapter(market, balance, xq_us_name['balances'])
+
+    indicators = finance_data_adapter(market, metrics, xq_us_name['indicators'])
 
     data = pd.concat([income, cash, balance, indicators], axis = 1, join='inner')
     
@@ -235,3 +207,26 @@ def us_equity_xq_finance_data_load(market, symbol = 'AAPL'):
     # equity_xq_finance_store_csv(equity_folder, data, 'metrics')
   except:
     print(f"function {__name__}  error!!", symbol)
+
+if __name__ == "__main__":
+    market = 'us'
+    symbol = 'AAPL'
+    symbol = 'TSM'
+    symbol = 'JPM'
+
+    market = 'cn'
+    symbol = 'SH600519'
+    data = finance_data_load_xq(market, symbol)
+    print(data.head())
+    
+    # Example of loading daily data
+    daily_data = us_equity_xq_daily_data_load(market, symbol)
+    print(daily_data.head())
+    
+    # Example of loading balance data
+    balance_data = us_equity_xq_balance_load_csv(market, symbol, None, 'balance')
+    print(balance_data.head())
+    
+    # Example of loading factors data
+    factors_data = us_equity_xq_factors_load_csv(market, symbol, 'factors', '2021-01-01', '2022-01-01')
+    print(factors_data.head())
