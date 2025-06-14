@@ -21,8 +21,7 @@ from lumibot.strategies.strategy import Strategy
 from lumibot.traders import Trader
 
 from credentials import AlpacaConfig
-_this_dir = Path(__file__).parent.parent
-sys.path.append(str(_this_dir))
+
 from quant_free.utils.us_equity_utils import *
 from quant_free.dataset.us_equity_load import *
 

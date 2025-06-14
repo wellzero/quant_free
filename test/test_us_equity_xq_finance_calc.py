@@ -2,9 +2,8 @@
 import os
 import sys
 from pathlib import Path
-_this_dir = Path(__file__).parent.parent
-sys.path.append(str(_this_dir))
-print(_this_dir)
+
+
 from quant_free.factor.xq_finance import *
 from quant_free.dataset.finance_data_load_xq import *
 from quant_free.dataset.us_equity_load import *

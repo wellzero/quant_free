@@ -16,8 +16,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 import sys
 from pathlib import Path
-_this_dir = Path(__file__).parent.parent
-sys.path.append(str(_this_dir))
+
 from credentials import AlpacaConfig
 from quant_free.dataset.us_equity_load import *
 from quant_free.utils.us_equity_utils import *
