@@ -87,29 +87,6 @@ class FinancialDataProcessor:
         df_adapted.fillna(0, inplace=True)
         return df_adapted.infer_objects()
 
-    def _calculate_quarterly_differences(self, df: pd.DataFrame, str1: str, str2: str) -> pd.DataFrame:
-        """Calculates quarterly differences for cumulative reports."""
-        result_df = df.copy()
-        years = sorted({idx.split('/')[0] for idx in result_df.index.get_level_values('report_name')})
-        columns_to_adjust = df.columns[self.ignore_cols:]
-
-        for year in years:
-            q1_idx, q6_idx, q9_idx, fy_idx = f'{year}/Q1', f'{year}/Q6', f'{year}/Q9', f'{year}/FY'
-            if q9_idx in result_df.index and fy_idx in result_df.index:
-                result_df.loc[fy_idx, columns_to_adjust] -= result_df.loc[q9_idx, columns_to_adjust]
-            if q6_idx in result_df.index and q9_idx in result_df.index:
-                result_df.loc[q9_idx, columns_to_adjust] -= result_df.loc[q6_idx, columns_to_adjust]
-            if q1_idx in result_df.index and q6_idx in result_df.index:
-                result_df.loc[q6_idx, columns_to_adjust] -= result_df.loc[q1_idx, columns_to_adjust]
-        
-        # Restore original values for specified columns
-        if str1 in df.columns:
-            result_df[str1] = df[str1]
-        if str2 in df.columns:
-            result_df[str2] = df[str2]
-            
-        return result_df
-
     def get_full_financials(self) -> pd.DataFrame:
         """Loads, processes, and combines all financial statements."""
         try:
@@ -125,12 +102,12 @@ class FinancialDataProcessor:
             balance = self._adapt_statement(balance_raw, self.xq_names['balances'])
             indicators = self._adapt_statement(metrics_raw, self.xq_names['indicators'])
 
-            # Calculate quarterly differences
-            income = self._calculate_quarterly_differences(income, '基本每股收益', '稀释每股收益')
-            cash = self._calculate_quarterly_differences(cash, '期初现金及现金等价物余额', '期末现金及现金等价物余额')
-
             # Combine
-            data = pd.concat([income, cash, balance, indicators], axis=1, join='inner')
+            data = pd.concat([df.loc[~df.index.duplicated(keep='first')] for df in [income, cash, balance, indicators]], axis=1, join='outer')
+
+            # Fill any NaN values that may result from the outer join
+            data.fillna(0, inplace=True)
+
             return data.loc[:, ~data.columns.duplicated()]
         except Exception as e:
             logger.error(f"Failed to process financials for {self.symbol}: {e}")
@@ -208,6 +185,14 @@ if __name__ == "__main__":
     cn_data = finance_data_load_xq(market=cn_market, symbol=cn_symbol)
     if not cn_data.empty:
         print(cn_data.head())
+
+    # --- CN Example ---
+    print("\n--- Loading HK Data for SH600519 ---")
+    hk_market = 'hk'
+    hk_symbol = '02882'
+    hk_data = finance_data_load_xq(market=hk_market, symbol=hk_symbol)
+    if not hk_data.empty:
+        print(hk_data.head())
     
     # --- Other Examples ---
     print("\n--- Loading Daily Data ---")
