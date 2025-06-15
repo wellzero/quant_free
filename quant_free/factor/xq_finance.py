@@ -341,9 +341,10 @@ class xq_finance:
       try:
         df = self.finance_factors_one_stock(symbol)
         us_dir1_store_csv(self.market,
-                          dir0 = symbol,
-                          dir1 = 'xq',
-                          filename='finance_factor.csv',
+                          dir0 = 'equity',
+                          dir1 = symbol,
+                          dir2 = 'xq',
+                          filename='finance_factor',
                           data = df)
       except:
         print("no finance data skip stock", symbol)

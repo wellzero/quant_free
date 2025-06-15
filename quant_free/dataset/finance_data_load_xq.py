@@ -46,14 +46,15 @@ class FinancialDataProcessor:
 
     def _load_raw_statement(self, statement_type: str) -> pd.DataFrame:
         """Loads a single raw financial statement CSV."""
-        equity_folder = equity_sub_folder(self.market, symbol=self.symbol, sub_dir=self.provider)
-        file_path = Path(equity_folder) / f"{statement_type}.csv"
-        logger.info(f"Loading {file_path} for {self.symbol}")
         try:
-            df = pd.read_csv(file_path)
+            df = us_dir1_load_csv(self.market,
+                 dir0 = 'equity',
+                 dir1 = self.symbol,
+                 dir2 = self.provider,
+                 filename= statement_type)
             return df.loc[:, ~df.columns.str.startswith('subtitle')]
         except FileNotFoundError:
-            logger.error(f"File not found: {file_path}")
+            logger.error(f"File not found: {statement_type} for {self.symbol} in {self.market} market.")
             raise
 
     def _adapt_statement(self, df: pd.DataFrame, title_map: dict) -> pd.DataFrame:
@@ -82,7 +83,7 @@ class FinancialDataProcessor:
             return cell
         df_adapted = df_adapted.applymap(get_first_value)
 
-        df_adapted = df_adapted.sort_values(by='report_date', ascending=True)
+        df_adapted = df_adapted.sort_values(by='ctime', ascending=True)
         df_adapted.replace({'--': 0, '_': 0, 'None': 0}, inplace=True)
         df_adapted.fillna(0, inplace=True)
         return df_adapted.infer_objects()

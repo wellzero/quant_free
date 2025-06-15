@@ -241,8 +241,10 @@ def us_equity_xq_daily_data_load(market, symbol='AAPL', options=['close'], sub_d
     """Loads daily equity data."""
     try:
         data = us_dir1_load_csv(market,
-               dir0 = symbol, dir1 = sub_dir,
-              filename= 'daily.csv')
+                 dir0 = 'equity',
+                 dir1 = symbol,
+                 dir2 = sub_dir,
+                 filename= 'daily.csv')
 
         data.set_index('timestamp', inplace=True)
         data = data.replace(['--', '_', 'None'], 0).fillna(0)
@@ -256,8 +258,10 @@ def us_equity_xq_factors_load_csv(market, symbol, file_name, start_time, end_tim
     """Loads financial factors from a CSV within a date range."""
     try:
         data = us_dir1_load_csv(market,
-               dir0 = symbol, dir1 = 'xq',
-               filename= file_name + '.csv')
+                 dir0 = 'equity',
+                 dir1 = symbol,
+                 dir2 = provider,
+                 filename= file_name)
 
         data.set_index('REPORT_DATE', inplace=True)
         data.index = pd.to_datetime(data.index)

@@ -35,6 +35,7 @@ def create_common_directory(*subdirs):
 
 def us_symbol_file(filename='equity_symbol.csv'):
     """Get the file path for the symbol file."""
+    filename = ensure_csv_extension(filename)
     symbol_dir = create_common_directory('symbol')
     return os.path.join(symbol_dir, filename)
 
@@ -55,53 +56,72 @@ def us_equity_research_folder(market = 'us', sub_folder='price', file_name='defa
         data.to_csv(file_path)
     return file_path
 
-def us_dir1_store_csv(market = 'us',
-                      dir0 = 'symbol',
-                      dir1 = 'xq',
+def us_dir1_store_csv(market='us', dir0='equity', dir1=None, dir2=None,
                       filename='industry.csv',
                       encoding='utf-8',
-                      data = None,
+                      data=None,
                       index=True):
     """Get the file path for the symbol file."""
-    symbol_dir = create_common_directory(market, dir0, dir1)
+    filename = ensure_csv_extension(filename)
+    dirs = [d for d in [market, dir0, dir1, dir2] if d is not None]
+    symbol_dir = create_common_directory(*dirs)
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path, encoding=encoding, index=index)
         print(f"stored to folder {file_path}")
+
 def us_dir0_store_csv(market = 'us', dir0 = 'symbol', filename='industry.csv', data = None):
     """Get the file path for the symbol file."""
+    filename = ensure_csv_extension(filename)
     symbol_dir = create_common_directory(market, dir0)
     file_path = os.path.join(symbol_dir, filename)
     if data is not None:
         data.to_csv(file_path)
         print(f"stored to folder {file_path}")
 
-def us_dir1_load_csv(market = 'us', dir0 = 'symbol', dir1 = 'xq', filename='industry.csv', dtype = None, index_col=0):
-    """Get the file path for the symbol file."""
-    symbol_dir = create_common_directory(market, dir0, dir1)
+def us_dir1_load_csv(market='us', dir0='equity', dir1=None, dir2=None, filename='industry.csv', dtype=None, index_col=0):
+    """
+    Load a CSV file from a directory structure with a variable number of subdirectories.
+
+    Args:
+        market (str): The main market directory (e.g., 'us').
+        dir0 (str): The first subdirectory.
+        dir1 (str, optional): The second subdirectory. Defaults to None.
+        dir2 (str, optional): The third subdirectory. Defaults to None.
+        filename (str): The name of the CSV file.
+        dtype (dict, optional): Data types for columns in the CSV. Defaults to None.
+        index_col (int, optional): The column to use as the index. Defaults to 0.
+
+    Returns:
+        pandas.DataFrame: The loaded DataFrame, or None if the file does not exist.
+    """
+    filename = ensure_csv_extension(filename)
+    dirs = [d for d in [market, dir0, dir1, dir2] if d is not None]
+    symbol_dir = create_common_directory(*dirs)
     file_path = os.path.join(symbol_dir, filename)
+
     if os.path.exists(file_path):
-        if dtype == None:
-          df = pd.read_csv(file_path, index_col = index_col)
-        else:
-          df = pd.read_csv(file_path, index_col = index_col, dtype=str)
+        try:
+            df = pd.read_csv(file_path, index_col=index_col, dtype=dtype)
+            df.index = pd.to_datetime(df.index)
 
-        df.index = pd.to_datetime(df.index)
-        # Drop the 'Unnamed: 0.1' column if it exists
-        if 'Unnamed: 0.1' in df.columns:
-            df.drop(columns=['Unnamed: 0.1'], inplace=True)
+            # Clean up unnamed columns
+            for col in ['Unnamed: 0.1', 'Unnamed: 0']:
+                if col in df.columns:
+                    df.drop(columns=[col], inplace=True)
 
-        # Drop the 'Unnamed: 0' column if it exists
-        if 'Unnamed: 0' in df.columns:
-            df.drop(columns=['Unnamed: 0'], inplace=True)
-        df = df.fillna(0)
-        return df
+            df = df.fillna(0)
+            return df
+        except Exception as e:
+            print(f"Error reading file {file_path}: {e}")
+            return None
     else:
         print(f"File {filename} does not exist in the {symbol_dir} directory.")
         return None
-
+    
 def us_dir0_load_csv(market = 'us', dir0 = 'symbol', filename='industry.csv'):
     """Get the file path for the symbol file."""
+    filename = ensure_csv_extension(filename)
     symbol_dir = create_common_directory(market, dir0)
     file_path = os.path.join(symbol_dir, filename)
     if os.path.exists(file_path):
