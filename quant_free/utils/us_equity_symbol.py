@@ -4,7 +4,7 @@ from pathlib import Path
 import yfinance as yf
 import pandas as pd
 
-_this_dir = Path(__file__).parent.parent
+
 
 
 def sort_symbols(symbols: list[str]) -> list[str]:
@@ -22,7 +22,7 @@ def sort_symbols(symbols: list[str]) -> list[str]:
 def us_symbol_file():
   
   # Read directory from JSON file
-  conf = os.path.join(_this_dir, 'config.json')
+  conf = os.path.join(os.getenv("QUANT_FREE_ROOT"), 'config.json')
   with open(conf) as f:
       config = json.load(f)
   root_dir = config['data_dir']

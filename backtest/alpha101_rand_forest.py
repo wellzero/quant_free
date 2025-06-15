@@ -183,4 +183,4 @@ if __name__ == "__main__":
             parameters={"asset": asset},
         )
 
-        backtest_store_result(Path(__file__).parent, Alpha101.parameters)
+        backtest_store_result(os.getenv("QUANT_FREE_ROOT"), Alpha101.parameters)

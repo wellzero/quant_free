@@ -1,8 +1,6 @@
 import json
 import re
 import os
-from pathlib import Path
-_this_dir = Path(__file__).parent
 
 def xq_js_to_dict(market = "us"):
     """
@@ -14,7 +12,7 @@ def xq_js_to_dict(market = "us"):
     Returns:
     dict: The converted Python dictionary.
     """
-    js_file_path =  os.path.join(_this_dir, 'js/xq_finance_dict.js')
+    js_file_path =  os.path.join(os.getenv("QUANT_FREE_ROOT"), 'quant_free/utils/js/xq_finance_dict.js')
     try:
         # Read the JavaScript file
         with open(js_file_path, 'r', encoding='utf-8') as file:

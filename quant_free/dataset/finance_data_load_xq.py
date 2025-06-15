@@ -68,7 +68,7 @@ class FinancialDataProcessor:
         df_adapted.set_index('report_name', inplace=True)
 
         # Convert string representations of lists to actual lists
-        def str_to_list(cell):
+        def str_to_list(cell): 
             try:
                 return ast.literal_eval(cell)
             except (ValueError, SyntaxError):
@@ -120,55 +120,6 @@ def finance_data_load_xq(market='us', symbol='AAPL'):
     processor = FinancialDataProcessor(market, symbol)
     return processor.get_full_financials()
 
-def us_equity_xq_daily_data_load(market, symbol='AAPL', options=['close'], sub_dir='xq'):
-    """Loads daily equity data."""
-    try:
-        equity_folder = equity_sub_folder(market, symbol=symbol, sub_dir=sub_dir)
-        equity_file = os.path.join(equity_folder, 'daily.csv')
-        data = pd.read_csv(equity_file)
-        data.set_index('timestamp', inplace=True)
-        data = data.replace(['--', '_', 'None'], 0).fillna(0)
-        return data.loc[:, options]
-    except Exception as e:
-        logger.error(f"Failed to load daily data for {symbol}: {e}")
-        return pd.DataFrame()
-
-def us_equity_xq_search_sort_date(report_dates):
-   """Sorts report dates chronologically."""
-   dates = [date for date in report_dates if date.split('/')[-1] in ['Q1', 'Q6', 'Q9', 'FY']]
-   dates = [x.replace("FY", "QA") for x in dates]
-   dates.sort()
-   dates = [x.replace("QA", "FY") for x in dates]
-   return dates
-
-def us_equity_xq_store_csv(market, symbol, file_name, data, provider="xq"):
-    """Stores a DataFrame to a CSV file."""
-    try:
-        equity_folder = equity_sub_folder(market, symbol=symbol, sub_dir=provider)
-        file = os.path.join(equity_folder, file_name + '.csv')
-        data.to_csv(file)
-        logger.info(f"Stored data to {file}")
-    except Exception as e:
-        logger.error(f"Failed to store data for {symbol} to {file_name}.csv: {e}")
-
-def us_equity_xq_factors_load_csv(market, symbol, file_name, start_time, end_time, factors=['roe'], provider="xq"):
-    """Loads financial factors from a CSV within a date range."""
-    try:
-        equity_folder = equity_sub_folder(market, symbol=symbol, sub_dir=provider)
-        file = os.path.join(equity_folder, file_name + '.csv')
-        df = pd.read_csv(file)
-        df.set_index('REPORT_DATE', inplace=True)
-        df.index = pd.to_datetime(df.index)
-
-        start_date = pd.to_datetime(start_time)
-        end_date = pd.to_datetime(end_time)
-
-        mask = (df.index >= start_date) & (df.index <= end_date)
-        return df.loc[mask, factors]
-    except Exception as e:
-        logger.error(f"Failed to load factors for {symbol}: {e}")
-        return pd.DataFrame()
-
 # --- Main Execution Block ---
 
 if __name__ == "__main__":
@@ -193,14 +144,3 @@ if __name__ == "__main__":
     hk_data = finance_data_load_xq(market=hk_market, symbol=hk_symbol)
     if not hk_data.empty:
         print(hk_data.head())
-    
-    # --- Other Examples ---
-    print("\n--- Loading Daily Data ---")
-    daily_data = us_equity_xq_daily_data_load(market=cn_market, symbol=cn_symbol)
-    if not daily_data.empty:
-        print(daily_data.head())
-    
-    print("\n--- Loading Factors Data ---")
-    factors_data = us_equity_xq_factors_load_csv(market=cn_market, symbol=cn_symbol, file_name='factors', start_time='2021-01-01', end_time='2022-01-01')
-    if not factors_data.empty:
-        print(factors_data.head())

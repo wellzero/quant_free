@@ -7,7 +7,7 @@ import yfinance as yf
 from quant_free.utils.us_equity_utils import *
 from quant_free.dataset.us_equity_load import *
 
-_this_dir = Path(__file__).parent.parent
+
 
 
 def us_equity_get_trade_dates(market = 'us'):

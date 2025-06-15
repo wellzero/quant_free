@@ -1,7 +1,5 @@
 import sys
-from pathlib import Path
-_this_dir = Path(__file__).parent.parent.parent
-sys.path.append(str(_this_dir))
+
 
 from quant_free.dataset.us_equity_load import *
 from quant_free.factor.trend import *

@@ -1,7 +1,5 @@
 import sys
-from pathlib import Path
-_this_dir = Path(__file__).parent.parent.parent
-sys.path.append(str(_this_dir))
+
 
 import pandas as pd
 # import pandas_ta as ta

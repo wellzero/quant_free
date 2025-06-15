@@ -1,5 +1,10 @@
 import os
 import pandas as pd
+# Configure logging
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
@@ -231,3 +236,37 @@ def us_quity_multi_index_data_load(
   multi_index_df = pd.concat(list_df)
 
   return multi_index_df
+
+def us_equity_xq_daily_data_load(market, symbol='AAPL', options=['close'], sub_dir='xq'):
+    """Loads daily equity data."""
+    try:
+        data = us_dir1_load_csv(market,
+               dir0 = symbol, dir1 = sub_dir,
+              filename= 'daily.csv')
+
+        data.set_index('timestamp', inplace=True)
+        data = data.replace(['--', '_', 'None'], 0).fillna(0)
+        return data.loc[:, options]
+    except Exception as e:
+        logger.error(f"Failed to load daily data for {symbol}: {e}")
+        return pd.DataFrame()
+    
+
+def us_equity_xq_factors_load_csv(market, symbol, file_name, start_time, end_time, factors=['roe'], provider="xq"):
+    """Loads financial factors from a CSV within a date range."""
+    try:
+        data = us_dir1_load_csv(market,
+               dir0 = symbol, dir1 = 'xq',
+               filename= file_name + '.csv')
+
+        data.set_index('REPORT_DATE', inplace=True)
+        data.index = pd.to_datetime(data.index)
+
+        start_date = pd.to_datetime(start_time)
+        end_date = pd.to_datetime(end_time)
+
+        mask = (data.index >= start_date) & (data.index <= end_date)
+        return data.loc[mask, factors]
+    except Exception as e:
+        logger.error(f"Failed to load factors for {symbol}: {e}")
+        return pd.DataFrame()

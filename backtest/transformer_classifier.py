@@ -454,4 +454,4 @@ if __name__ == "__main__":
     )
 
     from quant_free.utils.backtest_utill import *
-    backtest_store_result(Path(__file__).parent, TransformerClassifier.parameters)
+    backtest_store_result(os.getenv("QUANT_FREE_ROOT"), TransformerClassifier.parameters)

@@ -8,7 +8,7 @@ def backtest_store_result(path, parameters):
     result_folder.mkdir(parents=True, exist_ok=True)
     
     # Move logs folder
-    logs_folder = path / 'logs'
+    logs_folder = path /'result'/'logs'
     if logs_folder.exists():
         for log_file in logs_folder.iterdir():
             log_file.rename(result_folder / log_file.name)

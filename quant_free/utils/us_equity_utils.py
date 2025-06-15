@@ -4,7 +4,10 @@ from pathlib import Path
 import yfinance as yf
 import pandas as pd
 
-_this_dir = Path(__file__).parent.parent
+def ensure_csv_extension(filename):
+    if not filename.endswith('.csv'):
+        filename += '.csv'
+    return filename
 
 def create_directory(root_dir, *subdirs):
     """Create a directory or nested directories if they don't exist."""
@@ -13,14 +16,14 @@ def create_directory(root_dir, *subdirs):
     return path
 
 def get_json_config_value(key = None):
-    config_path = os.path.join(_this_dir, '../config.json')
+    config_path = os.path.join(os.getenv("QUANT_FREE_ROOT"), 'config.json')
     with open(config_path) as file:
         config = json.load(file)
     return config[key]
 
 def get_root_directory():
     """Read the root directory path from the config.json file."""
-    config_path = os.path.join(_this_dir, '../config.json')
+    config_path = os.path.join(os.getenv("QUANT_FREE_ROOT"), 'config.json')
     with open(config_path) as file:
         config = json.load(file)
     return config['data_dir']
