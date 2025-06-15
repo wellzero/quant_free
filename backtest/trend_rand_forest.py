@@ -21,7 +21,7 @@ from sklearn.metrics import accuracy_score
 from credentials import AlpacaConfig
 
 import sys
-from pathlib import Path
+
 
 from quant_free.utils.us_equity_utils import *
 from quant_free.dataset.us_equity_load import *
