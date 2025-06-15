@@ -89,7 +89,7 @@ def download_all_index_data(market='cn'):
         except Exception as e:
             print(f"Failed to download data for {symbol}: {e}")
             continue
-        df = datacenter_xq.get_us_finance_daily_trade(symbol = symbol_xq) 
+
 
         if not df.empty:
             # Save daily data
