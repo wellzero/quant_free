@@ -5,9 +5,7 @@ import os
 import sys
 
 from quant_free.utils.us_equity_utils import create_directory, us_dir1_store_csv
-
-
-
+import efinance as ef
 
 
 def download_all_index_symbols(market='cn'):
@@ -22,11 +20,11 @@ def download_all_index_symbols(market='cn'):
         elif market == 'us':
             # Get US index symbols from a predefined list since akshare doesn't support US indexes
             us_indexes = [
-                {'symbol': '^GSPC', 'name': 'S&P 500'},
-                {'symbol': '^DJI', 'name': 'Dow Jones Industrial Average'},
-                {'symbol': '^IXIC', 'name': 'NASDAQ Composite'},
-                {'symbol': '^RUT', 'name': 'Russell 2000'},
-                {'symbol': '^VIX', 'name': 'CBOE Volatility Index'},
+                {'symbol': '.GSPC', 'name': 'S&P 500'},
+                {'symbol': '.DJI', 'name': 'Dow Jones Industrial Average'},
+                {'symbol': '.IXIC', 'name': 'NASDAQ Composite'},
+                {'symbol': '.RUT', 'name': 'Russell 2000'},
+                {'symbol': '.VIX', 'name': 'CBOE Volatility Index'},
             ]
             index_df = pd.DataFrame(us_indexes)
         else:
@@ -55,34 +53,11 @@ def download_all_index_symbols(market='cn'):
         print(f"Error downloading {market} index symbols: {e}")
         return pd.DataFrame()
 
-def download_index_daily_data(symbol, market='cn'):
-    """Download daily trade data for a specific index symbol in specified market"""
-    try:
-        if market == 'cn':
-            df = ak.stock_zh_index_daily_em(symbol=symbol)
-        elif market == 'hk':
-            df = ak.stock_hk_index_daily_em(symbol=symbol)
-        elif market == 'us':
-            # For US indexes, use stock_zh_a_hist instead
-            df = ak.stock_us_daily(symbol=symbol)
-        else:
-            print(f"Unsupported market: {market}")
-            return pd.DataFrame()
-            
-        # Rename Chinese columns to English
-        if not df.empty:
-            column_mapping = {
-                'date': 'timestamp',
-            }
-            df = df.rename(columns=column_mapping)
-        return df
-    except Exception as e:
-        print(f"Error downloading data for {market} index {symbol}: {e}")
-        return pd.DataFrame()
-
 def download_all_index_data(market='cn'):
     """Download all index symbols and their daily trade data for specified market"""
     # Get all index symbols
+    datacenter_xq = ef.stock.us_finance_xq_getter()
+
     index_df = download_all_index_symbols(market)
     
     if index_df.empty:
@@ -91,29 +66,39 @@ def download_all_index_data(market='cn'):
     # Save index symbols
     us_dir1_store_csv(
         market=market,
-        dir0='index',
-        dir1='symbols',
-        filename='symbols.csv',
+        dir0='symbol',
+        dir1='xq',
+        filename='index_symbol.csv',
         data=index_df,
         index=False
     )
-    
     # Download daily data for each index
     for _, row in index_df.iterrows():
-        symbol = row['symbol']
+
+        symbol = row['symbol'].upper()
+        symbol_xq = symbol
+
+        if market == 'hk':
+            symbol_xq = f"HK{symbol_xq}"
+
         print(f"Downloading data for {market} index: {symbol}")
         
         # Get daily data
-        daily_df = download_index_daily_data(symbol, market)
-        
-        if not daily_df.empty:
+        try:
+            df = datacenter_xq.get_us_finance_daily_trade(symbol=symbol_xq)
+        except Exception as e:
+            print(f"Failed to download data for {symbol}: {e}")
+            continue
+        df = datacenter_xq.get_us_finance_daily_trade(symbol = symbol_xq) 
+
+        if not df.empty:
             # Save daily data
             us_dir1_store_csv(
                 market=market,
                 dir0='index',
                 dir1=symbol,
                 filename='daily.csv',
-                data=daily_df,
+                data=df,
                 index=False
             )
     
@@ -121,6 +106,8 @@ def download_all_index_data(market='cn'):
 
 if __name__ == "__main__":
     # Download data for all supported markets
-    for market in ['cn', 'hk', 'us']:
+    # for market in ['cn', 'hk', 'us']:
+    for market in ['hk', 'us']:
+        print(f"Processing {market.upper()} market...")
         print(f"Processing {market.upper()} market...")
         download_all_index_data(market)
