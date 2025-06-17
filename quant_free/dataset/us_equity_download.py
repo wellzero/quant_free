@@ -112,16 +112,16 @@ def us_equity_efinance_finance_data_download(market = 'us', symbols = ['AAPL'], 
       efinance_symbol = datacenter.get_secucode(symbol)
       equity_folder = equity_sub_folder(market, symbol = symbol, sub_dir = provider)
 
-      data = datacenter.get_us_finance_income(symbol = efinance_symbol)
+      data = datacenter.xq_get_income(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'income')
 
-      data = datacenter.get_us_finance_cash(symbol = efinance_symbol)
+      data = datacenter.xq_get_cash(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'cash')
 
-      data = datacenter.get_us_finance_balance(symbol = efinance_symbol)
+      data = datacenter.xq_get_balance(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'balance')
 
-      data = datacenter.get_us_finance_main_factor(symbol = efinance_symbol)
+      data = datacenter.xq_get_indicator(symbol = efinance_symbol)
       us_equity_efinance_finance_store_csv(equity_folder, data, 'metrics')
     except:
       print(f"function {__name__} error!!")

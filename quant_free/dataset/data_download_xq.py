@@ -7,7 +7,7 @@ import efinance as ef
 
 # Read directory from JSON file
 
-def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider="xq"):
+def xq_finance_download(market = 'us', symbols = ['AAPL'], provider="xq"):
 
   datacenter = ef.stock.us_finance_xq_getter(market)
 
@@ -16,7 +16,7 @@ def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider=
       # xq_symbol = datacenter.get_secucode("MMM")
       print(f"Downloading {symbol} finance data...")
 
-      data = datacenter.get_us_finance_income(symbol = symbol)
+      data = datacenter.xq_get_income(symbol = symbol)
       us_dir1_store_csv(market=market,
                         dir0='equity',
                         dir1=symbol,
@@ -25,7 +25,7 @@ def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider=
                         data=data,
                         index=False)
 
-      data = datacenter.get_us_finance_cash(symbol = symbol)
+      data = datacenter.xq_get_cash(symbol = symbol)
       us_dir1_store_csv(market=market,
                         dir0='equity',
                         dir1=symbol,
@@ -34,7 +34,7 @@ def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider=
                         data=data,
                         index=False)
 
-      data = datacenter.get_us_finance_balance(symbol = symbol)
+      data = datacenter.xq_get_balance(symbol = symbol)
       us_dir1_store_csv(market=market,
                         dir0='equity',
                         dir1=symbol,
@@ -43,7 +43,7 @@ def equity_xq_finance_data_download(market = 'us', symbols = ['AAPL'], provider=
                         data=data,
                         index=False)
 
-      data = datacenter.get_us_finance_main_factor(symbol = symbol)
+      data = datacenter.xq_get_indicator(symbol = symbol)
       us_dir1_store_csv(market=market,
                         dir0='equity',
                         dir1=symbol,
@@ -60,7 +60,7 @@ def equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="x
     try:
       
       print(f"Downloading {symbol} trade data...")
-      data = datacenter_xq.get_us_finance_daily_trade(symbol = symbol)
+      data = datacenter_xq.xq_get_kline(symbol = symbol)
       us_dir1_store_csv(market=market,
                         dir0='equity',
                         dir1=symbol,
@@ -71,7 +71,7 @@ def equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="x
     except:
       print(f"function {__name__} {equity_xq_daily_data_download} error!!")
 
-def equity_xq_symbol_download(market = 'us'):
+def xq_symbol_download(market = 'us'):
   datacenter_xq = ef.stock.us_finance_xq_sector_getter(market)
   data = datacenter_xq.get_all_us_equity()
   us_dir1_store_csv(
@@ -106,7 +106,7 @@ def equity_xq_symbol_download(market = 'us'):
                       filename='us_star.csv',
                       data = data)
 
-def equity_xq_sector_download(market = 'us'):
+def xq_sector_download(market = 'us'):
   
   datacenter_xq = ef.stock.us_finance_xq_sector_getter(market)
   data = datacenter_xq.get_all_us_sector_name()
@@ -125,7 +125,7 @@ def equity_xq_sector_download(market = 'us'):
                       filename=row['name'] + '.csv',
                       data = data)
 
-def equity_xq_fund_download(market='us'):
+def xq_fund_download(market='us'):
     """Download data for each fund type."""
     datacenter_xq = ef.stock.us_finance_xq_getter(market)
     
@@ -160,7 +160,7 @@ def equity_xq_fund_download(market='us'):
             for index, row in data.iterrows():
                 fund_symbol = row['symbol']
                 print(f"Downloading daily trade data for {fund_name} fund: {fund_symbol}")
-                daily_data = datacenter_xq.get_us_finance_daily_trade(symbol=fund_symbol)
+                daily_data = datacenter_xq.xq_get_kline(symbol=fund_symbol)
                 us_dir1_store_csv(
                     market,
                     dir0='fund',

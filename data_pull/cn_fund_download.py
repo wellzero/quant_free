@@ -8,4 +8,4 @@ from quant_free.dataset.us_equity_download import *
 
 if __name__ == "__main__":
 
-    equity_xq_fund_download(market='cn')
+    xq_fund_download(market='cn')

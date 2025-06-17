@@ -85,7 +85,7 @@ def download_all_index_data(market='cn'):
         
         # Get daily data
         try:
-            df = datacenter_xq.get_us_finance_daily_trade(symbol=symbol_xq)
+            df = datacenter_xq.xq_get_kline(symbol=symbol_xq)
         except Exception as e:
             print(f"Failed to download data for {symbol}: {e}")
             continue
