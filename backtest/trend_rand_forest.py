@@ -87,7 +87,7 @@ class Trend(Strategy):
     def load_factor_model_train(self, symbol):
 
 
-      factor = multi_sym_daily_trade_load(
+      factor = multi_sym_daily_load(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
@@ -120,7 +120,7 @@ class Trend(Strategy):
 
       print(f"oob score {self.fit.oob_score_}")
 
-      test_factors = multi_sym_daily_trade_load(
+      test_factors = multi_sym_daily_load(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
@@ -209,7 +209,7 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = multi_sym_daily_trade_load(
+        df = multi_sym_daily_load(
             market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,

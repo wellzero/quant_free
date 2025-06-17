@@ -428,7 +428,7 @@ class FactorBase(ABC):
     print(f'preprocessing {sector}')
 
     df = copy.deepcopy(
-        us_quity_multi_index_data_load(
+        multi_sym_daily_load_multi_index(
         self.market,
         sector_name = sector,
         start_date = self.start_date,
@@ -521,7 +521,7 @@ class FactorBase(ABC):
       sector_price = sector_price.loc[:, sector]
       sector_price.name = "sector_price"
 
-    dict_data = multi_sym_daily_trade_load(
+    dict_data = multi_sym_daily_load(
                                       self.market,
                                       symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 

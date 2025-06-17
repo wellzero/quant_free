@@ -107,7 +107,7 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def multi_sym_daily_trade_load(
+def multi_sym_daily_load(
     market = 'us', 
     symbols = ['AAPL'],
     start_date = '2023-05-29',
@@ -176,7 +176,7 @@ def multi_sym_daily_trade_load(
   return data
 
 # load data fro a sector
-def us_equity_sector_daily_data_load(
+def equity_sector_daily_load(
     market = 'us',
     sector_name = 'Semiconductor Products and Equipment',
     start_date = '2023-05-29',
@@ -188,7 +188,7 @@ def us_equity_sector_daily_data_load(
     dir0 = 'symbol', dir1 = 'xq',
     filename= sector_name +'.csv')['symbol'].values
 
-  return multi_sym_daily_trade_load(
+  return multi_sym_daily_load(
     market,
     symbols = symbols,
     start_date = start_date,
@@ -197,7 +197,7 @@ def us_equity_sector_daily_data_load(
     dir_option = dir_option)
 
 # multi index load [date ticker]
-def us_quity_multi_index_data_load(
+def multi_sym_daily_load_multi_index(
     market = 'us',
     sector_name = '半导体产品与设备', 
     start_date = '2023-05-29',
@@ -226,7 +226,7 @@ def us_quity_multi_index_data_load(
   else:
     symbols = df_symbol['symbol'].values
   
-  dict_df = multi_sym_daily_trade_load(
+  dict_df = multi_sym_daily_load(
     market,
     symbols = symbols,
     start_date = start_date,

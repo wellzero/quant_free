@@ -17,7 +17,7 @@ class SectorsRatio:
         if (data_symbols.empty == False):
           symbols = data_symbols['symbol'].values
 
-          data = multi_sym_daily_trade_load(
+          data = multi_sym_daily_load(
                                             self.market, 
                                             symbols = symbols, 
                                             start_date = self.start_date,

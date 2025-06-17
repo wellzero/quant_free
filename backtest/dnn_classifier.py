@@ -179,7 +179,7 @@ class DNNClassifier(Strategy):
 
     def load_factor_model_train(self, symbol):
         # Load and preprocess data
-        factor = multi_sym_daily_trade_load(
+        factor = multi_sym_daily_load(
           self.market,
             symbols=[symbol],
             start_date=self.parameters["training_start_date"],
@@ -210,7 +210,7 @@ class DNNClassifier(Strategy):
                       verbose=1)
 
         # Load test data
-        test_factors = multi_sym_daily_trade_load(
+        test_factors = multi_sym_daily_load(
           self.market,
             symbols=[symbol],
             start_date=self.parameters["test_start_date"],
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     backtesting_end = pd.to_datetime(DNNClassifier.parameters["test_end_date"])
     symbol = DNNClassifier.parameters["symbol"]
     
-    df = multi_sym_daily_trade_load(
+    df = multi_sym_daily_load(
         market = 'us',
         symbols=[symbol],
         start_date=backtesting_start,

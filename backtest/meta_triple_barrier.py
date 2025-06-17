@@ -81,7 +81,7 @@ class Trend(Strategy):
 
     def load_labeling(self, symbol):
        
-        data = multi_sym_daily_trade_load(
+        data = multi_sym_daily_load(
           self.market,
             symbols = [symbol],
             start_date = backtesting_start,
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = multi_sym_daily_trade_load(
+        df = multi_sym_daily_load(
             market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,

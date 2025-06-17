@@ -67,7 +67,7 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
     symbols = data_index['symbol'].values
     name = data_index['name'].values
 
-    data_trade = multi_sym_daily_trade_load(market=market,
+    data_trade = multi_sym_daily_load(market=market,
                                                     equity=equity,
                                                     dir_option = '',
                                                     symbols = symbols,

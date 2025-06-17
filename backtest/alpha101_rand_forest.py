@@ -65,7 +65,7 @@ class Alpha101(Strategy):
 
     def load_factor_model_train(self, symbol):
         """Load and train the Random Forest model."""
-        factor = multi_sym_daily_trade_load(
+        factor = multi_sym_daily_load(
             self.market,
             symbols=[symbol],
             start_date=self.parameters["training_start_date"],
@@ -102,7 +102,7 @@ class Alpha101(Strategy):
 
     def load_test_data(self, symbol):
         """Load test data for evaluation."""
-        test_factors = multi_sym_daily_trade_load(
+        test_factors = multi_sym_daily_load(
             self.market,
             symbols=[symbol],
             start_date=self.parameters["test_start_date"],
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         symbol = Alpha101.parameters["symbol"]
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = multi_sym_daily_trade_load(
+        df = multi_sym_daily_load(
             market='us',
             symbols=[symbol],
             start_date=backtesting_start,
