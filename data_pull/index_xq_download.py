@@ -106,8 +106,6 @@ def download_all_index_data(market='cn'):
 
 if __name__ == "__main__":
     # Download data for all supported markets
-    # for market in ['cn', 'hk', 'us']:
-    for market in ['hk', 'us']:
-        print(f"Processing {market.upper()} market...")
+    for market in ['cn', 'hk', 'us']:
         print(f"Processing {market.upper()} market...")
         download_all_index_data(market)
