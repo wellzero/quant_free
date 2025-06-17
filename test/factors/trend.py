@@ -1,7 +1,7 @@
 import sys
 
 
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.factor.trend import *
 
 if __name__ == "__main__":

@@ -9,26 +9,49 @@ from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 
-def us_equity_data_load(
+# def daily_trade_load(market, symbol='AAPL', options=['close'], sub_dir='xq'):
+#     """Loads daily equity data."""
+#     try:
+#         data = us_dir1_load_csv(market,
+#                  dir0 = 'equity',
+#                  dir1 = symbol,
+#                  dir2 = sub_dir,
+#                  filename= 'daily.csv')
+
+#         data.set_index('timestamp', inplace=True)
+#         data = data.replace(['--', '_', 'None'], 0).fillna(0)
+#         return data.loc[:, options]
+#     except Exception as e:
+#         logger.error(f"Failed to load daily data for {symbol}: {e}")
+#         return pd.DataFrame()
+    
+def daily_trade_load(
     market = 'us', 
     equity='equity',
     symbol = 'AAPL',
-    dir_option = '',
+    dir_option = 'xq',
     file_name = 'daily.csv',
     interval = 'day'):
+  """Load equity data from a CSV file.
+  Args:
+      market (str): The market type, e.g., 'us'.
+      equity (str): The type of equity, e.g., 'equity' or 'index'.
+      symbol (str): The stock symbol.
+      dir_option (str): Optional directory option for additional subdirectories.
+      file_name (str): The name of the CSV file to load.
+      interval (str): The time interval for the data, e.g., 'day' or 'minute'.
+  Returns:
+      pd.DataFrame: The loaded DataFrame with the date as the index.
+  """
+  data = us_dir1_load_csv(
+     market,
+     dir0 = equity,
+     dir1 = dir_option,
+     dir2 = symbol,
+     filename = file_name)
   
-  equity_folder = us_equity_folder(market, equity=equity, symbol = symbol)
-  if dir_option == '':
-    equity_file = os.path.join(equity_folder, file_name)
-  else:
-    equity_file = os.path.join(equity_folder, dir_option, file_name)
-  data = pd.read_csv(equity_file)
-
   if 'timestamp' in data.columns:
     data.rename(columns={'timestamp': 'date'}, inplace=True)
-  elif 'Unnamed: 0' in data.columns and 'Unnamed: 1' in data.columns :
-    # Assuming df is your DataFrame
-    data.rename(columns = {'Unnamed: 0' : 'symbol', 'Unnamed: 1' : 'date'}, inplace=True)
 
   data.set_index('date', inplace=True)
   data = data.sort_index()
@@ -50,18 +73,18 @@ def equity_tradedate_load_within_range(
 
     # Download historical stock data
   if market == "us":
-    stock_data = us_equity_data_load(
+    stock_data = daily_trade_load(
                   market,
                   symbol = "AAPL",
                   dir_option = dir_option)
   elif market == "cn":
-    stock_data = us_equity_data_load(
+    stock_data = daily_trade_load(
                   market = market,
                   equity = 'index',
                   symbol = 'SH000001',
                   file_name = 'daily.csv')
   elif market == "hk":
-    stock_data = us_equity_data_load(
+    stock_data = daily_trade_load(
                   market = market,
                   equity = 'index',
                   symbol = 'HSCI',
@@ -71,7 +94,7 @@ def equity_tradedate_load_within_range(
 
   return trade_dates_time
 
-def us_equity_symbol_load(market = 'us'):
+def symbol_load(market = 'us'):
   df = us_dir1_load_csv(market,
                         dir0 = 'symbol',
                         dir1 = 'xq',
@@ -84,7 +107,7 @@ def convert_to_string_if_number(value):
         return str(value)
     return value
 
-def equity_tradedata_load(
+def multi_sym_daily_trade_load(
     market = 'us', 
     symbols = ['AAPL'],
     start_date = '2023-05-29',
@@ -105,19 +128,11 @@ def equity_tradedata_load(
 
   lack_list = []
   for symbol in symbols:
-    # print(symbol)
-    equity_folder = us_equity_folder(market, equity = equity, symbol = convert_to_string_if_number(symbol))
-    if dir_option == '':
-      equity_file = os.path.join(equity_folder, file_name)
-    else:
-      equity_file = os.path.join(equity_folder, dir_option, file_name)
-
-    
-    if os.path.exists(equity_file):
+    try:
       # try:
         # print(f"loading {symbol} trade data...")
 
-        data_tmp = us_equity_data_load(market = market,
+        data_tmp = daily_trade_load(market = market,
                                        equity = equity,
                                        symbol = symbol,
                                        dir_option = dir_option,
@@ -152,8 +167,8 @@ def equity_tradedata_load(
           print(f"lack of some trade date skip {symbol}, date_start {df_filled.head(1).index}")
       # except:
       #   print(f"lack of some trade date skip {symbol}, data row {data_tmp.shape[0]}, date_start {df_filled.index[0]}, end_start {df_filled.index[-1]}")
-    else:
-      print(f"lack of some trade date skip {symbol}, file not exist {equity_file}")
+    except Exception as e:
+      print(f"market {market} lack of some trade date skip {symbol}, file not exist {file_name}")
       lack_list.append(symbol)
 
   if len(lack_list) > 0:
@@ -173,7 +188,7 @@ def us_equity_sector_daily_data_load(
     dir0 = 'symbol', dir1 = 'xq',
     filename= sector_name +'.csv')['symbol'].values
 
-  return equity_tradedata_load(
+  return multi_sym_daily_trade_load(
     market,
     symbols = symbols,
     start_date = start_date,
@@ -211,7 +226,7 @@ def us_quity_multi_index_data_load(
   else:
     symbols = df_symbol['symbol'].values
   
-  dict_df = equity_tradedata_load(
+  dict_df = multi_sym_daily_trade_load(
     market,
     symbols = symbols,
     start_date = start_date,
@@ -241,24 +256,14 @@ def us_quity_multi_index_data_load(
 
   return multi_index_df
 
-def us_equity_xq_daily_data_load(market, symbol='AAPL', options=['close'], sub_dir='xq'):
-    """Loads daily equity data."""
-    try:
-        data = us_dir1_load_csv(market,
-                 dir0 = 'equity',
-                 dir1 = symbol,
-                 dir2 = sub_dir,
-                 filename= 'daily.csv')
-
-        data.set_index('timestamp', inplace=True)
-        data = data.replace(['--', '_', 'None'], 0).fillna(0)
-        return data.loc[:, options]
-    except Exception as e:
-        logger.error(f"Failed to load daily data for {symbol}: {e}")
-        return pd.DataFrame()
-    
-
-def us_equity_xq_factors_load_csv(market, symbol, file_name, start_time, end_time, factors=['roe'], provider="xq"):
+def factor_load(
+      market,
+      symbol,
+      file_name,
+      start_time,
+      end_time,
+      factors=['roe'],
+      provider="xq"):
     """Loads financial factors from a CSV within a date range."""
     try:
         data = us_dir1_load_csv(market,

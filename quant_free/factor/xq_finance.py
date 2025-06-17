@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.dataset.finance_data_load_xq import *
 
 import pandas as pd
@@ -141,7 +141,7 @@ class xq_finance:
     
     df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
-    daily_data = us_equity_xq_daily_data_load(self.market, symbol, ['pe', 'market_capital', 'ps', 'pcf'])
+    daily_data = daily_trade_load(self.market, symbol, ['pe', 'market_capital', 'ps', 'pcf'])
     daily_data.index = [it[:10] for it in daily_data.index]
     daily_trade_dates = daily_data.index
 
@@ -357,7 +357,7 @@ class xq_finance:
     for symbol in self.symbols:
       # print("calc symbol ", symbol)
       try:
-        df = us_equity_xq_factors_load_csv(self.market, symbol, "finance_factor", self.start_time, self.end_time, self.factors)
+        df = factor_load(self.market, symbol, "finance_factor", self.start_time, self.end_time, self.factors)
         
         
         df.index = pd.MultiIndex.from_product([df.index, [symbol]], names=['REPORT', 'symbol'])

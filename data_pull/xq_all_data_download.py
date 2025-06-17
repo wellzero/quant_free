@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from quant_free.dataset.xq_data_download import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.dataset.us_equity_download import *
 
 def download_market_data(market, skip_finance=False):
@@ -27,7 +27,7 @@ def download_market_data(market, skip_finance=False):
     xq_sector_download(market)
     
     # Daily trade data
-    symbols = us_equity_symbol_load(market)
+    symbols = symbol_load(market)
     xq_kline_download(market, symbols)
     
     # Finance report (optional)

@@ -3,7 +3,7 @@ import sys
 
 import pandas as pd
 # import pandas_ta as ta
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.factor.price import *
 
@@ -67,7 +67,7 @@ def find_index_parity(market = 'cn', start_date = '2014-01-29', end_date = '2024
     symbols = data_index['symbol'].values
     name = data_index['name'].values
 
-    data_trade = equity_tradedata_load(market=market,
+    data_trade = multi_sym_daily_trade_load(market=market,
                                                     equity=equity,
                                                     dir_option = '',
                                                     symbols = symbols,

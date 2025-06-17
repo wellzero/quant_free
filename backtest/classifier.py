@@ -24,7 +24,7 @@ import sys
 
 
 from quant_free.utils.us_equity_utils import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 
 
 
@@ -89,7 +89,7 @@ class factors_classifier(Strategy):
     def load_factor_model_train(self, symbol):
 
 
-      factor = equity_tradedata_load(
+      factor = multi_sym_daily_trade_load(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["training_start_date"],
@@ -169,7 +169,7 @@ class factors_classifier(Strategy):
       accuracy = accuracy_score(cont['bin'], train_pred)
       print(f"Training accuracy: {accuracy}")
 
-      test_factors = equity_tradedata_load(
+      test_factors = multi_sym_daily_trade_load(
           self.market,
           symbols = [symbol],
           start_date = self.parameters["test_start_date"],
@@ -291,7 +291,7 @@ if __name__ == "__main__":
         symbol = factors_classifier.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_tradedata_load(
+        df = multi_sym_daily_trade_load(
             market = 'us'
             symbols = [symbol],
             start_date = backtesting_start,

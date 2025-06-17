@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.dataset.us_equity_efinance_load import *
 from quant_free.common.us_equity_common import *
 
@@ -143,7 +143,7 @@ class finance_factors_calc:
     df_dates = df.index
     df_date_times = [convert_to_financial_datetime(date) for date in df.index]
 
-    daily_data = us_equity_data_load(self.market, symbol)['close']
+    daily_data = daily_trade_load(self.market, symbol)['close']
     daily_trade_dates = daily_data.index
 
     dates = []

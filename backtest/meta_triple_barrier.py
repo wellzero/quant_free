@@ -24,7 +24,7 @@ import sys
 
 
 from quant_free.utils.us_equity_utils import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 
 from quant_free.finml.labeling.labeling import *
 from quant_free.finml.features.volatility import daily_volatility
@@ -81,7 +81,7 @@ class Trend(Strategy):
 
     def load_labeling(self, symbol):
        
-        data = equity_tradedata_load(
+        data = multi_sym_daily_trade_load(
           self.market,
             symbols = [symbol],
             start_date = backtesting_start,
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         symbol = Trend.parameters["symbol"] # "AAPL"
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_tradedata_load(
+        df = multi_sym_daily_trade_load(
             market = 'us',
             symbols = [symbol],
             start_date = backtesting_start,

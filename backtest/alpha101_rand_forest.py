@@ -18,7 +18,7 @@ import sys
 
 
 from credentials import AlpacaConfig
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.utils.backtest_utill import backtest_store_result
 
@@ -65,7 +65,7 @@ class Alpha101(Strategy):
 
     def load_factor_model_train(self, symbol):
         """Load and train the Random Forest model."""
-        factor = equity_tradedata_load(
+        factor = multi_sym_daily_trade_load(
             self.market,
             symbols=[symbol],
             start_date=self.parameters["training_start_date"],
@@ -102,7 +102,7 @@ class Alpha101(Strategy):
 
     def load_test_data(self, symbol):
         """Load test data for evaluation."""
-        test_factors = equity_tradedata_load(
+        test_factors = multi_sym_daily_trade_load(
             self.market,
             symbols=[symbol],
             start_date=self.parameters["test_start_date"],
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         symbol = Alpha101.parameters["symbol"]
         asset = Asset(symbol=symbol, asset_type="stock")
 
-        df = equity_tradedata_load(
+        df = multi_sym_daily_trade_load(
             market='us',
             symbols=[symbol],
             start_date=backtesting_start,

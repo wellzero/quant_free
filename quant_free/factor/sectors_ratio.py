@@ -1,4 +1,4 @@
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 
 class SectorsRatio:
   def __init__(self, sectors, start_date, end_date, column_option = 'market_capital', dir = 'fh', market = 'us'):
@@ -17,7 +17,7 @@ class SectorsRatio:
         if (data_symbols.empty == False):
           symbols = data_symbols['symbol'].values
 
-          data = equity_tradedata_load(
+          data = multi_sym_daily_trade_load(
                                             self.market, 
                                             symbols = symbols, 
                                             start_date = self.start_date,

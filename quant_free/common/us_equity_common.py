@@ -5,13 +5,13 @@ import os
 import pandas as pd
 import yfinance as yf
 from quant_free.utils.us_equity_utils import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 
 
 
 
 def us_equity_get_trade_dates(market = 'us'):
-  df = us_equity_data_load(market)
+  df = daily_trade_load(market)
   return df.index
 
 def us_equity_get_trade_date_within_range(market = 'us', symbol = "AAPL", start_date = '2023-05-29', end_date = '2024-05-29', dir_option = ''):

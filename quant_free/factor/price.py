@@ -1,6 +1,6 @@
 
 from quant_free.common.us_equity_common import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # def calculate_ratio_changes(symbol, target_date, days_before, days_after):
 #     # Convert the input data to a pandas DataFrame
 
-#     df = us_equity_data_load(symbol)
+#     df = daily_trade_load(symbol)
 #     df.index = pd.to_datetime(df.index)
 
 #     # Find the nearest date in the data frame
@@ -33,7 +33,7 @@ def finance_calculate_ratio_changes(df_factor, days_before, days_after):
     for symbol, symbol_data in df_factor.groupby(level='symbol'):
         # print("symbol: ", symbol)
         try:
-            df = us_equity_data_load(symbol = symbol)
+            df = daily_trade_load(symbol = symbol)
             df.index = pd.to_datetime(df.index)
             date_index = df.index
             # Iterate over each row in the symbol data
@@ -77,7 +77,7 @@ class PriceRatio:
     self.dir_option = dir_option
     self.market = market
 
-    df_daily_trade = us_equity_data_load(market, symbol = symbol, dir_option = dir_option)[column_option]
+    df_daily_trade = daily_trade_load(market, symbol = symbol, dir_option = dir_option)[column_option]
     df_daily_trade.index = pd.to_datetime(pd.to_datetime(df_daily_trade.index).date)
     self.df_daily_trade = df_daily_trade
     return

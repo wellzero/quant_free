@@ -21,7 +21,7 @@ from tqdm.auto import tqdm
 from factorlab.feature_engineering.transformations import Transform as TransformLib
 
 from quant_free.common.us_equity_common import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.dataset.us_equity_store import *
 from quant_free.utils.us_equity_utils import *
 
@@ -521,7 +521,7 @@ class FactorBase(ABC):
       sector_price = sector_price.loc[:, sector]
       sector_price.name = "sector_price"
 
-    dict_data = equity_tradedata_load(
+    dict_data = multi_sym_daily_trade_load(
                                       self.market,
                                       symbols = [symbol], start_date = self.start_date,
                                       end_date = self.end_date, column_option = "all", 

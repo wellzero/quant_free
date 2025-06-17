@@ -6,7 +6,7 @@ from sklearn import linear_model
 
 import copy
 
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 from quant_free.factor.base import FactorBase
 
 
@@ -29,7 +29,7 @@ class Alpha191(FactorBase):
         
         df_ids = data.index.get_level_values(0)
 
-        benchmark = equity_tradedata_load(
+        benchmark = multi_sym_daily_trade_load(
                                     self.market,
                                     symbols = [self.ref_index], start_date = self.start_date,
                                     end_date = self.end_date, column_option = "all", 

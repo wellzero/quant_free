@@ -6,11 +6,11 @@ import sys
 
 from quant_free.factor.xq_finance import *
 from quant_free.dataset.finance_data_load_xq import *
-from quant_free.dataset.us_equity_load import *
+from quant_free.dataset.equity_load import *
 
 
 if __name__ == '__main__':
-  # symbols = us_equity_symbol_load(market = 'us')
+  # symbols = symbol_load(market = 'us')
   # symbols = ['AAPL', 'NVDA']
   #symbols = ['TEAM', 'IAU', 'DKILY', 'OLCLY']
   # symbols = ['WFC', 'AXP', 'BX', 'GS']
@@ -19,7 +19,7 @@ if __name__ == '__main__':
   # data = finance_data_load_xq(symbols)
   # print(data)
 
-  symbols = us_equity_symbol_load(market = 'us')
+  symbols = symbol_load(market = 'us')
   # symbols = ['AAPL', 'NVDA']
   # symbols = ['XOM', 'WMT', 'COST']
   # symbols = ['MS', 'NOW', 'BX', 'GS', 'SCHW']
