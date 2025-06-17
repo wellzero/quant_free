@@ -54,7 +54,7 @@ def xq_finance_download(market = 'us', symbols = ['AAPL'], provider="xq"):
     except:
       print(f"function {__name__} error!!")
 
-def equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="xq"):
+def xq_kline_download(market = 'us', symbols = ['AAPL'], provider="xq"):
   datacenter_xq = ef.stock.us_finance_xq_getter()
   for symbol in symbols:
     try:
@@ -69,7 +69,7 @@ def equity_xq_daily_data_download(market = 'us', symbols = ['AAPL'], provider="x
                         data=data,
                         index=False)
     except:
-      print(f"function {__name__} {equity_xq_daily_data_download} error!!")
+      print(f"function {__name__} {xq_kline_download} error!!")
 
 def xq_symbol_download(market = 'us'):
   datacenter_xq = ef.stock.us_finance_xq_sector_getter(market)

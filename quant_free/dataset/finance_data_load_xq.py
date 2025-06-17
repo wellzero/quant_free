@@ -54,7 +54,8 @@ class FinancialDataProcessor:
                  filename= statement_type)
             return df.loc[:, ~df.columns.str.startswith('subtitle')]
         except FileNotFoundError:
-            logger.error(f"File not found: {statement_type} for {self.symbol} in {self.market} market.")
+            logger.error(f"File not found: {statement_type}\
+                         for {self.symbol} in {self.market} market.")
             raise
 
     def _adapt_statement(self, df: pd.DataFrame, title_map: dict) -> pd.DataFrame:
@@ -62,7 +63,8 @@ class FinancialDataProcessor:
         df_adapted = df.copy()
         
         # Rename columns
-        title_cn = [title_map.get(key, key) for key in df_adapted.columns[self.ignore_cols:]]
+        title_cn = [title_map.get(key, key) 
+            for key in df_adapted.columns[self.ignore_cols:]]
         df_adapted.columns = list(df_adapted.columns[:self.ignore_cols]) + title_cn
 
         df_adapted['report_name'] = df_adapted['report_name'].str.replace('年', '/')
@@ -98,13 +100,19 @@ class FinancialDataProcessor:
             metrics_raw = self._load_raw_statement('metrics')
 
             # Adapt
-            income = self._adapt_statement(income_raw, self.xq_names['incomes'])
-            cash = self._adapt_statement(cash_raw, self.xq_names['cashes'])
-            balance = self._adapt_statement(balance_raw, self.xq_names['balances'])
-            indicators = self._adapt_statement(metrics_raw, self.xq_names['indicators'])
+            income = self._adapt_statement(income_raw,
+                self.xq_names['incomes'])
+            cash = self._adapt_statement(cash_raw,
+                self.xq_names['cashes'])
+            balance = self._adapt_statement(balance_raw,
+                self.xq_names['balances'])
+            indicators = self._adapt_statement(metrics_raw,
+                self.xq_names['indicators'])
 
             # Combine
-            data = pd.concat([df.loc[~df.index.duplicated(keep='first')] for df in [income, cash, balance, indicators]], axis=1, join='outer')
+            data = pd.concat([df.loc[~df.index.duplicated(keep='first')] 
+                for df in [income, cash, balance, indicators]],
+                axis=1, join='outer')
 
             # Fill any NaN values that may result from the outer join
             data.fillna(0, inplace=True)
