@@ -67,7 +67,20 @@ class FinancialDataProcessor:
             for key in df_adapted.columns[self.ignore_cols:]]
         df_adapted.columns = list(df_adapted.columns[:self.ignore_cols]) + title_cn
 
-        df_adapted['report_name'] = df_adapted['report_name'].str.replace('年', '/')
+        if self.market == 'us':
+            # For US market, we need to handle the 'report_name' column
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年FY', 'Q4')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年Q9', 'Q3')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年Q6', 'Q2')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年Q1', 'Q1')
+        elif self.market in ['cn', 'hk']:
+            # For CN and HK markets, we need to handle the 'report_name' column differently
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年报', 'Q4')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('三季报', 'Q3')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('半年报', 'Q2')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('中报', 'Q2')
+            df_adapted['report_name'] = df_adapted['report_name'].str.replace('一季报', 'Q1')
+
         df_adapted.set_index('report_name', inplace=True)
 
         # Convert string representations of lists to actual lists
@@ -116,6 +129,8 @@ class FinancialDataProcessor:
 
             # Fill any NaN values that may result from the outer join
             data.fillna(0, inplace=True)
+
+            data.sort_index(inplace=True)
 
             return data.loc[:, ~data.columns.duplicated()]
         except Exception as e:
