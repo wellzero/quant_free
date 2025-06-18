@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from quant_free.dataset.xq_data_download import *
-from quant_free.dataset.equity_load import *
+from quant_free.dataset.xq_data_load import *
 from quant_free.dataset.us_equity_download import *
 
 def download_market_data(market, skip_finance=False):

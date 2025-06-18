@@ -1,6 +1,6 @@
 
 from quant_free.common.us_equity_common import *
-from quant_free.dataset.equity_load import *
+from quant_free.dataset.xq_data_load import *
 
 import pandas as pd
 from datetime import datetime, timedelta

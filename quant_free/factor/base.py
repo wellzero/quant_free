@@ -21,7 +21,7 @@ from tqdm.auto import tqdm
 from factorlab.feature_engineering.transformations import Transform as TransformLib
 
 from quant_free.common.us_equity_common import *
-from quant_free.dataset.equity_load import *
+from quant_free.dataset.xq_data_load import *
 from quant_free.dataset.us_equity_store import *
 from quant_free.utils.us_equity_utils import *
 

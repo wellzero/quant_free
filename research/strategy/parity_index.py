@@ -3,7 +3,7 @@ import sys
 
 import pandas as pd
 # import pandas_ta as ta
-from quant_free.dataset.equity_load import *
+from quant_free.dataset.xq_data_load import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.factor.price import *
 

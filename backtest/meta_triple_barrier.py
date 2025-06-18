@@ -24,7 +24,7 @@ import sys
 
 
 from quant_free.utils.us_equity_utils import *
-from quant_free.dataset.equity_load import *
+from quant_free.dataset.xq_data_load import *
 
 from quant_free.finml.labeling.labeling import *
 from quant_free.finml.features.volatility import daily_volatility

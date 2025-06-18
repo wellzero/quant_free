@@ -124,7 +124,7 @@ class FinancialDataProcessor:
 
 # --- Standalone Utility Functions (Kept for compatibility or other uses) ---
 
-def finance_data_load_xq(market='us', symbol='AAPL'):
+def xq_finance_load(market='us', symbol='AAPL'):
     """Main function to load financial data for a given symbol."""
     processor = FinancialDataProcessor(market, symbol)
     return processor.get_full_financials()
@@ -134,7 +134,7 @@ def finance_data_load_xq(market='us', symbol='AAPL'):
 if __name__ == "__main__":
     # --- US Example ---
     print("--- Loading US Data for JPM ---")
-    us_data = finance_data_load_xq(market='us', symbol='JPM')
+    us_data = xq_finance_load(market='us', symbol='JPM')
     if not us_data.empty:
         print(us_data.head())
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     print("\n--- Loading CN Data for SH600519 ---")
     cn_market = 'cn'
     cn_symbol = 'SH600519'
-    cn_data = finance_data_load_xq(market=cn_market, symbol=cn_symbol)
+    cn_data = xq_finance_load(market=cn_market, symbol=cn_symbol)
     if not cn_data.empty:
         print(cn_data.head())
 
@@ -150,6 +150,6 @@ if __name__ == "__main__":
     print("\n--- Loading HK Data for SH600519 ---")
     hk_market = 'hk'
     hk_symbol = '02882'
-    hk_data = finance_data_load_xq(market=hk_market, symbol=hk_symbol)
+    hk_data = xq_finance_load(market=hk_market, symbol=hk_symbol)
     if not hk_data.empty:
         print(hk_data.head())
