@@ -24,9 +24,9 @@ class Market(Enum):
     CN = 'cn'
 
 MARKET_IGNORE_COLUMNS = {
-    Market.US.value: 7,
-    Market.HK.value: 6,
-    Market.CN.value: 3,
+    Market.US.value: 5,
+    Market.HK.value: 4,
+    Market.CN.value: 2,
 }
 
 # --- Core Financial Data Loading Class ---
@@ -58,49 +58,124 @@ class FinancialDataProcessor:
                          for {self.symbol} in {self.market} market.")
             raise
 
-    def _adapt_statement(self, df: pd.DataFrame, title_map: dict) -> pd.DataFrame:
-        """Adapts and cleans a financial statement DataFrame."""
-        df_adapted = df.copy()
-        
-        # Rename columns
-        title_cn = [title_map.get(key, key) 
-            for key in df_adapted.columns[self.ignore_cols:]]
-        df_adapted.columns = list(df_adapted.columns[:self.ignore_cols]) + title_cn
+    def _rename_columns(self, df: pd.DataFrame, title_map: dict) -> pd.DataFrame:
+        """Renames columns using the provided title_map."""
+        title_cn = [title_map.get(key, key) for key in df.columns]
+        df.columns = title_cn
+        return df
 
+    def _standardize_report_names(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardizes report names based on the market."""
         if self.market == 'us':
-            # For US market, we need to handle the 'report_name' column
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年FY', 'Q4')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年Q9', 'Q3')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年Q6', 'Q2')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年Q1', 'Q1')
+            df['report_name'] = df['report_name'].str.replace('年FY', 'Q4')
+            df['report_name'] = df['report_name'].str.replace('年Q9', 'Q3')
+            df['report_name'] = df['report_name'].str.replace('年Q6', 'Q2')
+            df['report_name'] = df['report_name'].str.replace('年Q1', 'Q1')
         elif self.market in ['cn', 'hk']:
-            # For CN and HK markets, we need to handle the 'report_name' column differently
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('年报', 'Q4')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('三季报', 'Q3')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('半年报', 'Q2')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('中报', 'Q2')
-            df_adapted['report_name'] = df_adapted['report_name'].str.replace('一季报', 'Q1')
+            df['report_name'] = df['report_name'].str.replace('年报', 'Q4')
+            df['report_name'] = df['report_name'].str.replace('三季报', 'Q3')
+            df['report_name'] = df['report_name'].str.replace('半年报', 'Q2')
+            df['report_name'] = df['report_name'].str.replace('中报', 'Q2')
+            df['report_name'] = df['report_name'].str.replace('一季报', 'Q1')
+        return df
 
-        df_adapted.set_index('report_name', inplace=True)
-
-        # Convert string representations of lists to actual lists
-        def str_to_list(cell): 
+    def _convert_string_lists(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Converts string representations of lists to actual lists."""
+        def str_to_list(cell):
             try:
                 return ast.literal_eval(cell)
             except (ValueError, SyntaxError):
                 return cell
-        df_adapted = df_adapted.applymap(str_to_list)
+        return df.applymap(str_to_list)
 
-        # Extract the first value from lists
+    def _extract_first_value(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Extracts the first value from lists in the DataFrame."""
         def get_first_value(cell):
             if isinstance(cell, list) and len(cell) > 1:
                 return cell[0]
             return cell
-        df_adapted = df_adapted.applymap(get_first_value)
+        return df.applymap(get_first_value)
 
-        df_adapted = df_adapted.sort_values(by='ctime', ascending=True)
-        df_adapted.replace({'--': 0, '_': 0, 'None': 0}, inplace=True)
-        df_adapted.fillna(0, inplace=True)
+    def _clean_and_sort(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Cleans and sorts the DataFrame."""
+        df.sort_index(inplace=True)
+        df.replace({'--': 0, '_': 0, 'None': 0}, inplace=True)
+        df.fillna(0, inplace=True)
+        return df
+
+    def _get_quarter(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculates quarter-over-quarter differences for financial statements.
+        
+        Args:
+            df (pd.DataFrame): Input DataFrame with financial data
+            
+        Returns:
+            pd.DataFrame: DataFrame with quarter differences calculated
+            
+        Notes:
+            - For US market: Q1 values are kept as-is, Q2-Q4 show quarter differences
+            - For HK market: Q1-Q2 values are kept as-is, Q3-Q4 show quarter differences
+            - For CN market: Same as HK market
+        """
+        try:
+            
+            # Determine which quarters to keep as-is vs calculate differences
+            skip_quarters = {
+                'us': 'Q1',    # US: Only Q1 kept as-is
+                'hk': 'Q2', # HK: Q2 kept as-is
+                'cn': 'Q1'  # CN: Q1 kept as-is
+            }.get(self.market, [1])  # Default to US behavior
+            
+            # Calculate quarter differences where needed
+            for i in range(1, len(df)):
+                if skip_quarters not in df.index[i]:
+                    # Calculate difference from previous quarter
+                    df.iloc[i, self.ignore_cols:] = (
+                        df.iloc[i, self.ignore_cols:] - 
+                        df.iloc[i-1, self.ignore_cols:]
+                    )
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error calculating quarter differences for {self.symbol}: {e}")
+            return df  # Return original if error occurs
+
+    def _adapt_statement(self, df: pd.DataFrame, title_map: dict) -> pd.DataFrame:
+        """
+        Adapts and cleans a financial statement DataFrame by renaming columns, 
+        standardizing report names, and handling missing values.
+
+        Args:
+            df (pd.DataFrame): The input DataFrame containing financial statement data.
+            title_map (dict): A dictionary mapping original column names to standardized names.
+
+        Returns:
+            pd.DataFrame: The adapted DataFrame with cleaned and standardized data.
+        """
+        df_adapted = df.copy()
+        
+        # Step 1: Rename columns
+        df_adapted = self._rename_columns(df_adapted, title_map)
+        
+        # Step 2: Standardize report names based on market
+        df_adapted = self._standardize_report_names(df_adapted)
+        
+        # Step 3: Set 'report_name' as index
+        df_adapted.set_index('report_name', inplace=True)
+        
+        # Step 4: Convert string representations of lists to actual lists
+        df_adapted = self._convert_string_lists(df_adapted)
+        
+        # Step 5: Extract the first value from lists
+        df_adapted = self._extract_first_value(df_adapted)
+        
+        # Step 6: Sort by 'ctime' and clean data
+        df_adapted = self._clean_and_sort(df_adapted)
+
+        df_adapted = self._get_quarter(df_adapted)
+        
         return df_adapted.infer_objects()
 
     def get_full_financials(self) -> pd.DataFrame:
