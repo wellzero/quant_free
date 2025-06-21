@@ -90,7 +90,7 @@ def us_dir1_load_csv(market='us', dir0='equity', dir1=None, dir2=None, filename=
         dir2 (str, optional): The third subdirectory. Defaults to None.
         filename (str): The name of the CSV file.
         dtype (dict, optional): Data types for columns in the CSV. Defaults to None.
-        index_col (int, optional): The column to use as the index. Defaults to 0.
+        index_col (int or str, optional): The column to use as the index. Can be a column name or index. Defaults to 0.
 
     Returns:
         pandas.DataFrame: The loaded DataFrame, or None if the file does not exist.
@@ -103,7 +103,13 @@ def us_dir1_load_csv(market='us', dir0='equity', dir1=None, dir2=None, filename=
     if os.path.exists(file_path):
         try:
             df = pd.read_csv(file_path, index_col=index_col, dtype=dtype)
-            df.index = pd.to_datetime(df.index)
+            
+            # # Convert index to datetime if it's a datetime-like column
+            # if df.index.dtype == 'object':
+            #     try:
+            #         df.index = pd.to_datetime(df.index)
+            #     except (ValueError, TypeError):
+            #         pass  # Skip if index cannot be converted to datetime
 
             # Clean up unnamed columns
             for col in ['Unnamed: 0.1', 'Unnamed: 0']:

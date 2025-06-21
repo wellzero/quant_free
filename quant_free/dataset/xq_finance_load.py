@@ -5,11 +5,16 @@ import warnings
 import logging
 from enum import Enum
 
+import multitasking
+from tqdm.auto import tqdm
+from typing import List
+
 
 from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 from quant_free.utils.xq_parse_js import *
+from quant_free.dataset.xq_data_load import *
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,9 +29,9 @@ class Market(Enum):
     CN = 'cn'
 
 MARKET_IGNORE_COLUMNS = {
-    Market.US.value: 5,
-    Market.HK.value: 4,
-    Market.CN.value: 2,
+    Market.US.value: 6,
+    Market.HK.value: 5,
+    Market.CN.value: 3,
 }
 
 # --- Core Financial Data Loading Class ---
@@ -51,6 +56,7 @@ class FinancialDataProcessor:
                  dir0 = 'equity',
                  dir1 = self.symbol,
                  dir2 = self.provider,
+                 index_col = 'report_name',
                  filename= statement_type)
             return df.loc[:, ~df.columns.str.startswith('subtitle')]
         except FileNotFoundError:
@@ -65,18 +71,46 @@ class FinancialDataProcessor:
         return df
 
     def _standardize_report_names(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Standardizes report names based on the market."""
-        if self.market == 'us':
-            df['report_name'] = df['report_name'].str.replace('年FY', 'Q4')
-            df['report_name'] = df['report_name'].str.replace('年Q9', 'Q3')
-            df['report_name'] = df['report_name'].str.replace('年Q6', 'Q2')
-            df['report_name'] = df['report_name'].str.replace('年Q1', 'Q1')
-        elif self.market in ['cn', 'hk']:
-            df['report_name'] = df['report_name'].str.replace('年报', 'Q4')
-            df['report_name'] = df['report_name'].str.replace('三季报', 'Q3')
-            df['report_name'] = df['report_name'].str.replace('半年报', 'Q2')
-            df['report_name'] = df['report_name'].str.replace('中报', 'Q2')
-            df['report_name'] = df['report_name'].str.replace('一季报', 'Q1')
+        """
+        Standardizes report names based on the market.
+
+        Args:
+            df (pd.DataFrame): Input DataFrame with report names in the index.
+
+        Returns:
+            pd.DataFrame: DataFrame with standardized report names in the index.
+        """
+        # Define market-specific replacement rules
+        replacements = {
+            'us': {
+                '年FY': 'Q4',
+                '年Q9': 'Q3',
+                '年Q6': 'Q2',
+                '年Q1': 'Q1'
+            },
+            'cn': {
+                '年报': 'Q4',
+                '三季报': 'Q3',
+                '半年报': 'Q2',
+                '中报': 'Q2',
+                '一季报': 'Q1'
+            },
+            'hk': {
+                '年报': 'Q4',
+                '三季报': 'Q3',
+                '半年报': 'Q2',
+                '中报': 'Q2',
+                '一季报': 'Q1'
+            }
+        }
+
+        # Get the appropriate replacements for the current market
+        market_replacements = replacements.get(self.market, {})
+
+        # Apply replacements to the index
+        for old, new in market_replacements.items():
+            df.index = df.index.str.replace(old, new)
+
         return df
 
     def _convert_string_lists(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -161,10 +195,7 @@ class FinancialDataProcessor:
         
         # Step 2: Standardize report names based on market
         df_adapted = self._standardize_report_names(df_adapted)
-        
-        # Step 3: Set 'report_name' as index
-        df_adapted.set_index('report_name', inplace=True)
-        
+              
         # Step 4: Convert string representations of lists to actual lists
         df_adapted = self._convert_string_lists(df_adapted)
         
@@ -195,6 +226,80 @@ class FinancialDataProcessor:
         except Exception as e:
             logger.error(f"Error processing {statement_type} data for {self.symbol}: {e}")
             return pd.DataFrame()
+        
+    def load_daily_trade_data(self) -> pd.DataFrame:
+        """
+        Loads daily trade data (e.g., OHLCV) for a given symbol and market.
+
+        Returns:
+            pd.DataFrame: DataFrame containing daily trade data.
+        """
+        try:
+            df = us_dir1_load_csv(
+                self.market,
+                dir0='equity',
+                dir1=self.symbol,
+                dir2=self.provider,
+                index_col='timestamp',
+                filename='daily'
+            )
+            df.sort_index(inplace=True)
+            df.fillna(0, inplace=True)
+            return df
+        except FileNotFoundError:
+            logger.error(f"Daily trade data not found for {self.symbol} in {self.market} market.")
+            return pd.DataFrame()
+        except Exception as e:
+            logger.error(f"Error loading daily trade data for {self.symbol}: {e}")
+            return pd.DataFrame()
+        
+    def merge_daily_data_to_finance(self, finance) -> pd.DataFrame:
+        """
+        Merges financial data with daily trade data based on the financial statement dates.
+
+        Args:
+            finance (pd.DataFrame): DataFrame containing financial statements.
+            trade_data (pd.DataFrame): DataFrame containing daily trade data.
+
+        Returns:
+            pd.DataFrame: Merged DataFrame with financial data aligned to trade dates.
+        """
+        trade_data = self.load_daily_trade_data()
+        if trade_data.empty or finance.empty:
+            logger.warning(f"Trade data or financial data is empty for {self.symbol}.")
+            return pd.DataFrame()
+        
+        if 'report_name' not in finance.index.names:
+            logger.error(f"'report_name' index not found in financial data for {self.symbol}.")
+            return pd.DataFrame()
+        
+        if 'timestamp' not in trade_data.index.names:
+            logger.error(f"'timestamp' index not found in trade data for {self.symbol}.")
+            return pd.DataFrame()
+
+        try:
+            # Reset the index and set 'report_date' as the new index
+            finance = finance.reset_index().set_index('report_date')
+
+            # Ensure 'ctime' is in datetime format
+            finance.index = pd.to_datetime(finance.index, errors='coerce')
+            trade_data.index = pd.to_datetime(trade_data.index, errors='coerce')
+
+            # Merge on the index (dates)
+            merged_data = pd.merge_asof(
+                finance.sort_index(),
+                trade_data.sort_index(),
+                left_index=True,
+                right_index=True,
+                direction='backward'
+            )
+
+            merged_data = merged_data.reset_index().set_index('report_name')
+
+            return merged_data
+        except Exception as e:
+            logger.error(f"Error merging financial and trade data for {self.symbol}: {e}")
+            return pd.DataFrame()
 
     def get_full_financials(self) -> pd.DataFrame:
         """Loads, processes, and combines all financial statements."""
@@ -214,22 +319,76 @@ class FinancialDataProcessor:
                 for df in [income, cash, balance, metrics]],
                 axis=1, join='outer')
 
+            # Remove duplicate columns with the same name
+            data = data.loc[:, ~data.columns.duplicated()]
+
             # Fill any NaN values that may result from the outer join
             data.fillna(0, inplace=True)
 
             data.sort_index(inplace=True)
 
-            return data.loc[:, ~data.columns.duplicated()]
+            data = self.merge_daily_data_to_finance(data)
+            
+            return data
         except Exception as e:
             logger.error(f"Failed to process financials for {self.symbol}: {e}")
             return pd.DataFrame()
 
-# --- Standalone Utility Functions (Kept for compatibility or other uses) ---
 
+# --- Standalone Utility Functions (Kept for compatibility or other uses) ---
 def xq_finance_load(market='us', symbol='AAPL'):
     """Main function to load financial data for a given symbol."""
+
+    logger.info(f"Loading financial data for {symbol} in {market} market...")
+
     processor = FinancialDataProcessor(market, symbol)
-    return processor.get_full_financials()
+
+    data = processor.get_full_financials()
+
+    us_dir1_store_csv(
+        market=market,
+        dir0='equity',
+        dir1=symbol,
+        dir2='xq',
+        filename='finance',
+        data=data,
+        # index=False
+    )
+
+    return data
+
+
+def parallel_calc(market='us', symbols = ['AAPL', 'GOOGL', 'MSFT']):
+
+    @multitasking.task
+    def start(symbol: str):
+        xq_finance_load(market=market, symbol=symbol)
+        series.append(symbol)
+        pbar.update()
+        pbar.set_description(f'Processing => {symbol}')
+
+    series: List[pd.Series] = []
+    pbar = tqdm(total=len(symbols))
+    for symbol in symbols:
+        start(symbol)
+    multitasking.wait_for_tasks()
+
+
+def xq_finance_process(market='us'):
+    """
+    Processes financial data for a given symbol and returns a DataFrame.
+    
+    Args:
+        market (str): The market type, e.g., 'us', 'cn', or 'hk'.
+        symbol (str): The stock symbol to process.
+        
+    Returns:
+        pd.DataFrame: Processed financial data.
+    """
+    symbols = symbol_load(market)
+
+    parallel_calc(market, symbols)
+
 
 # --- Main Execution Block ---
 
@@ -238,7 +397,7 @@ if __name__ == "__main__":
     print("--- Loading US Data for JPM ---")
     us_data = xq_finance_load(market='us', symbol='JPM')
     if not us_data.empty:
-        print(us_data.iloc[:, MARKET_IGNORE_COLUMNS.get('us', 0):] .tail(10))
+        print(us_data.tail(10))
 
     # --- CN Example ---
     print("\n--- Loading CN Data for SH600519 ---")
@@ -246,7 +405,7 @@ if __name__ == "__main__":
     cn_symbol = 'SH600519'
     cn_data = xq_finance_load(market=cn_market, symbol=cn_symbol)
     if not cn_data.empty:
-        print(cn_data.iloc[:, MARKET_IGNORE_COLUMNS.get('cn', 0):].tail(10))
+        print(cn_data.tail(10))
 
     # --- CN Example ---
     hk_market = 'hk'
@@ -254,4 +413,4 @@ if __name__ == "__main__":
     print(f"\n--- Loading HK Data for {hk_symbol} ---")
     hk_data = xq_finance_load(market=hk_market, symbol=hk_symbol)
     if not hk_data.empty:
-        print(hk_data.iloc[:, MARKET_IGNORE_COLUMNS.get('hk', 0):].tail(10))
+        print(hk_data.tail(10))
