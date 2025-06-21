@@ -128,7 +128,7 @@ class FinancialDataProcessor:
             }.get(self.market, [1])  # Default to US behavior
             
             # Calculate quarter differences where needed
-            for i in range(1, len(df)):
+            for i in range(len(df)-1, 0, -1):
                 if skip_quarters not in df.index[i]:
                     # Calculate difference from previous quarter
                     df.iloc[i, self.ignore_cols:] = (
@@ -178,28 +178,40 @@ class FinancialDataProcessor:
         
         return df_adapted.infer_objects()
 
+    def _get_finance_data(self, statement_type: str) -> pd.DataFrame:
+        """
+        Retrieves and processes a specific type of financial statement.
+
+        Args:
+            statement_type (str): The type of financial statement to retrieve (e.g., 'income', 'cash', 'balance').
+
+        Returns:
+            pd.DataFrame: Processed DataFrame for the specified financial statement.
+        """
+        try:
+            raw_data = self._load_raw_statement(statement_type)
+            adapted_data = self._adapt_statement(raw_data, self.xq_names[statement_type])
+            return adapted_data
+        except Exception as e:
+            logger.error(f"Error processing {statement_type} data for {self.symbol}: {e}")
+            return pd.DataFrame()
+
     def get_full_financials(self) -> pd.DataFrame:
         """Loads, processes, and combines all financial statements."""
         try:
             # Load
-            income_raw = self._load_raw_statement('income')
-            cash_raw = self._load_raw_statement('cash')
-            balance_raw = self._load_raw_statement('balance')
-            metrics_raw = self._load_raw_statement('metrics')
+            income = self._get_finance_data('income')
+            cash = self._get_finance_data('cash')
+            balance = self._get_finance_data('balance')
+            metrics = self._get_finance_data('metrics')
 
-            # Adapt
-            income = self._adapt_statement(income_raw,
-                self.xq_names['incomes'])
-            cash = self._adapt_statement(cash_raw,
-                self.xq_names['cashes'])
-            balance = self._adapt_statement(balance_raw,
-                self.xq_names['balances'])
-            indicators = self._adapt_statement(metrics_raw,
-                self.xq_names['indicators'])
-
+            if income.empty or cash.empty or balance.empty or metrics.empty:
+                logger.warning(f"One or more financial statements are empty for {self.symbol}.")
+                return pd.DataFrame()
+            
             # Combine
             data = pd.concat([df.loc[~df.index.duplicated(keep='first')] 
-                for df in [income, cash, balance, indicators]],
+                for df in [income, cash, balance, metrics]],
                 axis=1, join='outer')
 
             # Fill any NaN values that may result from the outer join
@@ -226,7 +238,7 @@ if __name__ == "__main__":
     print("--- Loading US Data for JPM ---")
     us_data = xq_finance_load(market='us', symbol='JPM')
     if not us_data.empty:
-        print(us_data.head())
+        print(us_data.iloc[:, MARKET_IGNORE_COLUMNS.get('us', 0):] .tail(10))
 
     # --- CN Example ---
     print("\n--- Loading CN Data for SH600519 ---")
@@ -234,12 +246,12 @@ if __name__ == "__main__":
     cn_symbol = 'SH600519'
     cn_data = xq_finance_load(market=cn_market, symbol=cn_symbol)
     if not cn_data.empty:
-        print(cn_data.head())
+        print(cn_data.iloc[:, MARKET_IGNORE_COLUMNS.get('cn', 0):].tail(10))
 
     # --- CN Example ---
-    print("\n--- Loading HK Data for SH600519 ---")
     hk_market = 'hk'
     hk_symbol = '02882'
+    print(f"\n--- Loading HK Data for {hk_symbol} ---")
     hk_data = xq_finance_load(market=hk_market, symbol=hk_symbol)
     if not hk_data.empty:
-        print(hk_data.head())
+        print(hk_data.iloc[:, MARKET_IGNORE_COLUMNS.get('hk', 0):].tail(10))

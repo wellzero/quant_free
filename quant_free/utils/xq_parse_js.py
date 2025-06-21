@@ -63,10 +63,10 @@ def xq_js_to_dict(market = "us"):
             if key.startswith('cash'):
                 cash.update(value)
 
-        result["indicators"] = indicator
-        result["incomes"] = income
-        result["balances"] = balance
-        result["cashes"] = cash
+        result["metrics"] = indicator
+        result["income"] = income
+        result["balance"] = balance
+        result["cash"] = cash
         
         return result
     
