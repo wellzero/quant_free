@@ -204,9 +204,7 @@ class FinancialDataProcessor:
         
         # Step 6: Sort by 'ctime' and clean data
         df_adapted = self._clean_and_sort(df_adapted)
-
-        df_adapted = self._get_quarter(df_adapted)
-        
+ 
         return df_adapted.infer_objects()
 
     def _get_finance_data(self, statement_type: str) -> pd.DataFrame:
@@ -326,10 +324,12 @@ class FinancialDataProcessor:
             data.fillna(0, inplace=True)
 
             data.sort_index(inplace=True)
-
-            data = self.merge_daily_data_to_finance(data)
             
-            return data
+            data_quarterly = self._get_quarter(data)
+
+            data_quarterly = self.merge_daily_data_to_finance(data_quarterly)
+
+            return data, data_quarterly
         except Exception as e:
             logger.error(f"Failed to process financials for {self.symbol}: {e}")
             return pd.DataFrame()
@@ -343,19 +343,29 @@ def xq_finance_load(market='us', symbol='AAPL'):
 
     processor = FinancialDataProcessor(market, symbol)
 
-    data = processor.get_full_financials()
+    data, data_quarterly = processor.get_full_financials()
 
     us_dir1_store_csv(
         market=market,
         dir0='equity',
         dir1=symbol,
         dir2='xq',
-        filename='finance',
+        filename='finance_yearly.csv',
         data=data,
         # index=False
     )
 
-    return data
+    us_dir1_store_csv(
+        market=market,
+        dir0='equity',
+        dir1=symbol,
+        dir2='xq',
+        filename='finance_quarterly.csv',
+        data=data_quarterly,
+        # index=False
+    )
+
+    return data_quarterly
 
 
 def parallel_calc(market='us', symbols = ['AAPL', 'GOOGL', 'MSFT']):
