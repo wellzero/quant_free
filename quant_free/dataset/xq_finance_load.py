@@ -324,12 +324,14 @@ class FinancialDataProcessor:
             data.fillna(0, inplace=True)
 
             data.sort_index(inplace=True)
-            
+
+            data_yearly = data.copy()    
+
             data_quarterly = self._get_quarter(data)
 
             data_quarterly = self.merge_daily_data_to_finance(data_quarterly)
 
-            return data, data_quarterly
+            return data_yearly, data_quarterly
         except Exception as e:
             logger.error(f"Failed to process financials for {self.symbol}: {e}")
             return pd.DataFrame()
@@ -343,7 +345,7 @@ def xq_finance_load(market='us', symbol='AAPL'):
 
     processor = FinancialDataProcessor(market, symbol)
 
-    data, data_quarterly = processor.get_full_financials()
+    data_yearly, data_quarterly = processor.get_full_financials()
 
     us_dir1_store_csv(
         market=market,
@@ -351,7 +353,7 @@ def xq_finance_load(market='us', symbol='AAPL'):
         dir1=symbol,
         dir2='xq',
         filename='finance_yearly.csv',
-        data=data,
+        data=data_yearly,
         # index=False
     )
 
