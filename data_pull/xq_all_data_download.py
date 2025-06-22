@@ -24,15 +24,19 @@ def download_market_data(markets, skip_daily=False, skip_finance=False, symbols=
         print(f"Processing {market.upper()} market...")
         # Equity and sector download
         if symbols is None:
-         xq_symbol_download(market)
-         xq_sector_download(market)
+            xq_symbol_download(market)
+            xq_sector_download(market)
         
         # Load symbols if not provided
         if symbols is None:
             symbols = symbol_load(market)
         else:
-            symbols = [s.strip().upper() for s in symbols.split(',')]
+            symbols = [s.strip().upper() for s in symbols.split(',')] if symbols else []
 
+        if len(symbols) == 0:
+            print(f"No symbols provided for {market.upper()} market. Pls configure symbol rightly.")
+            exit(0)
+        
         if not skip_daily:
             print(f"Downloading daily kline data for {market.upper()} market...")
             xq_kline_download(market, symbols)
