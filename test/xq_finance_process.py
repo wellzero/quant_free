@@ -1,11 +1,11 @@
 import argparse
-from quant_free.dataset.xq_finance_data import xq_finance_process
+from quant_free.dataset.xq_finance_parser import xq_finance_parser
 
 def process_market(market: str) -> None:
     """Process data for a specific market."""
     print(f"Processing {market} market..."  )
     for market in market:
-        xq_finance_process(market=market)
+        xq_finance_parser(market=market)
 
 
 def main() -> None:

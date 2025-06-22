@@ -33,7 +33,7 @@ def get_sectors(market = "us", dir_option = "xq"):
 
     return sectors
 
-def get_sectors_equity(market = "us", sector = None, dir_option = "xq"):
+def get_symbols_by_sector(market = "us", sector = None, dir_option = "xq"):
 
     data_symbols = us_dir1_load_csv(
         market,
