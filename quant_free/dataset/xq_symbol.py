@@ -9,7 +9,7 @@ from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 
-def symbol_load(market = 'us'):
+def get_all_symbol(market = 'us'):
   df = us_dir1_load_csv(market,
                         dir0 = 'symbol',
                         dir1 = 'xq',
@@ -33,7 +33,7 @@ def get_sectors(market = "us", dir_option = "xq"):
 
     return sectors
 
-def get_sectors_equity(market = "us", sector = "AAPL", dir_option = "xq"):
+def get_sectors_equity(market = "us", sector = None, dir_option = "xq"):
 
     data_symbols = us_dir1_load_csv(
         market,

@@ -10,7 +10,7 @@ from quant_free.dataset.xq_symbol import *
 if __name__ == "__main__":
     # us_equity_symbol_download()
 
-    symbols = symbol_load(market = 'us')
+    symbols = get_all_symbol(market = 'us')
     # symbols = ['TEAM']
     print(symbols.head(10))
     market = 'us'

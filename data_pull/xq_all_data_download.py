@@ -30,7 +30,7 @@ def download_market_data(markets, skip_daily=False, skip_finance=False, symbols=
         
         # Load symbols if not provided
         if symbols is None:
-            symbols = symbol_load(market)
+            symbols = get_all_symbol(market)
         else:
             symbols = [s.strip().upper() for s in symbols.split(',')] if symbols else []
 

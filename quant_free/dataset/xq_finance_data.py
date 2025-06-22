@@ -398,7 +398,7 @@ def xq_finance_process(market='us'):
     Returns:
         pd.DataFrame: Processed financial data.
     """
-    symbols = symbol_load(market)
+    symbols = get_all_symbol(market)
 
     parallel_calc(market, symbols)
 

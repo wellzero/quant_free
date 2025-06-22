@@ -22,7 +22,7 @@ if __name__ == "__main__":
     xq_sector_download(market)
 
     # daily trade 
-    symbols = symbol_load(market = market)
+    symbols = get_all_symbol(market = market)
     xq_kline_download(market, symbols)
 
     # finance report

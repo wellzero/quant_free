@@ -10,7 +10,7 @@ from quant_free.dataset.xq_symbol import *
 
 
 if __name__ == '__main__':
-  symbols = symbol_load(market = 'us')
+  symbols = get_all_symbol(market = 'us')
   # symbols = ['AAPL', 'NVDA']
   #symbols = ['TEAM', 'IAU', 'DKILY', 'OLCLY']
   # symbols = ['WFC', 'AXP', 'BX', 'GS']
