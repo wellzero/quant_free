@@ -94,19 +94,6 @@ def equity_tradedate_load_within_range(
 
   return trade_dates_time
 
-def symbol_load(market = 'us'):
-  df = us_dir1_load_csv(market,
-                        dir0 = 'symbol',
-                        dir1 = 'xq',
-                        filename='equity_symbol.csv',
-                        dtype = str)
-  return df.loc[:, 'symbol'].values
-
-def convert_to_string_if_number(value):
-    if isinstance(value, (int, float, complex)):
-        return str(value)
-    return value
-
 def multi_sym_daily_load(
     market = 'us', 
     symbols = ['AAPL'],
@@ -283,3 +270,4 @@ def factor_load(
     except Exception as e:
         logger.error(f"Failed to load factors for {symbol}: {e}")
         return pd.DataFrame()
+

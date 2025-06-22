@@ -2,7 +2,8 @@ import os
 import sys
 import argparse
 from quant_free.dataset.xq_data_download import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 from quant_free.dataset.us_equity_download import *
 
 def download_market_data(markets, skip_daily=False, skip_finance=False, symbols=None):

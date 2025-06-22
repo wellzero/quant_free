@@ -5,7 +5,8 @@ import os
 import pandas as pd
 import yfinance as yf
 from quant_free.utils.us_equity_utils import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 
 
@@ -29,26 +30,6 @@ def us_equity_get_current_trade_date(symbol = "AAPL"):
   trade_dates = stock_data.index.date
 
   return trade_dates[-1].strftime('%Y-%m-%d')
-
-def us_equity_get_sector(symbol = "AAPL", dir_option = "xq"):
-    
-    sector_file = 'equity_sector.csv'
-    df_sector = us_dir1_load_csv(dir0 = 'symbol', dir1 = dir_option, filename = sector_file)
-
-    if dir_option == "xq":
-      sectors = list(df_sector['name'].values)
-    else:
-      sectors = list(df_sector['Sector'].values)
-
-    for sector in sectors:
-      data_symbols = us_dir1_load_csv(dir0 = 'symbol', dir1 = dir_option, filename= sector +'.csv')
-      if (data_symbols.empty == False):
-        symbols = data_symbols['symbol'].values
-        if symbol in symbols:
-          return sector
-
-    return None
-
 
 if __name__ == "__main__":
   trade_dates = us_equity_get_trade_date_within_range()

@@ -6,7 +6,8 @@ from sklearn import linear_model
 
 import copy
 
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 from quant_free.factor.base import FactorBase
 
 

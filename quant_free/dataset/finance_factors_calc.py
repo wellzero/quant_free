@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 from quant_free.dataset.us_equity_efinance_load import *
 from quant_free.common.us_equity_common import *
 

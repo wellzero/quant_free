@@ -2,7 +2,8 @@ import os
 import sys
 
 from quant_free.dataset.us_equity_download import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 if __name__ == "__main__":
     symbols = symbol_load(market = 'us')

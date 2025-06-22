@@ -23,7 +23,8 @@ from lumibot.traders import Trader
 from credentials import AlpacaConfig
 
 from quant_free.utils.us_equity_utils import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 
 class DNNClassifier(Strategy):

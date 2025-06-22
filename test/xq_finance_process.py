@@ -1,5 +1,5 @@
 import argparse
-from quant_free.dataset.xq_finance_load import xq_finance_process
+from quant_free.dataset.xq_finance_data import xq_finance_process
 
 def process_market(market: str) -> None:
     """Process data for a specific market."""

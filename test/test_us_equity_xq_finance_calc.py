@@ -5,8 +5,9 @@ import sys
 
 
 from quant_free.factor.xq_finance import *
-from quant_free.dataset.xq_finance_load import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_finance_data import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 
 if __name__ == '__main__':
@@ -16,7 +17,7 @@ if __name__ == '__main__':
   # symbols = ['WFC', 'AXP', 'BX', 'GS']
   # symbols = 'JPM'
   # symbols = 'AAPL'
-  # data = xq_finance_load(symbols)
+  # data = xq_finance_data(symbols)
   # print(data)
 
   symbols = symbol_load(market = 'us')

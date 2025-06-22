@@ -14,7 +14,8 @@ from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 from quant_free.utils.xq_parse_js import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -338,7 +339,7 @@ class FinancialDataProcessor:
 
 
 # --- Standalone Utility Functions (Kept for compatibility or other uses) ---
-def xq_finance_load(market='us', symbol='AAPL'):
+def xq_finance_data(market='us', symbol='AAPL'):
     """Main function to load financial data for a given symbol."""
 
     logger.info(f"Loading financial data for {symbol} in {market} market...")
@@ -374,7 +375,7 @@ def parallel_calc(market='us', symbols = ['AAPL', 'GOOGL', 'MSFT']):
 
     @multitasking.task
     def start(symbol: str):
-        xq_finance_load(market=market, symbol=symbol)
+        xq_finance_data(market=market, symbol=symbol)
         series.append(symbol)
         pbar.update()
         pbar.set_description(f'Processing => {symbol}')
@@ -407,7 +408,7 @@ def xq_finance_process(market='us'):
 if __name__ == "__main__":
     # --- US Example ---
     print("--- Loading US Data for JPM ---")
-    us_data = xq_finance_load(market='us', symbol='JPM')
+    us_data = xq_finance_data(market='us', symbol='JPM')
     if not us_data.empty:
         print(us_data.tail(10))
 
@@ -415,7 +416,7 @@ if __name__ == "__main__":
     print("\n--- Loading CN Data for SH600519 ---")
     cn_market = 'cn'
     cn_symbol = 'SH600519'
-    cn_data = xq_finance_load(market=cn_market, symbol=cn_symbol)
+    cn_data = xq_finance_data(market=cn_market, symbol=cn_symbol)
     if not cn_data.empty:
         print(cn_data.tail(10))
 
@@ -423,6 +424,6 @@ if __name__ == "__main__":
     hk_market = 'hk'
     hk_symbol = '02882'
     print(f"\n--- Loading HK Data for {hk_symbol} ---")
-    hk_data = xq_finance_load(market=hk_market, symbol=hk_symbol)
+    hk_data = xq_finance_data(market=hk_market, symbol=hk_symbol)
     if not hk_data.empty:
         print(hk_data.tail(10))

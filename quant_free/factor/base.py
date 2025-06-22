@@ -21,7 +21,9 @@ from tqdm.auto import tqdm
 from factorlab.feature_engineering.transformations import Transform as TransformLib
 
 from quant_free.common.us_equity_common import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
+from quant_free.dataset.xq_sector_data import *
 from quant_free.dataset.us_equity_store import *
 from quant_free.utils.us_equity_utils import *
 
@@ -516,7 +518,7 @@ class FactorBase(ABC):
     subclass_name = self.__class__.__name__
     
     if sector_price is None and "Trend" != subclass_name:
-      sector = us_equity_get_sector(symbol, self.dir)
+      sector = get_equity_sector_name(symbol, self.dir)
       sector_price = us_dir1_load_csv(self.market, dir0 = 'symbol', dir1 = self.dir, filename= "index_price.csv")
       sector_price = sector_price.loc[:, sector]
       sector_price.name = "sector_price"

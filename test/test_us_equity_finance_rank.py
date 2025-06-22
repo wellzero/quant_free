@@ -5,7 +5,8 @@ import sys
 
 
 from quant_free.dataset.finance_factors_calc import *
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 
 if __name__ == '__main__':

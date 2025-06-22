@@ -1,7 +1,8 @@
 import sys
 
 
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 from quant_free.factor.alpha_101 import *
 
 from quant_free.utils.us_equity_utils import *

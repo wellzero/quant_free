@@ -1,4 +1,5 @@
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 class SectorsRatio:
   def __init__(self, sectors, start_date, end_date, column_option = 'market_capital', dir = 'fh', market = 'us'):

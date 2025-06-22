@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from quant_free.dataset.xq_data_load import *
+from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_symbol import *
 
 import numpy as np
 import pandas as pd
