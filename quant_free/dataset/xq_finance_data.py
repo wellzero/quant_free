@@ -1,4 +1,6 @@
+from operator import index
 import os
+from cvxpy import outer
 import pandas as pd
 import ast
 import warnings
@@ -6,7 +8,7 @@ import logging
 from enum import Enum
 
 import multitasking
-from pkg_resources import _provider_factories
+# from pkg_resources import _provider_factories
 from tqdm.auto import tqdm
 from typing import List
 
@@ -53,21 +55,40 @@ class FinanceData:
         
         return finance_yearly, finance_quarterly
     
-    def equity_finance_process(self, sector: list) -> pd.DataFrame:
+    def equity_finance_process(self, symbols: list) -> pd.DataFrame:
         """
         Process financial data for a given symbol.
         """
-        finance_yearly, finance_quarterly = self._load_data(symbol)
-        
-        if finance_yearly is None or finance_quarterly is None:
-            return pd.DataFrame()
 
-        # Combine yearly and quarterly data
-        finance_data = pd.concat([finance_yearly, finance_quarterly], axis=0)
-        finance_data.set_index('date', inplace=True)
-        finance_data.sort_index(inplace=True)
+        financial_column = ['净利润', '归属于母公司股东的净利润', '营业总收入', '营业利润']
 
-        return finance_data
+        finance_yearly = pd.DataFrame()
+        finance_quarterly = pd.DataFrame()
+        combined_data_quarterly = pd.DataFrame()
+
+        for symbol in symbols:
+
+            finance_yearly, finance_quarterly = self._load_data(symbol)
+
+            if finance_yearly is not None and finance_quarterly is not None:
+                # Select relevant columns
+                yearly_selected = finance_yearly[financial_column].copy()  # Create a copy to avoid the warning
+                yearly_selected.loc[:, 'symbol'] = symbol  # Use .loc for assignment
+                yearly_selected = yearly_selected.reset_index()  # Convert index to column
+                yearly_selected.set_index(['symbol', 'report_name'], inplace=True)
+
+                quarterly_selected = finance_quarterly[financial_column].copy()  # Create a copy to avoid the warning
+                quarterly_selected.loc[:, 'symbol'] = symbol  # Use .loc for assignment
+                quarterly_selected = quarterly_selected.reset_index()  # Convert index to column
+                quarterly_selected.set_index(['symbol', 'report_name'], inplace=True)
+
+                combined_data_quarterly = pd.concat([combined_data_quarterly, quarterly_selected])
+            else:
+                logger.warning(f"Skipping {symbol} due to missing data.")
+
+        df = combined_data_quarterly.groupby('report_name').sum()
+
+        return df
 
 
 
@@ -76,23 +97,10 @@ class FinanceData:
 
 if __name__ == "__main__":
     # --- US Example ---
-    print("--- Loading US Data for JPM ---")
-    us_data = xq_finance_data(market='us', symbol='JPM')
-    if not us_data.empty:
-        print(us_data.tail(10))
-
-    # --- CN Example ---
-    print("\n--- Loading CN Data for SH600519 ---")
-    cn_market = 'cn'
-    cn_symbol = 'SH600519'
-    cn_data = xq_finance_data(market=cn_market, symbol=cn_symbol)
-    if not cn_data.empty:
-        print(cn_data.tail(10))
-
-    # --- CN Example ---
-    hk_market = 'hk'
-    hk_symbol = '02882'
-    print(f"\n--- Loading HK Data for {hk_symbol} ---")
-    hk_data = xq_finance_data(market=hk_market, symbol=hk_symbol)
-    if not hk_data.empty:
-        print(hk_data.tail(10))
+    print("---  cn finance data example ---")
+    symbols=['SH600519', 'SZ000995', 'SH600199']
+    symbols=['SH600199']
+    fd = FinanceData(market='cn')
+    data = fd.equity_finance_process(symbols=symbols)
+    if not data.empty:
+        print(data.tail(10))
