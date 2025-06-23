@@ -393,25 +393,42 @@ def xq_finance_parser(market='us'):
 
 # --- Main Execution Block ---
 
+
 if __name__ == "__main__":
-    # --- US Example ---
-    print("--- Loading US Data for JPM ---")
-    us_data = xq_finance_data(market='us', symbol='JPM')
-    if not us_data.empty:
-        print(us_data.tail(10))
-
+    import argparse
+    
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='Process financial data for stocks')
+    parser.add_argument('-m', '--market', type=str, default='us', 
+                        help='Market type: us, cn, or hk (default: us)')
+    parser.add_argument('-s', '--symbol', type=str, default=None,
+                        help='Stock symbol to process (e.g., JPM). If not provided, processes all symbols')
+    
+    args = parser.parse_args()
+    
+    if args.symbol:
+        # Process single symbol
+        print(f"--- Loading {args.market.upper()} Data for {args.symbol} ---")
+        data = xq_finance_data(market=args.market, symbol=args.symbol)
+        if not data.empty:
+            print(data.tail(10))
+    else:
+        # Process all symbols in market
+        print(f"--- Processing ALL symbols in {args.market.upper()} market ---")
+        xq_finance_parser(market=args.market)
+        
     # --- CN Example ---
-    print("\n--- Loading CN Data for SH600519 ---")
-    cn_market = 'cn'
-    cn_symbol = 'SH600519'
-    cn_data = xq_finance_data(market=cn_market, symbol=cn_symbol)
-    if not cn_data.empty:
-        print(cn_data.tail(10))
+    # print("\n--- Loading CN Data for SH600519 ---")
+    # cn_market = 'cn'
+    # cn_symbol = 'SH600519'
+    # cn_data = xq_finance_data(market=cn_market, symbol=cn_symbol)
+    # if not cn_data.empty:
+    #     print(cn_data.tail(10))
 
-    # --- CN Example ---
-    hk_market = 'hk'
-    hk_symbol = '02882'
-    print(f"\n--- Loading HK Data for {hk_symbol} ---")
-    hk_data = xq_finance_data(market=hk_market, symbol=hk_symbol)
-    if not hk_data.empty:
-        print(hk_data.tail(10))
+    # # --- CN Example ---
+    # hk_market = 'hk'
+    # hk_symbol = '02882'
+    # print(f"\n--- Loading HK Data for {hk_symbol} ---")
+    # hk_data = xq_finance_data(market=hk_market, symbol=hk_symbol)
+    # if not hk_data.empty:
+    #     print(hk_data.tail(10))

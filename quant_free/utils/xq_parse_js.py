@@ -41,33 +41,19 @@ def xq_js_to_dict(market = "us"):
         
         data = cleaned_dict[market]
         
+        def process_data(data, prefix):
+            result = {}
+            for key, value in data.items():
+                if key.startswith(prefix):
+                    result.update(value)
+            return {re.sub(r'\$[^$]*', '$', k): v for k, v in result.items()}
+
         result = {}
+        result["metrics"] = process_data(data, 'indicator')
+        result["income"] = process_data(data, 'income')
+        result["balance"] = process_data(data, 'balance')
+        result["cash"] = process_data(data, 'cash')
 
-        indicator = {}
-        for key, value in data.items():
-            if key.startswith('indicator'):
-                indicator.update(value)
-        
-        income = {}
-        for key, value in data.items():
-            if key.startswith('income'):
-                income.update(value)
-
-        balance = {}
-        for key, value in data.items():
-            if key.startswith('balance'):
-                balance.update(value)
-
-        cash = {}
-        for key, value in data.items():
-            if key.startswith('cash'):
-                cash.update(value)
-
-        result["metrics"] = indicator
-        result["income"] = income
-        result["balance"] = balance
-        result["cash"] = cash
-        
         return result
     
     except Exception as e:
@@ -75,5 +61,5 @@ def xq_js_to_dict(market = "us"):
         return None
 
 if __name__ == "__main__":
-    data = xq_js_to_dict()
-    print(data['us'])
+    data = xq_js_to_dict(market = "us")
+    print(len(data))
