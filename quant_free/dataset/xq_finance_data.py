@@ -60,10 +60,14 @@ class FinanceData:
         Process financial data for a given symbol.
         """
 
-        financial_column = ['净利润', '归属于母公司股东的净利润', '营业总收入', '营业利润']
+        financial_column = ['Net Profit',
+                            'Net Profit Attributable to Parent Company Shareholders',
+                            'Total Operating Revenue',
+                            'Operating Profit']
 
         finance_yearly = pd.DataFrame()
         finance_quarterly = pd.DataFrame()
+        combined_data_yearly = pd.DataFrame()
         combined_data_quarterly = pd.DataFrame()
 
         for symbol in symbols:
@@ -82,14 +86,17 @@ class FinanceData:
                 quarterly_selected = quarterly_selected.reset_index()  # Convert index to column
                 quarterly_selected.set_index(['symbol', 'report_name'], inplace=True)
 
+                combined_data_yearly = pd.concat([combined_data_yearly, yearly_selected])
                 combined_data_quarterly = pd.concat([combined_data_quarterly, quarterly_selected])
             else:
                 logger.warning(f"Skipping {symbol} due to missing data.")
 
-        df = combined_data_quarterly.groupby('report_name').sum()
+        df_yearly   = combined_data_yearly.groupby('report_name').sum()
+        df_quarterly = combined_data_yearly.groupby('report_name').sum()
+        
+        df_quarterly[financial_column] = df_quarterly[financial_column].rolling(4).sum()
 
-        return df
-
+        return df_quarterly, df_yearly
 
 
 
@@ -99,7 +106,7 @@ if __name__ == "__main__":
     # --- US Example ---
     print("---  cn finance data example ---")
     symbols=['SH600519', 'SZ000995', 'SH600199']
-    symbols=['SH600199']
+    # symbols=['SH600199']
     fd = FinanceData(market='cn')
     data = fd.equity_finance_process(symbols=symbols)
     if not data.empty:

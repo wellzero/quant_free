@@ -154,10 +154,9 @@ class FinancialDataParser:
             for i in range(len(df)-1, 0, -1):
                 if skip_quarters not in df.index[i]:
                     # Calculate difference from previous quarter
-                    df.iloc[i, self.ignore_cols:] = (
-                        df.iloc[i, self.ignore_cols:] - 
-                        df.iloc[i-1, self.ignore_cols:]
-                    )
+                    df.iloc[i, self.ignore_cols:] = \
+                        df.iloc[i, self.ignore_cols:] - df.iloc[i-1, self.ignore_cols:]
+
             
             return df
             
@@ -356,7 +355,7 @@ def xq_finance_data(market='us', symbol='AAPL'):
         # index=False
     )
 
-    return data_quarterly
+    return data_yearly, data_quarterly
 
 
 def parallel_calc(market='us', symbols = ['AAPL', 'GOOGL', 'MSFT']):
@@ -409,9 +408,10 @@ if __name__ == "__main__":
     if args.symbol:
         # Process single symbol
         print(f"--- Loading {args.market.upper()} Data for {args.symbol} ---")
-        data = xq_finance_data(market=args.market, symbol=args.symbol)
-        if not data.empty:
-            print(data.tail(10))
+        data_yearly, data_quarterly = xq_finance_data(market=args.market, symbol=args.symbol)
+        if not data_yearly.empty:
+            print(data_yearly.tail(10))
+            print(data_quarterly.tail(10))
     else:
         # Process all symbols in market
         print(f"--- Processing ALL symbols in {args.market.upper()} market ---")
