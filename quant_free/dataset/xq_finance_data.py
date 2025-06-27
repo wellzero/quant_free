@@ -18,6 +18,7 @@ from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 from quant_free.utils.xq_parse_js import *
 from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_finance_parser import *
 from quant_free.dataset.xq_symbol import *
 from quant_free.common.const import *
 from quant_free.common.log import *
@@ -64,6 +65,7 @@ class FinanceData:
                             'Net Profit Attributable to Parent Company Shareholders',
                             'Total Operating Revenue',
                             'Operating Profit']
+        finance_yearly_column = ['market_capital']
 
         finance_yearly = pd.DataFrame()
         finance_quarterly = pd.DataFrame()
@@ -73,10 +75,11 @@ class FinanceData:
         for symbol in symbols:
 
             finance_yearly, finance_quarterly = self._load_data(symbol)
+            # finance_yearly, finance_quarterly = xq_finance_data(market=self.market, symbol=symbol)
 
             if finance_yearly is not None and finance_quarterly is not None:
                 # Select relevant columns
-                yearly_selected = finance_yearly[financial_column].copy()  # Create a copy to avoid the warning
+                yearly_selected = finance_yearly[finance_yearly_column].copy()  # Create a copy to avoid the warning
                 yearly_selected.loc[:, 'symbol'] = symbol  # Use .loc for assignment
                 yearly_selected = yearly_selected.reset_index()  # Convert index to column
                 yearly_selected.set_index(['symbol', 'report_name'], inplace=True)
@@ -92,7 +95,7 @@ class FinanceData:
                 logger.warning(f"Skipping {symbol} due to missing data.")
 
         df_yearly   = combined_data_yearly.groupby('report_name').sum()
-        df_quarterly = combined_data_yearly.groupby('report_name').sum()
+        df_quarterly = combined_data_quarterly.groupby('report_name').sum()
         
         df_quarterly[financial_column] = df_quarterly[financial_column].rolling(4).sum()
 

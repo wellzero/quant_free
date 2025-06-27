@@ -315,9 +315,9 @@ class FinancialDataParser:
 
             data_yearly = data.copy()    
 
-            data_quarterly = self._get_quarter(data)
+            data_yearly = self.merge_daily_data_to_finance(data_yearly)
 
-            data_quarterly = self.merge_daily_data_to_finance(data_quarterly)
+            data_quarterly = self._get_quarter(data)
 
             return data_yearly, data_quarterly
         except Exception as e:

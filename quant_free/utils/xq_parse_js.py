@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import subprocess
 
 def xq_js_to_dict(market = "us"):
     """
@@ -14,39 +15,28 @@ def xq_js_to_dict(market = "us"):
     """
     js_file_path =  os.path.join(os.getenv("QUANT_FREE_ROOT"), 'quant_free/utils/js/xq_finance_dict.js')
     try:
-        # Read the JavaScript file
-        with open(js_file_path, 'r', encoding='utf-8') as file:
-            js_content = file.read()
+        # Execute the JavaScript file using Node.js
+        result = subprocess.run(['node', js_file_path], capture_output=True, text=True)
 
-        # Remove the JavaScript variable assignment to isolate the object
-        js_content_1 = re.sub(r'\$[^:]*:', ':', js_content)
-        js_content_2 = re.sub(r'subtitle\d+: "[^"]*",\n', '', js_content_1)
+        # Check if there was any output
+        if result.stdout:
+            # Load the JSON output into a Python dictionary
+            data_dict = json.loads(result.stdout)
+            # data_dict = json.dumps(table, indent=2, ensure_ascii=False)
+        else:
+            print("No output from the JavaScript file.")
+            print("Error:", result.stderr)
 
-        js_object_str = re.sub(r'^[^=]*=\s*', '', js_content_2, count=1).strip().rstrip(';')
-
-        # Replace single quotes with double quotes for JSON compatibility
-        json_str = js_object_str.replace("'", '"')
-
-        # Fix other JavaScript to JSON incompatibilities, if any
-        json_str = re.sub(r'(\w+):', r'"\1":', json_str)  # Add double quotes around keys
-
-        # Parse the JSON string to a Python dictionary
-        data_dict = json.loads(json_str)
-
-        # Remove '$' and the following letter from keys
-        def clean_key(key):
-            return re.sub(r'\$.', '', key)
-        
-        cleaned_dict = {clean_key(k): v for k, v in data_dict.items()}
-        
-        data = cleaned_dict[market]
+        data_dict = deduplicate_values(data_dict)
+       
+        data = data_dict[market]
         
         def process_data(data, prefix):
             result = {}
             for key, value in data.items():
                 if key.startswith(prefix):
                     result.update(value)
-            return {re.sub(r'\$[^$]*', '$', k): v for k, v in result.items()}
+            return {re.sub(r'\$[^$]*', '', k): v for k, v in result.items()}
 
         result = {}
         result["metrics"] = process_data(data, 'indicator')
@@ -60,6 +50,27 @@ def xq_js_to_dict(market = "us"):
         print(f'Error: {e}')
         return None
 
+def deduplicate_values(data_dict):
+    """
+    Deduplicate values in the dictionary for the same keys, keeping the first occurrence.
+
+    Parameters:
+    data_dict (dict): The input dictionary with potential duplicate keys.
+
+    Returns:
+    dict: The processed dictionary with deduplicated values.
+    """
+
+    deduped_dict = {}
+    for key, value in data_dict.items():
+        for key1, value1 in value.items():
+            for key2, value2 in value1.items():
+                if key2 not in deduped_dict:
+                    deduped_dict[key2] = value2
+                else:
+                    data_dict[key][key1][key2] = deduped_dict[key2]
+    return data_dict
+
 if __name__ == "__main__":
     data = xq_js_to_dict(market = "us")
-    print(len(data))
+    print(len(data['cash']))

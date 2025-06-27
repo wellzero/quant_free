@@ -2020,3 +2020,7 @@ us: {
   }
 }
 }
+
+if (require.main === module) {
+  console.log(JSON.stringify(BUSSINESS_TABLE, null, 2)); // Pretty print JSON
+}
