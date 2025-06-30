@@ -5,7 +5,7 @@ import sys
 
 
 from quant_free.dataset.finance_factors_calc import *
-from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_daily_data import *
 from quant_free.dataset.xq_symbol import *
 
 

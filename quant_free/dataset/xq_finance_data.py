@@ -17,7 +17,7 @@ from quant_free.utils.us_equity_symbol import *
 from quant_free.utils.us_equity_utils import *
 from quant_free.common.us_equity_common import *
 from quant_free.utils.xq_parse_js import *
-from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_daily_data import *
 from quant_free.dataset.xq_finance_parser import *
 from quant_free.dataset.xq_symbol import *
 from quant_free.common.const import *

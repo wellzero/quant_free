@@ -1,6 +1,6 @@
 
 from quant_free.common.us_equity_common import *
-from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_daily_data import *
 from quant_free.dataset.xq_symbol import *
 
 import pandas as pd

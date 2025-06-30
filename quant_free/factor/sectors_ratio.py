@@ -1,4 +1,4 @@
-from quant_free.dataset.xq_trade_data import *
+from quant_free.dataset.xq_daily_data import *
 from quant_free.dataset.xq_symbol import *
 
 class SectorsRatio:
