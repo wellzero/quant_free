@@ -79,7 +79,14 @@ def us_dir0_store_csv(market = 'us', dir0 = 'symbol', filename='industry.csv', d
         data.to_csv(file_path)
         print(f"stored to folder {file_path}")
 
-def us_dir1_load_csv(market='us', dir0='equity', dir1=None, dir2=None, filename='industry.csv', dtype=None, index_col=0):
+def us_dir1_load_csv(market='us',
+                     dir0='equity',
+                     dir1=None,
+                     dir2=None,
+                     filename='industry.csv',
+                     dtype=None,
+                     index_col=0,
+                     keep_default_na=True):
     """
     Load a CSV file from a directory structure with a variable number of subdirectories.
 
@@ -102,8 +109,11 @@ def us_dir1_load_csv(market='us', dir0='equity', dir1=None, dir2=None, filename=
 
     if os.path.exists(file_path):
         try:
-            df = pd.read_csv(file_path, index_col=index_col, dtype=dtype)
-            
+            df = pd.read_csv(file_path,
+                             index_col=index_col,
+                             dtype=dtype,
+                             keep_default_na=keep_default_na)
+
             # # Convert index to datetime if it's a datetime-like column
             # if df.index.dtype == 'object':
             #     try:
@@ -117,6 +127,7 @@ def us_dir1_load_csv(market='us', dir0='equity', dir1=None, dir2=None, filename=
                     df.drop(columns=[col], inplace=True)
 
             df = df.fillna(0)
+
             return df
         except Exception as e:
             print(f"Error reading file {file_path}: {e}")

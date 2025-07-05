@@ -1,4 +1,5 @@
 import os
+from numpy import dtype
 import pandas as pd
 # Configure logging
 import logging
@@ -14,7 +15,8 @@ def get_all_symbol(market = 'us'):
                         dir0 = 'symbol',
                         dir1 = 'xq',
                         filename='equity_symbol.csv',
-                        dtype = str)
+                        dtype = str,
+                        keep_default_na = False)
   return df.loc[:, 'symbol'].values
 
 def get_sectors(market = "us", dir_option = "xq"):
@@ -24,7 +26,9 @@ def get_sectors(market = "us", dir_option = "xq"):
       market,
       dir0 = 'symbol',
       dir1 = dir_option,
-      filename = sector_file)
+      filename = sector_file,
+      dtype = str,
+      keep_default_na= False)
 
     if dir_option == "xq":
       sectors = list(df_sector['name'].values)
@@ -39,7 +43,9 @@ def get_symbols_by_sector(market = "us", sector = None, dir_option = "xq"):
         market,
         dir0 = 'symbol',
         dir1 = dir_option,
-        filename= sector)
+        dtype = str,
+        filename= sector,
+        keep_default_na= False)
     if (data_symbols.empty == False):
         symbols = data_symbols['symbol'].values
     return symbols

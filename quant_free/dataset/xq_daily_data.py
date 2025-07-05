@@ -46,20 +46,18 @@ def daily_trade_load(
   data = us_dir1_load_csv(
      market,
      dir0 = equity,
-     dir1 = dir_option,
-     dir2 = symbol,
+     dir1 = symbol,
+     dir2 = dir_option,
      filename = file_name)
   
-  if 'timestamp' in data.columns:
-    data.rename(columns={'timestamp': 'date'}, inplace=True)
-
-  data.set_index('date', inplace=True)
   data = data.sort_index()
 
   if interval == 'day':
     data.index = pd.to_datetime(pd.to_datetime(data.index).date)
+    data.index.name = 'date' 
   else:
     data.index = pd.to_datetime(data.index)
+
 
   return data
 
